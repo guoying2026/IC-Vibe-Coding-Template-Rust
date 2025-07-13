@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { Button, Card } from "../components";
-import { backendService } from "../services/backendService";
+import React, { useState, useEffect } from "react";
+import { Button, Card, ErrorDisplay, Loader } from './components';
+import { backendService } from './services/backendService';
 
 interface CounterViewProps {
   onError: (error: string) => void;
