@@ -2,7 +2,7 @@
 // Global type definitions
 
 // 语言类型定义
-export type Language = 'en' | 'zh';
+export type Language = "en" | "zh";
 
 // BTC资产接口定义
 export interface BTCAsset {
@@ -105,12 +105,12 @@ export interface MarketStats {
 // 交易记录接口定义
 export interface Transaction {
   id: string; // 交易唯一标识符
-  type: 'supply' | 'withdraw' | 'borrow' | 'repay'; // 交易类型
+  type: "supply" | "withdraw" | "borrow" | "repay"; // 交易类型
   asset: string; // 涉及的资产符号
   amount: number; // 交易金额
   timestamp: number; // 交易时间戳
   txHash: string; // 交易哈希
-  status: 'pending' | 'success' | 'failed'; // 交易状态
+  status: "pending" | "success" | "failed"; // 交易状态
   gasUsed?: number; // 消耗的gas
   blockNumber?: number; // 区块号
 }
@@ -136,7 +136,7 @@ export interface MigrationData {
   estimatedGas: number; // 预估gas费用
   estimatedTime: number; // 预估完成时间(分钟)
   benefits: string[]; // 迁移收益列表
-  status: 'pending' | 'in_progress' | 'completed' | 'failed'; // 迁移状态
+  status: "pending" | "in_progress" | "completed" | "failed"; // 迁移状态
 }
 
 // 钱包连接状态接口
@@ -160,7 +160,7 @@ export interface AppState {
 }
 
 // 页面路由类型
-export type PageRoute = 'earn' | 'borrow' | 'explore' | 'migrate' | 'dashboard';
+export type PageRoute = "earn" | "borrow" | "explore" | "migrate" | "dashboard";
 
 // 导航项接口
 export interface NavItem {
@@ -168,4 +168,4 @@ export interface NavItem {
   label: { en: string; zh: string }; // 多语言标签
   icon?: string; // 图标（可选）
   path: string; // 路径
-} 
+}

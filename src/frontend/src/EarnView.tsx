@@ -1,8 +1,15 @@
 // 从React导入必要的钩子函数
-import React, { useState, useEffect } from 'react';
-import { BTCAsset } from './types';
-import { useLanguage } from './hooks/useLanguage';
-import { AssetPool, Dashboard, LiquidityProvider, TransactionHistory, WalletConnector, MarketDetail } from "./components";
+import React, { useState, useEffect } from "react";
+import { BTCAsset } from "./types";
+import { useLanguage } from "./hooks/useLanguage";
+import {
+  AssetPool,
+  Dashboard,
+  LiquidityProvider,
+  TransactionHistory,
+  WalletConnector,
+  MarketDetail,
+} from "./components";
 
 // 资产接口定义 - 包含借贷平台所需的所有资产属性
 interface Asset {
@@ -24,12 +31,12 @@ interface Asset {
 // 交易记录接口定义
 interface Transaction {
   id: string; // 交易唯一标识符
-  type: 'supply' | 'withdraw' | 'borrow' | 'repay'; // 交易类型：供应、提取、借贷、还款
+  type: "supply" | "withdraw" | "borrow" | "repay"; // 交易类型：供应、提取、借贷、还款
   asset: string; // 涉及的资产符号
   amount: number; // 交易金额
   timestamp: number; // 交易时间戳
   txHash: string; // 交易哈希
-  status: 'pending' | 'success' | 'failed'; // 交易状态
+  status: "pending" | "success" | "failed"; // 交易状态
 }
 
 // 组件属性接口定义
@@ -76,7 +83,7 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
         collateralFactor: 80, // 80%抵押因子
         liquidationThreshold: 85, // 85%清算阈值
         borrowRate: 7.5, // 借贷利率
-        utilization: 75 // 利用率
+        utilization: 75, // 利用率
       },
       {
         id: "2",
@@ -91,7 +98,7 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
         collateralFactor: 75,
         liquidationThreshold: 80,
         borrowRate: 8.2,
-        utilization: 68
+        utilization: 68,
       },
       {
         id: "3",
@@ -106,7 +113,7 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
         collateralFactor: 77,
         liquidationThreshold: 82,
         borrowRate: 7.8,
-        utilization: 72
+        utilization: 72,
       },
       {
         id: "4",
@@ -121,8 +128,8 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
         collateralFactor: 82,
         liquidationThreshold: 87,
         borrowRate: 6.5,
-        utilization: 85
-      }
+        utilization: 85,
+      },
     ];
 
     // 模拟交易历史数据
@@ -134,7 +141,7 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
         amount: 100,
         timestamp: Date.now() - 3600000, // 1小时前
         txHash: "0x123...abc",
-        status: "success"
+        status: "success",
       },
       {
         id: "2",
@@ -143,8 +150,8 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
         amount: 50,
         timestamp: Date.now() - 7200000, // 2小时前
         txHash: "0x456...def",
-        status: "success"
-      }
+        status: "success",
+      },
     ];
 
     // 设置模拟数据到状态
@@ -152,9 +159,16 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
     setTransactions(mockTransactions);
 
     // 计算统计数据
-    const totalSuppliedValue = mockAssets.reduce((sum, asset) => sum + (asset.supplied * 1), 0);
-    const totalEarnedValue = mockAssets.reduce((sum, asset) => sum + (asset.supplied * asset.apy / 100), 0);
-    const avgApyValue = mockAssets.reduce((sum, asset) => sum + asset.apy, 0) / mockAssets.length;
+    const totalSuppliedValue = mockAssets.reduce(
+      (sum, asset) => sum + asset.supplied * 1,
+      0,
+    );
+    const totalEarnedValue = mockAssets.reduce(
+      (sum, asset) => sum + (asset.supplied * asset.apy) / 100,
+      0,
+    );
+    const avgApyValue =
+      mockAssets.reduce((sum, asset) => sum + asset.apy, 0) / mockAssets.length;
 
     // 更新统计状态
     setTotalSupplied(totalSuppliedValue);
@@ -167,7 +181,7 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
     setLoading(true); // 开始加载
     try {
       // 模拟钱包连接过程 - 真实应用中需要集成实际的钱包连接
-      await new Promise(resolve => setTimeout(resolve, 1000)); // 模拟1秒延迟
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // 模拟1秒延迟
       setConnectedWallet("0x1234...5678"); // 设置模拟钱包地址
     } catch (error) {
       onError("Failed to connect wallet"); // 连接失败时显示错误
@@ -183,33 +197,38 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
       // 创建新的供应交易记录
       const newTransaction: Transaction = {
         id: Date.now().toString(),
-        type: 'supply',
+        type: "supply",
         asset: asset.symbol,
         amount,
         timestamp: Date.now(),
         txHash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 5)}`,
-        status: 'pending' // 初始状态为待处理
+        status: "pending", // 初始状态为待处理
       };
 
       // 添加交易到历史记录 (在前面插入新交易)
-      setTransactions(prev => [newTransaction, ...prev]);
-      
+      setTransactions((prev) => [newTransaction, ...prev]);
+
       // 更新资产余额和供应金额
-      setAssets(prev => prev.map(a => 
-        a.id === asset.id 
-          ? { ...a, supplied: a.supplied + amount, balance: a.balance - amount }
-          : a
-      ));
+      setAssets((prev) =>
+        prev.map((a) =>
+          a.id === asset.id
+            ? {
+                ...a,
+                supplied: a.supplied + amount,
+                balance: a.balance - amount,
+              }
+            : a,
+        ),
+      );
 
       // 模拟交易完成 - 3秒后更新状态为成功
       setTimeout(() => {
-        setTransactions(prev => prev.map(tx => 
-          tx.id === newTransaction.id 
-            ? { ...tx, status: 'success' }
-            : tx
-        ));
+        setTransactions((prev) =>
+          prev.map((tx) =>
+            tx.id === newTransaction.id ? { ...tx, status: "success" } : tx,
+          ),
+        );
       }, 3000);
-
     } catch (error) {
       onError("Failed to supply asset"); // 供应失败错误处理
     } finally {
@@ -226,31 +245,36 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
       // 创建借贷交易记录
       const newTransaction: Transaction = {
         id: Date.now().toString(),
-        type: 'borrow',
+        type: "borrow",
         asset: asset.symbol,
         amount,
         timestamp: Date.now(),
         txHash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 5)}`,
-        status: 'pending'
+        status: "pending",
       };
 
-      setTransactions(prev => [newTransaction, ...prev]);
-      
+      setTransactions((prev) => [newTransaction, ...prev]);
+
       // 更新资产借贷金额和钱包余额
-      setAssets(prev => prev.map(a => 
-        a.id === asset.id 
-          ? { ...a, borrowed: a.borrowed + amount, balance: a.balance + amount }
-          : a
-      ));
+      setAssets((prev) =>
+        prev.map((a) =>
+          a.id === asset.id
+            ? {
+                ...a,
+                borrowed: a.borrowed + amount,
+                balance: a.balance + amount,
+              }
+            : a,
+        ),
+      );
 
       setTimeout(() => {
-        setTransactions(prev => prev.map(tx => 
-          tx.id === newTransaction.id 
-            ? { ...tx, status: 'success' }
-            : tx
-        ));
+        setTransactions((prev) =>
+          prev.map((tx) =>
+            tx.id === newTransaction.id ? { ...tx, status: "success" } : tx,
+          ),
+        );
       }, 3000);
-
     } catch (error) {
       onError("Failed to borrow asset");
     } finally {
@@ -266,31 +290,36 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
       // 创建还款交易记录
       const newTransaction: Transaction = {
         id: Date.now().toString(),
-        type: 'repay',
+        type: "repay",
         asset: asset.symbol,
         amount,
         timestamp: Date.now(),
         txHash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 5)}`,
-        status: 'pending'
+        status: "pending",
       };
 
-      setTransactions(prev => [newTransaction, ...prev]);
-      
+      setTransactions((prev) => [newTransaction, ...prev]);
+
       // 更新资产借贷金额和钱包余额
-      setAssets(prev => prev.map(a => 
-        a.id === asset.id 
-          ? { ...a, borrowed: a.borrowed - amount, balance: a.balance - amount }
-          : a
-      ));
+      setAssets((prev) =>
+        prev.map((a) =>
+          a.id === asset.id
+            ? {
+                ...a,
+                borrowed: a.borrowed - amount,
+                balance: a.balance - amount,
+              }
+            : a,
+        ),
+      );
 
       setTimeout(() => {
-        setTransactions(prev => prev.map(tx => 
-          tx.id === newTransaction.id 
-            ? { ...tx, status: 'success' }
-            : tx
-        ));
+        setTransactions((prev) =>
+          prev.map((tx) =>
+            tx.id === newTransaction.id ? { ...tx, status: "success" } : tx,
+          ),
+        );
       }, 3000);
-
     } catch (error) {
       onError("Failed to repay asset");
     } finally {
@@ -306,31 +335,36 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
       // 创建提取交易记录
       const newTransaction: Transaction = {
         id: Date.now().toString(),
-        type: 'withdraw',
+        type: "withdraw",
         asset: asset.symbol,
         amount,
         timestamp: Date.now(),
         txHash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 5)}`,
-        status: 'pending'
+        status: "pending",
       };
 
-      setTransactions(prev => [newTransaction, ...prev]);
-      
+      setTransactions((prev) => [newTransaction, ...prev]);
+
       // 更新资产供应金额和钱包余额
-      setAssets(prev => prev.map(a => 
-        a.id === asset.id 
-          ? { ...a, supplied: a.supplied - amount, balance: a.balance + amount }
-          : a
-      ));
+      setAssets((prev) =>
+        prev.map((a) =>
+          a.id === asset.id
+            ? {
+                ...a,
+                supplied: a.supplied - amount,
+                balance: a.balance + amount,
+              }
+            : a,
+        ),
+      );
 
       setTimeout(() => {
-        setTransactions(prev => prev.map(tx => 
-          tx.id === newTransaction.id 
-            ? { ...tx, status: 'success' }
-            : tx
-        ));
+        setTransactions((prev) =>
+          prev.map((tx) =>
+            tx.id === newTransaction.id ? { ...tx, status: "success" } : tx,
+          ),
+        );
       }, 3000);
-
     } catch (error) {
       onError("Failed to withdraw asset");
     } finally {
@@ -355,26 +389,25 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
   return (
     // 主容器 - 全屏高度，渐变背景
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      
       {/* 顶部导航栏 - 固定在页面顶部 */}
-      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+      <div className="sticky top-0 z-50 border-b border-gray-200/50 bg-white/80 backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-900/80">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
             {/* 左侧：品牌标识和描述 */}
             <div className="flex items-center space-x-4">
               {/* 品牌名称 - 使用渐变文字效果 */}
-              <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-2xl font-bold text-transparent">
                 💰 ICP Earn
               </div>
               {/* 品牌描述 - 在小屏幕上隐藏 */}
-              <div className="hidden sm:block text-sm text-gray-500 dark:text-gray-400">
+              <div className="hidden text-sm text-gray-500 sm:block dark:text-gray-400">
                 Decentralized Lending Protocol
               </div>
             </div>
-            
+
             {/* 右侧：钱包连接器 */}
-            <WalletConnector 
-              connectedWallet={connectedWallet} 
+            <WalletConnector
+              connectedWallet={connectedWallet}
               onConnect={handleConnectWallet}
             />
           </div>
@@ -382,10 +415,9 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
       </div>
 
       {/* 主要内容区域 */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* 仪表板组件 - 显示总体统计信息 */}
-        <Dashboard 
+        <Dashboard
           totalSupplied={totalSupplied}
           totalEarned={totalEarned}
           avgApy={avgApy}
@@ -395,12 +427,12 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
         {/* 资产池列表区域 */}
         <div className="mt-8">
           {/* 标题 */}
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
             Available Markets
           </h2>
-          
+
           {/* 资产池网格布局 - 响应式设计 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {assets.map((asset) => (
               <AssetPool
                 key={asset.id} // React key for list rendering
@@ -415,7 +447,7 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
 
         {/* 交易历史组件 */}
         <div className="mt-8">
-          <TransactionHistory 
+          <TransactionHistory
             transactions={transactions}
             connectedWallet={connectedWallet}
           />
@@ -445,4 +477,4 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
       )}
     </div>
   );
-}; 
+};
