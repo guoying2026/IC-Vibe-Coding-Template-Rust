@@ -11,6 +11,8 @@ import { MarketDetailPage } from "./views/MarketDetailPage";
 import { Loader, ErrorDisplay } from "./components";
 import { LanguageProvider } from "./hooks/useLanguage";
 import { ExplorePage } from "./views/ExplorePage";
+import MigratePage from "./views/MigratePage";
+import DashboardPage from "./views/DashboardPage";
 
 // 主应用组件
 function App() {
@@ -132,45 +134,9 @@ function App() {
       case 'explore':
         return <ExplorePage />;
       case 'migrate':
-        return (
-          // 迁移页面占位符
-          <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-900 dark:to-gray-800 pt-20">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="text-center">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-4">
-                  Migrate Positions
-                </h1>
-                <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
-                  Coming Soon - Move your positions to better protocols
-                </p>
-                <div className="text-6xl mb-4">🔄</div>
-                <p className="text-gray-500 dark:text-gray-400">
-                  This page is under development
-                </p>
-              </div>
-            </div>
-          </div>
-        );
+        return <MigratePage />;
       case 'dashboard':
-        return (
-          // 仪表板页面占位符
-          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-900 dark:to-gray-800 pt-20">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="text-center">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-600 to-slate-600 bg-clip-text text-transparent mb-4">
-                  Your Portfolio Dashboard
-                </h1>
-                <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
-                  Coming Soon - Manage your Bitcoin DeFi positions
-                </p>
-                <div className="text-6xl mb-4">📊</div>
-                <p className="text-gray-500 dark:text-gray-400">
-                  This page is under development
-                </p>
-              </div>
-            </div>
-          </div>
-        );
+        return <DashboardPage />;
       default:
         return (
           <EarnPage 
@@ -204,12 +170,7 @@ function App() {
       {/* 全局加载遮罩 */}
       {loading && !error && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl">
-            <Loader />
-            <p className="text-center text-gray-600 dark:text-gray-400 mt-4">
-              Processing...
-            </p>
-          </div>
+          <Loader />
         </div>
       )}
 

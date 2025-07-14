@@ -36,13 +36,13 @@ const navItems: NavItem[] = [
   },
   {
     key: 'migrate',
-    label: { en: 'Migrate', zh: '迁移' },
+    label: { en: 'Migrate', zh: '教程' },
     // icon: '🔄',
     path: '/migrate'
   },
   {
     key: 'dashboard',
-    label: { en: 'Dashboard', zh: '仪表板' },
+    label: { en: 'Dashboard', zh: '个人中心' },
     // icon: '📊',
     path: '/dashboard'
   }

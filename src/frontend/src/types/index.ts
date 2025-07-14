@@ -126,19 +126,6 @@ export interface UserPortfolio {
   avgBorrowApy: number; // 平均借贷APY
 }
 
-// 迁移数据接口
-export interface MigrationData {
-  id: string; // 迁移ID
-  fromProtocol: string; // 源协议
-  toProtocol: string; // 目标协议
-  asset: string; // 资产类型
-  amount: number; // 迁移金额
-  estimatedGas: number; // 预估gas费用
-  estimatedTime: number; // 预估完成时间(分钟)
-  benefits: string[]; // 迁移收益列表
-  status: 'pending' | 'in_progress' | 'completed' | 'failed'; // 迁移状态
-}
-
 // 钱包连接状态接口
 export interface WalletState {
   address: string | null; // 钱包地址
