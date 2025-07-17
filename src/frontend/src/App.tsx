@@ -13,6 +13,7 @@ import { LanguageProvider } from "./hooks/useLanguage";
 import { ExplorePage } from "./views/ExplorePage";
 import MigratePage from "./views/MigratePage";
 import DashboardPage from "./views/DashboardPage";
+import { internetIdentityService, AuthState } from "./services/InternetIdentityService"; // 导入II服务
 
 // 主应用组件
 function App() {
@@ -38,14 +39,37 @@ function App() {
   // 当前选中的金库，用于显示详情页
   const [selectedVault, setSelectedVault] = useState<Vault | null>(null);
 
-  // 钱包连接状态
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  // Internet Identity认证状态
+  const [authState, setAuthState] = useState<AuthState>({
+    isAuthenticated: false,
+    principal: null,
+    userInfo: null,
+  });
   
   // 加载状态
   const [loading, setLoading] = useState(false);
   
   // 错误状态
   const [error, setError] = useState<string | undefined>();
+
+  // 初始化Internet Identity服务
+  useEffect(() => {
+    const initializeII = async () => {
+      try {
+        setLoading(true);
+        await internetIdentityService.initialize();
+        const state = internetIdentityService.getAuthState();
+        setAuthState(state);
+      } catch (error) {
+        console.error('初始化Internet Identity失败:', error);
+        setError('初始化认证服务失败');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeII();
+  }, []);
 
   // 处理错误显示
   const handleError = (errorMessage: string) => {
@@ -57,25 +81,32 @@ function App() {
     setError(undefined);
   };
 
-  // 处理钱包连接
+  // 处理Internet Identity登录
   const handleConnectWallet = async () => {
     setLoading(true);
     try {
-      // 模拟钱包连接过程
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      // 生成模拟钱包地址
-      const mockAddress = `0x${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}`;
-      setWalletAddress(mockAddress);
+      await internetIdentityService.login();
+      const state = internetIdentityService.getAuthState();
+      setAuthState(state);
     } catch (error) {
-      handleError("Failed to connect wallet");
+      handleError("Internet Identity登录失败");
     } finally {
       setLoading(false);
     }
   };
 
-  // 处理钱包断开连接
-  const handleDisconnectWallet = () => {
-    setWalletAddress(null);
+  // 处理Internet Identity登出
+  const handleDisconnectWallet = async () => {
+    try {
+      await internetIdentityService.logout();
+      setAuthState({
+        isAuthenticated: false,
+        principal: null,
+        userInfo: null,
+      });
+    } catch (error) {
+      handleError("登出失败");
+    }
   };
 
   // 处理页面切换
@@ -106,6 +137,13 @@ function App() {
     setSelectedVault(null);
   };
 
+  // 格式化Principal显示
+  const formatPrincipal = (principal: any) => {
+    if (!principal) return '';
+    const principalText = principal.toText();
+    return `${principalText.slice(0, 6)}...${principalText.slice(-4)}`;
+  };
+
   // 渲染当前页面内容
   const renderCurrentPage = () => {
     switch (currentPage) {
@@ -115,7 +153,10 @@ function App() {
           <VaultDetailPage vault={selectedVault} onBack={handleBackToVaults} />
         ) : (
           <EarnPage 
-            walletAddress={walletAddress}
+            walletAddress={authState.principal ? formatPrincipal(authState.principal) : null}
+            userInfo={authState.userInfo}
+            isAuthenticated={authState.isAuthenticated}
+            principal={authState.principal}
             onError={handleError}
             setLoading={setLoading}
             onSelectVault={handleSelectVault}
@@ -127,7 +168,7 @@ function App() {
           <MarketDetailPage market={selectedMarket} onBack={handleBackToMarkets} />
         ) : (
           <BorrowPage 
-            walletAddress={walletAddress}
+            walletAddress={authState.principal ? formatPrincipal(authState.principal) : null}
             onSelectMarket={handleSelectMarket}
           />
         );
@@ -140,7 +181,10 @@ function App() {
       default:
         return (
           <EarnPage 
-            walletAddress={walletAddress}
+            walletAddress={authState.principal ? formatPrincipal(authState.principal) : null}
+            userInfo={authState.userInfo}
+            isAuthenticated={authState.isAuthenticated}
+            principal={authState.principal}
             onError={handleError}
             setLoading={setLoading}
             onSelectVault={handleSelectVault}
@@ -157,7 +201,9 @@ function App() {
       <Header 
         currentPage={currentPage}
         onPageChange={handlePageChange}
-        walletAddress={walletAddress}
+        walletAddress={authState.principal ? formatPrincipal(authState.principal) : null}
+        userInfo={authState.userInfo}
+        isAuthenticated={authState.isAuthenticated}
         onConnectWallet={handleConnectWallet}
         onDisconnectWallet={handleDisconnectWallet}
       />

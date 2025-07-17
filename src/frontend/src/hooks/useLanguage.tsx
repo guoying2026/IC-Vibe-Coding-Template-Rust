@@ -23,12 +23,21 @@ const translations: Translations = {
   
   // 通用文本
   connect_wallet: { en: 'Connect Wallet', zh: '连接钱包' },
+  connect_internet_identity: { en: 'Connect Internet Identity', zh: '连接互联网身份' },
   disconnect: { en: 'Disconnect', zh: '断开连接' },
   loading: { en: 'Loading...', zh: '加载中...' },
   error: { en: 'Error', zh: '错误' },
   success: { en: 'Success', zh: '成功' },
   pending: { en: 'Pending', zh: '待处理' },
   failed: { en: 'Failed', zh: '失败' },
+  
+  // Internet Identity相关
+  internet_identity_login: { en: 'Login with Internet Identity', zh: '使用互联网身份登录' },
+  internet_identity_logout: { en: 'Logout', zh: '退出登录' },
+  internet_identity_connecting: { en: 'Connecting...', zh: '连接中...' },
+  internet_identity_connected: { en: 'Connected', zh: '已连接' },
+  internet_identity_failed: { en: 'Connection failed', zh: '连接失败' },
+  internet_identity_principal: { en: 'Principal ID', zh: '主体ID' },
   
   // 资产相关
   total_supply: { en: 'Total Supply', zh: '总供应量' },

@@ -4,12 +4,15 @@
 import { useState } from 'react';
 import { PageRoute, NavItem, Language } from '../../types';
 import { useLanguage } from '../../hooks/useLanguage';
+import { UserInfo } from '../../services/InternetIdentityService';
 
 // 组件属性接口
 interface HeaderProps {
   currentPage: PageRoute; // 当前页面路由
   onPageChange: (page: PageRoute) => void; // 页面切换回调
   walletAddress: string | null; // 钱包地址
+  userInfo: UserInfo | null; // 用户信息
+  isAuthenticated: boolean; // 认证状态
   onConnectWallet: () => void; // 连接钱包回调
   onDisconnectWallet: () => void; // 断开钱包回调
 }
@@ -53,6 +56,8 @@ export const Header = ({
   currentPage, 
   onPageChange, 
   walletAddress, 
+  userInfo, 
+  isAuthenticated, 
   onConnectWallet, 
   onDisconnectWallet 
 }: HeaderProps) => {
@@ -112,7 +117,7 @@ export const Header = ({
             ))}
           </nav>
 
-          {/* 右侧：语言切换和钱包连接 */}
+          {/* 右侧：语言切换和Internet Identity连接 */}
           <div className="flex items-center space-x-4">
             {/* 语言切换按钮 */}
             <button
@@ -122,7 +127,7 @@ export const Header = ({
               {language === 'en' ? 'EN' : 'CN'}
             </button>
 
-            {/* 钱包连接区域 */}
+            {/* Internet Identity连接区域 */}
             {walletAddress ? (
               <div className="relative">
                 <button
@@ -136,16 +141,57 @@ export const Header = ({
                   </svg>
                 </button>
                 {isWalletMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
-                    <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                      {t('balance')}: 0.0 BTC
+                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                    {/* 用户信息 */}
+                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {userInfo?.username || '用户'}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {walletAddress}
+                      </div>
+                      <div className="text-xs text-green-600 dark:text-green-400 mt-1">
+                        ✓ 已认证
+                      </div>
                     </div>
-                    <button
-                      onClick={handleDisconnect}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                    >
-                      {t('disconnect')}
-                    </button>
+                    
+                    {/* 余额信息 */}
+                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        ckBTC 余额
+                      </div>
+                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {userInfo?.ckbtc_balance || 0} ckBTC
+                      </div>
+                    </div>
+                    
+                    {/* 统计信息 */}
+                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <div className="text-gray-500 dark:text-gray-400">总收益</div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {userInfo?.total_earned || 0}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500 dark:text-gray-400">总借贷</div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {userInfo?.total_borrowed || 0}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* 操作按钮 */}
+                    <div className="px-2 py-1">
+                      <button
+                        onClick={handleDisconnect}
+                        className="w-full text-left px-2 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors rounded"
+                      >
+                        {t('disconnect')}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -154,7 +200,7 @@ export const Header = ({
                 onClick={onConnectWallet}
                 className="px-4 py-2 bg-white/20 text-white rounded-lg font-semibold border border-white/70 shadow-sm hover:bg-white/30 hover:text-white active:scale-95 transition-all duration-200"
               >
-                {t('connect_wallet')}
+                {t('connect_internet_identity')}
               </button>
             )}
 

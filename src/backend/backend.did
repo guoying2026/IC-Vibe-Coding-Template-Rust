@@ -2,20 +2,58 @@ type AssistantMessage = record {
   content : opt text;
   tool_calls : vec ToolCall;
 };
+type BorrowPosition = record {
+  id : text;
+  asset : text;
+  rate : float64;
+  health_factor : float64;
+  amount : float64;
+};
 type ChatMessage = variant {
   tool : record { content : text; tool_call_id : text };
   user : record { content : text };
   assistant : AssistantMessage;
   system : record { content : text };
 };
+type EarnPosition = record {
+  id : text;
+  apy : float64;
+  asset : text;
+  earned : float64;
+  amount : float64;
+};
 type FunctionCall = record { name : text; arguments : vec ToolCallArgument };
+type Result = variant { Ok : BorrowPosition; Err : text };
+type Result_1 = variant { Ok : EarnPosition; Err : text };
+type Result_2 = variant { Ok : vec BorrowPosition; Err : text };
+type Result_3 = variant { Ok : vec EarnPosition; Err : text };
+type Result_4 = variant { Ok : UserInfo; Err : text };
+type Result_5 = variant { Ok : float64; Err : text };
 type ToolCall = record { id : text; function : FunctionCall };
 type ToolCallArgument = record { value : text; name : text };
+type UserInfo = record {
+  "principal" : principal;
+  username : text;
+  health_factor : float64;
+  created_at : nat64;
+  total_earned : float64;
+  ckbtc_balance : float64;
+  total_borrowed : float64;
+};
 service : {
+  add_borrow_position : (text, float64, float64) -> (Result);
+  add_earn_position : (text, float64, float64) -> (Result_1);
   chat : (vec ChatMessage) -> (text);
+  get_borrow_positions : () -> (Result_2) query;
   get_count : () -> (nat64) query;
+  get_earn_positions : () -> (Result_3) query;
+  get_principal : () -> (principal) query;
+  get_user_info : () -> (Result_4) query;
   greet : (text) -> (text) query;
   increment : () -> (nat64);
+  is_authenticated : () -> (bool) query;
   prompt : (text) -> (text);
+  register_user : (text) -> (Result_4);
   set_count : (nat64) -> (nat64);
+  update_ckbtc_balance : (float64) -> (Result_5);
 }
