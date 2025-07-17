@@ -1,40 +1,39 @@
+use candid::{CandidType, Principal};
 use ic_cdk::export_candid;
+use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use ic_stable_structures::{StableBTreeMap, StableCell};
-use serde::{Deserialize, Serialize};
-use candid::{Principal, CandidType, Deserialize as CandidDeserialize};
 
 // 用户信息结构体
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct UserInfo {
     pub principal: Principal, // 用户主体ID
-    pub username: String, // 用户名
-    pub ckbtc_balance: f64, // ckBTC余额
-    pub total_earned: f64, // 总收益
-    pub total_borrowed: f64, // 总借贷
-    pub health_factor: f64, // 健康因子
-    pub created_at: u64, // 创建时间
+    pub username: String,     // 用户名
+    pub ckbtc_balance: f64,   // ckBTC余额
+    pub total_earned: f64,    // 总收益
+    pub total_borrowed: f64,  // 总借贷
+    pub health_factor: f64,   // 健康因子
+    pub created_at: u64,      // 创建时间
 }
 
 // 借贷位置结构体
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct BorrowPosition {
-    pub id: String, // 位置ID
-    pub asset: String, // 资产类型
-    pub amount: f64, // 借贷金额
-    pub rate: f64, // 利率
+    pub id: String,         // 位置ID
+    pub asset: String,      // 资产类型
+    pub amount: f64,        // 借贷金额
+    pub rate: f64,          // 利率
     pub health_factor: f64, // 健康因子
 }
 
 // 收益位置结构体
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct EarnPosition {
-    pub id: String, // 位置ID
+    pub id: String,    // 位置ID
     pub asset: String, // 资产类型
-    pub amount: f64, // 存入金额
-    pub apy: f64, // 年化收益率
-    pub earned: f64, // 已赚取收益
+    pub amount: f64,   // 存入金额
+    pub apy: f64,      // 年化收益率
+    pub earned: f64,   // 已赚取收益
 }
 
 // 用户数据存储
@@ -61,12 +60,12 @@ fn is_user_registered(principal: &Principal) -> bool {
 #[ic_cdk::update]
 fn register_user(username: String) -> Result<UserInfo, String> {
     let caller = get_caller();
-    
+
     // 检查用户是否已存在
     if is_user_registered(&caller) {
         return Err("用户已存在".to_string());
     }
-    
+
     // 创建新用户信息
     let user_info = UserInfo {
         principal: caller,
@@ -77,21 +76,21 @@ fn register_user(username: String) -> Result<UserInfo, String> {
         health_factor: 0.0,
         created_at: ic_cdk::api::time(),
     };
-    
+
     // 存储用户信息
     USERS.with(|users| {
         users.borrow_mut().insert(caller, user_info.clone());
     });
-    
+
     // 初始化用户位置
     BORROW_POSITIONS.with(|positions| {
         positions.borrow_mut().insert(caller, Vec::new());
     });
-    
+
     EARN_POSITIONS.with(|positions| {
         positions.borrow_mut().insert(caller, Vec::new());
     });
-    
+
     Ok(user_info)
 }
 
@@ -99,13 +98,17 @@ fn register_user(username: String) -> Result<UserInfo, String> {
 #[ic_cdk::query]
 fn get_user_info() -> Result<UserInfo, String> {
     let caller = get_caller();
-    
+
     if !is_user_registered(&caller) {
         return Err("用户未注册".to_string());
     }
-    
+
     USERS.with(|users| {
-        users.borrow().get(&caller).cloned().ok_or("用户信息不存在".to_string())
+        users
+            .borrow()
+            .get(&caller)
+            .cloned()
+            .ok_or("用户信息不存在".to_string())
     })
 }
 
@@ -113,11 +116,11 @@ fn get_user_info() -> Result<UserInfo, String> {
 #[ic_cdk::update]
 fn update_ckbtc_balance(amount: f64) -> Result<f64, String> {
     let caller = get_caller();
-    
+
     if !is_user_registered(&caller) {
         return Err("用户未注册".to_string());
     }
-    
+
     USERS.with(|users| {
         let mut users = users.borrow_mut();
         if let Some(user) = users.get_mut(&caller) {
@@ -133,23 +136,27 @@ fn update_ckbtc_balance(amount: f64) -> Result<f64, String> {
 #[ic_cdk::update]
 fn add_borrow_position(asset: String, amount: f64, rate: f64) -> Result<BorrowPosition, String> {
     let caller = get_caller();
-    
+
     if !is_user_registered(&caller) {
         return Err("用户未注册".to_string());
     }
-    
+
     let position = BorrowPosition {
-        id: format!("borrow_{}_{}", caller.to_string(), ic_cdk::api::time()),
+        id: format!("borrow_{}_{}", caller, ic_cdk::api::time()),
         asset,
         amount,
         rate,
         health_factor: 2.45, // 默认健康因子
     };
-    
+
     BORROW_POSITIONS.with(|positions| {
-        positions.borrow_mut().entry(caller).or_insert_with(Vec::new).push(position.clone());
+        positions
+            .borrow_mut()
+            .entry(caller)
+            .or_default()
+            .push(position.clone());
     });
-    
+
     // 更新用户总借贷金额
     USERS.with(|users| {
         let mut users = users.borrow_mut();
@@ -157,7 +164,7 @@ fn add_borrow_position(asset: String, amount: f64, rate: f64) -> Result<BorrowPo
             user.total_borrowed += amount;
         }
     });
-    
+
     Ok(position)
 }
 
@@ -165,23 +172,27 @@ fn add_borrow_position(asset: String, amount: f64, rate: f64) -> Result<BorrowPo
 #[ic_cdk::update]
 fn add_earn_position(asset: String, amount: f64, apy: f64) -> Result<EarnPosition, String> {
     let caller = get_caller();
-    
+
     if !is_user_registered(&caller) {
         return Err("用户未注册".to_string());
     }
-    
+
     let position = EarnPosition {
-        id: format!("earn_{}_{}", caller.to_string(), ic_cdk::api::time()),
+        id: format!("earn_{}_{}", caller, ic_cdk::api::time()),
         asset,
         amount,
         apy,
         earned: 0.0,
     };
-    
+
     EARN_POSITIONS.with(|positions| {
-        positions.borrow_mut().entry(caller).or_insert_with(Vec::new).push(position.clone());
+        positions
+            .borrow_mut()
+            .entry(caller)
+            .or_default()
+            .push(position.clone());
     });
-    
+
     // 更新用户总收益
     USERS.with(|users| {
         let mut users = users.borrow_mut();
@@ -189,7 +200,7 @@ fn add_earn_position(asset: String, amount: f64, apy: f64) -> Result<EarnPositio
             user.total_earned += amount * (apy / 100.0) / 365.0; // 简单计算日收益
         }
     });
-    
+
     Ok(position)
 }
 
@@ -197,28 +208,26 @@ fn add_earn_position(asset: String, amount: f64, apy: f64) -> Result<EarnPositio
 #[ic_cdk::query]
 fn get_borrow_positions() -> Result<Vec<BorrowPosition>, String> {
     let caller = get_caller();
-    
+
     if !is_user_registered(&caller) {
         return Err("用户未注册".to_string());
     }
-    
-    BORROW_POSITIONS.with(|positions| {
-        Ok(positions.borrow().get(&caller).cloned().unwrap_or_default())
-    })
+
+    BORROW_POSITIONS
+        .with(|positions| Ok(positions.borrow().get(&caller).cloned().unwrap_or_default()))
 }
 
 // 获取用户收益位置
 #[ic_cdk::query]
 fn get_earn_positions() -> Result<Vec<EarnPosition>, String> {
     let caller = get_caller();
-    
+
     if !is_user_registered(&caller) {
         return Err("用户未注册".to_string());
     }
-    
-    EARN_POSITIONS.with(|positions| {
-        Ok(positions.borrow().get(&caller).cloned().unwrap_or_default())
-    })
+
+    EARN_POSITIONS
+        .with(|positions| Ok(positions.borrow().get(&caller).cloned().unwrap_or_default()))
 }
 
 // 检查用户认证状态
@@ -261,7 +270,7 @@ thread_local! {
 
 #[ic_cdk::query]
 fn greet(name: String) -> String {
-    format!("Hello, {}!", name)
+    format!("Hello, {name}!")
 }
 
 #[ic_cdk::update]

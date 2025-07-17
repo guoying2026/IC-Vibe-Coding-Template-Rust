@@ -48,8 +48,8 @@ export function LlmPromptView({ onError, setLoading }: LlmPromptViewProps) {
         Send Prompt
       </Button>
       {response && (
-        <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-          <h3 className="font-semibold mb-2">Response:</h3>
+        <div className="mt-4 rounded-lg bg-gray-100 p-4">
+          <h3 className="mb-2 font-semibold">Response:</h3>
           <p className="whitespace-pre-wrap">{response}</p>
         </div>
       )}

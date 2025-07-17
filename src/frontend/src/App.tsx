@@ -13,29 +13,38 @@ import { LanguageProvider } from "./hooks/useLanguage";
 import { ExplorePage } from "./views/ExplorePage";
 import MigratePage from "./views/MigratePage";
 import DashboardPage from "./views/DashboardPage";
-import { internetIdentityService, AuthState } from "./services/InternetIdentityService"; // 导入II服务
+import {
+  internetIdentityService,
+  AuthState,
+} from "./services/InternetIdentityService"; // 导入II服务
 
 // 主应用组件
 function App() {
   // 当前页面路由状态
   const [currentPage, setCurrentPage] = useState<PageRoute>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('currentPage');
-      if (stored === 'earn' || stored === 'borrow' || stored === 'explore' || stored === 'migrate' || stored === 'dashboard') {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("currentPage");
+      if (
+        stored === "earn" ||
+        stored === "borrow" ||
+        stored === "explore" ||
+        stored === "migrate" ||
+        stored === "dashboard"
+      ) {
         return stored as PageRoute;
       }
     }
-    return 'earn';
+    return "earn";
   });
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('currentPage', currentPage);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("currentPage", currentPage);
     }
   }, [currentPage]);
-  
+
   // 当前选中的市场，用于显示详情页
   const [selectedMarket, setSelectedMarket] = useState<MarketPair | null>(null);
-  
+
   // 当前选中的金库，用于显示详情页
   const [selectedVault, setSelectedVault] = useState<Vault | null>(null);
 
@@ -45,10 +54,10 @@ function App() {
     principal: null,
     userInfo: null,
   });
-  
+
   // 加载状态
   const [loading, setLoading] = useState(false);
-  
+
   // 错误状态
   const [error, setError] = useState<string | undefined>();
 
@@ -61,8 +70,8 @@ function App() {
         const state = internetIdentityService.getAuthState();
         setAuthState(state);
       } catch (error) {
-        console.error('初始化Internet Identity失败:', error);
-        setError('初始化认证服务失败');
+        console.error("初始化Internet Identity失败:", error);
+        setError("初始化认证服务失败");
       } finally {
         setLoading(false);
       }
@@ -116,7 +125,7 @@ function App() {
     setSelectedVault(null); // 切换主页面时，清除选中的金库
     clearError(); // 切换页面时清除错误
   };
-  
+
   // 处理选择市场，进入详情页
   const handleSelectMarket = (market: MarketPair) => {
     setSelectedMarket(market);
@@ -126,7 +135,7 @@ function App() {
   const handleBackToMarkets = () => {
     setSelectedMarket(null);
   };
-  
+
   // 处理选择金库，进入详情页
   const handleSelectVault = (vault: Vault) => {
     setSelectedVault(vault);
@@ -139,7 +148,7 @@ function App() {
 
   // 格式化Principal显示
   const formatPrincipal = (principal: any) => {
-    if (!principal) return '';
+    if (!principal) return "";
     const principalText = principal.toText();
     return `${principalText.slice(0, 6)}...${principalText.slice(-4)}`;
   };
@@ -147,13 +156,15 @@ function App() {
   // 渲染当前页面内容
   const renderCurrentPage = () => {
     switch (currentPage) {
-      case 'earn':
+      case "earn":
         // 如果有选中的金库，则显示详情页，否则显示金库列表页
         return selectedVault ? (
           <VaultDetailPage vault={selectedVault} onBack={handleBackToVaults} />
         ) : (
-          <EarnPage 
-            walletAddress={authState.principal ? formatPrincipal(authState.principal) : null}
+          <EarnPage
+            walletAddress={
+              authState.principal ? formatPrincipal(authState.principal) : null
+            }
             userInfo={authState.userInfo}
             isAuthenticated={authState.isAuthenticated}
             principal={authState.principal}
@@ -162,26 +173,33 @@ function App() {
             onSelectVault={handleSelectVault}
           />
         );
-      case 'borrow':
+      case "borrow":
         // 如果有选中的市场，则显示详情页，否则显示市场列表页
         return selectedMarket ? (
-          <MarketDetailPage market={selectedMarket} onBack={handleBackToMarkets} />
+          <MarketDetailPage
+            market={selectedMarket}
+            onBack={handleBackToMarkets}
+          />
         ) : (
-          <BorrowPage 
-            walletAddress={authState.principal ? formatPrincipal(authState.principal) : null}
+          <BorrowPage
+            walletAddress={
+              authState.principal ? formatPrincipal(authState.principal) : null
+            }
             onSelectMarket={handleSelectMarket}
           />
         );
-      case 'explore':
+      case "explore":
         return <ExplorePage />;
-      case 'migrate':
+      case "migrate":
         return <MigratePage />;
-      case 'dashboard':
+      case "dashboard":
         return <DashboardPage />;
       default:
         return (
-          <EarnPage 
-            walletAddress={authState.principal ? formatPrincipal(authState.principal) : null}
+          <EarnPage
+            walletAddress={
+              authState.principal ? formatPrincipal(authState.principal) : null
+            }
             userInfo={authState.userInfo}
             isAuthenticated={authState.isAuthenticated}
             principal={authState.principal}
@@ -196,12 +214,13 @@ function App() {
   return (
     // 主应用容器
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      
       {/* 顶部导航栏 */}
-      <Header 
+      <Header
         currentPage={currentPage}
         onPageChange={handlePageChange}
-        walletAddress={authState.principal ? formatPrincipal(authState.principal) : null}
+        walletAddress={
+          authState.principal ? formatPrincipal(authState.principal) : null
+        }
         userInfo={authState.userInfo}
         isAuthenticated={authState.isAuthenticated}
         onConnectWallet={handleConnectWallet}
@@ -209,25 +228,23 @@ function App() {
       />
 
       {/* 主要内容区域 */}
-      <main>
-        {renderCurrentPage()}
-      </main>
+      <main>{renderCurrentPage()}</main>
 
       {/* 全局加载遮罩 */}
       {loading && !error && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <Loader />
         </div>
       )}
 
       {/* 全局错误显示 */}
       {error && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-2xl max-w-md w-full">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
             <ErrorDisplay message={error} />
             <button
               onClick={clearError}
-              className="w-full mt-4 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white py-2 px-4 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              className="mt-4 w-full rounded-lg bg-gray-100 px-4 py-2 text-gray-900 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
             >
               Close
             </button>

@@ -14,7 +14,9 @@ export function GreetingView({ onError, setLoading }: GreetingViewProps) {
   const [name, setName] = useState<string>("");
   const [response, setResponse] = useState<string>("");
 
-  const handleChangeText = (event: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleChangeText = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ): void => {
     if (!event?.target.value && event?.target.value !== "") {
       return;
     }

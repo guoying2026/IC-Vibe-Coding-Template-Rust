@@ -1,8 +1,8 @@
 // 市场详情页组件
 // Market detail page component
 
-import { MarketPair, Vault } from '../types';
-import { useLanguage } from '../hooks/useLanguage';
+import { MarketPair, Vault } from "../types";
+import { useLanguage } from "../hooks/useLanguage";
 
 // 组件属性接口
 interface MarketDetailPageProps {
@@ -13,11 +13,12 @@ interface MarketDetailPageProps {
 // 格式化数字为易读的货币格式
 const formatCurrency = (amount: number, compact = false) => {
   if (compact) {
-    if (amount >= 1_000_000_000) return `$${(amount / 1_000_000_000).toFixed(2)}B`;
+    if (amount >= 1_000_000_000)
+      return `$${(amount / 1_000_000_000).toFixed(2)}B`;
     if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(2)}M`;
     if (amount >= 1_000) return `$${(amount / 1_000).toFixed(1)}K`;
   }
-  return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 // 市场详情页主组件
@@ -27,25 +28,43 @@ export const MarketDetailPage = ({ market, onBack }: MarketDetailPageProps) => {
 
   return (
     // 页面主容器，带动画效果
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100 dark:from-gray-900 dark:to-slate-800 pt-20 animate-fade-in">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
+    <div className="animate-fade-in min-h-screen bg-gradient-to-br from-gray-50 to-slate-100 pt-20 dark:from-gray-900 dark:to-slate-800">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* 页面头部 */}
         <div className="mb-8">
           {/* 返回按钮 */}
-          <button onClick={onBack} className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-4 transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            <span>{t('Back to Markets')}</span>
+          <button
+            onClick={onBack}
+            className="mb-4 flex items-center space-x-2 text-sm text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            <span>{t("Back to Markets")}</span>
           </button>
-          
+
           {/* 市场标题 */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center -space-x-2">
-              <div className="w-12 h-12 text-4xl flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-md z-10">{market.collateral.icon}</div>
-              <div className="w-12 h-12 text-4xl flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-md">{market.loan.icon}</div>
+              <div className="z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white text-4xl shadow-md dark:bg-gray-800">
+                {market.collateral.icon}
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-4xl shadow-md dark:bg-gray-800">
+                {market.loan.icon}
+              </div>
             </div>
             <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl dark:text-white">
                 {market.collateral.symbol} / {market.loan.symbol}
               </h1>
               <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
@@ -58,56 +77,87 @@ export const MarketDetailPage = ({ market, onBack }: MarketDetailPageProps) => {
         </div>
 
         {/* 主要内容网格布局 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* 左侧和中间部分 (占2/3) */}
-          <div className="lg:col-span-2 space-y-8">
-            
+          <div className="space-y-8 lg:col-span-2">
             {/* 关键统计数据 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard title={t('Total Market Size')} value={formatCurrency(market.totalMarketSize, true)} />
-              <StatCard title={t('Total Liquidity')} value={formatCurrency(market.totalLiquidity, true)} />
-              <StatCard title={t('Borrow Rate')} value={`${market.borrowRate.toFixed(2)}%`} color="text-green-500" />
-              <StatCard title={t('Trusted By')} icons={market.trustedBy || []} />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+              <StatCard
+                title={t("Total Market Size")}
+                value={formatCurrency(market.totalMarketSize, true)}
+              />
+              <StatCard
+                title={t("Total Liquidity")}
+                value={formatCurrency(market.totalLiquidity, true)}
+              />
+              <StatCard
+                title={t("Borrow Rate")}
+                value={`${market.borrowRate.toFixed(2)}%`}
+                color="text-green-500"
+              />
+              <StatCard
+                title={t("Trusted By")}
+                icons={market.trustedBy || []}
+              />
             </div>
 
             {/* 图表区域 */}
-            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Total Borrow (USD)</h3>
-              <div className="h-64 bg-gray-100 dark:bg-gray-700/50 rounded-lg flex items-center justify-center">
+            <div className="rounded-2xl border border-gray-200/50 bg-white/60 p-6 shadow-lg backdrop-blur-lg dark:border-gray-700/50 dark:bg-gray-800/60">
+              <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+                Total Borrow (USD)
+              </h3>
+              <div className="flex h-64 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700/50">
                 <p className="text-gray-500">📈 Chart placeholder</p>
               </div>
             </div>
-            
+
             {/* 金库列表 */}
             <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Vaults Listing The Market</h3>
+              <h3 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">
+                Vaults Listing The Market
+              </h3>
               <div className="space-y-3">
-                {market.vaults.map(vault => <VaultListItem key={vault.id} vault={vault} />)}
+                {market.vaults.map((vault) => (
+                  <VaultListItem key={vault.id} vault={vault} />
+                ))}
               </div>
             </div>
           </div>
-          
+
           {/* 右侧操作面板 (占1/3) */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="space-y-6 lg:col-span-1">
             <div className="sticky top-24">
-              <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Actions</h3>
-                
+              <div className="rounded-2xl border border-gray-200/50 bg-white/60 p-6 shadow-lg backdrop-blur-lg dark:border-gray-700/50 dark:bg-gray-800/60">
+                <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+                  Actions
+                </h3>
+
                 {/* 供应抵押品 */}
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Supply Collateral {market.collateral.symbol}</label>
-                  <input type="number" placeholder="0.00" className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-900/80 focus:ring-2 focus:ring-blue-500 transition"/>
+                  <label className="mb-2 block text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Supply Collateral {market.collateral.symbol}
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    className="w-full rounded-xl border border-gray-200 bg-white/80 px-4 py-3 transition focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900/80"
+                  />
                 </div>
 
                 {/* 借贷 */}
                 <div className="mb-6">
-                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Borrow {market.loan.symbol}</label>
-                  <input type="number" placeholder="0.00" className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-900/80 focus:ring-2 focus:ring-blue-500 transition"/>
+                  <label className="mb-2 block text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Borrow {market.loan.symbol}
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    className="w-full rounded-xl border border-gray-200 bg-white/80 px-4 py-3 transition focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900/80"
+                  />
                 </div>
-                
-                <button className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-600 active:scale-95 shadow-lg hover:shadow-xl transition-all duration-200">
-                  {t('connect_wallet')}
+
+                <button className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:from-blue-600 hover:to-purple-600 hover:shadow-xl active:scale-95">
+                  {t("connect_wallet")}
                 </button>
               </div>
             </div>
@@ -119,13 +169,36 @@ export const MarketDetailPage = ({ market, onBack }: MarketDetailPageProps) => {
 };
 
 // 统计卡片子组件
-const StatCard = ({ title, value, icons, color }: { title: string; value?: string; icons?: string[]; color?: string }) => (
-  <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg rounded-xl p-4 shadow-sm border border-gray-200/50 dark:border-gray-700/50">
-    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{title}</p>
-    {value && <p className={`text-2xl font-bold text-gray-900 dark:text-white ${color}`}>{value}</p>}
+const StatCard = ({
+  title,
+  value,
+  icons,
+  color,
+}: {
+  title: string;
+  value?: string;
+  icons?: string[];
+  color?: string;
+}) => (
+  <div className="rounded-xl border border-gray-200/50 bg-white/60 p-4 shadow-sm backdrop-blur-lg dark:border-gray-700/50 dark:bg-gray-800/60">
+    <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">{title}</p>
+    {value && (
+      <p
+        className={`text-2xl font-bold text-gray-900 dark:text-white ${color}`}
+      >
+        {value}
+      </p>
+    )}
     {icons && (
-      <div className="flex items-center space-x-2 mt-2">
-        {icons.map((icon, index) => <div key={index} className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs">{icon}</div>)}
+      <div className="mt-2 flex items-center space-x-2">
+        {icons.map((icon, index) => (
+          <div
+            key={index}
+            className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs"
+          >
+            {icon}
+          </div>
+        ))}
       </div>
     )}
   </div>
@@ -133,17 +206,27 @@ const StatCard = ({ title, value, icons, color }: { title: string; value?: strin
 
 // 金库列表项子组件
 const VaultListItem = ({ vault }: { vault: Vault }) => (
-  <div className="grid grid-cols-12 gap-4 items-center px-4 py-3 bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-lg shadow-sm hover:bg-white/90 dark:hover:bg-gray-700/90 transition-colors">
-    <div className="col-span-1 flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 text-lg">{vault.curatorIcon}</div>
+  <div className="grid grid-cols-12 items-center gap-4 rounded-lg bg-white/70 px-4 py-3 shadow-sm backdrop-blur-md transition-colors hover:bg-white/90 dark:bg-gray-800/70 dark:hover:bg-gray-700/90">
+    <div className="col-span-1 flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-lg dark:bg-gray-600">
+      {vault.curatorIcon}
+    </div>
     <div className="col-span-4">
-      <p className="font-semibold text-gray-900 dark:text-white">{vault.name}</p>
-      <p className="text-xs text-gray-500 dark:text-gray-400">{vault.curator}</p>
+      <p className="font-semibold text-gray-900 dark:text-white">
+        {vault.name}
+      </p>
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        {vault.curator}
+      </p>
     </div>
     <div className="col-span-4 text-left">
-      <p className="font-medium text-gray-800 dark:text-gray-200">{formatCurrency(vault.allocation)}</p>
+      <p className="font-medium text-gray-800 dark:text-gray-200">
+        {formatCurrency(vault.allocation)}
+      </p>
     </div>
     <div className="col-span-3 text-right">
-      <p className="font-medium text-gray-800 dark:text-gray-200">{vault.supplyShare.toFixed(2)}%</p>
+      <p className="font-medium text-gray-800 dark:text-gray-200">
+        {vault.supplyShare.toFixed(2)}%
+      </p>
     </div>
   </div>
-); 
+);
