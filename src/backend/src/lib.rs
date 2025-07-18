@@ -31,7 +31,7 @@ fn init(token_id: String, assets: Option<Vec<AssetConfig>>, maximum_token: NumTo
 
 #[update]
 async fn supply(token_id: String, amount: NumTokens)-> Result<u64, String>{
-    assert_eq!(amount.eq(&0), false, "Supply must > 0");
+    assert_eq!(amount.eq(&NumTokens::default()), false, "Supply must > 0");
     let token = Principal::from_text(token_id).unwrap();
     if token != STATE.with(|s| s.borrow().token_id) {
         return Err("Incorrect Token".to_string());
@@ -49,7 +49,7 @@ async fn supply(token_id: String, amount: NumTokens)-> Result<u64, String>{
 
 #[update]
 async fn borrow(token_id: String, amount: NumTokens) -> Result<u64, String>{
-    assert_eq!(amount.eq(&0), false, "Borrow must > 0");
+    assert_eq!(amount.eq(&NumTokens::default()), false, "Borrow must > 0");
     let accept_collateral = check_user_collateral();
     assert_eq!(accept_collateral.len() > 0, true, "You don't have specified collateral for this pool");
 
@@ -86,7 +86,7 @@ async fn borrow(token_id: String, amount: NumTokens) -> Result<u64, String>{
 
 #[update]
 async fn repay(token_id: String, amount: NumTokens)-> Result<u64, String>{
-    assert_eq!(amount.eq(&0), false, "Repay must > 0");
+    assert_eq!(amount.eq(&NumTokens::default()), false, "Repay must > 0");
     let token = Principal::from_text(token_id).unwrap();
     let current_user_borrow = STATE.with(|s|
         s.borrow().users.get(&msg_caller())
