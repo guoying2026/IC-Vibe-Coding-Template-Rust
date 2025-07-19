@@ -7,9 +7,12 @@ use std::cmp::PartialOrd;
 use candid::{Principal};
 use ic_cdk::api::{canister_self, msg_caller};
 use ic_cdk::call::Call;
-use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use icrc_ledger_types::icrc1::transfer::{NumTokens, TransferArg, TransferError};
-use crate::types::{AssetConfig, STATE};
+use rand::{random, Rng};
+use sha2::Digest;
+use sha2::digest::Update;
+use crate::types::{AssetConfig, AssetTypes, Pool, STATE};
 
 pub trait EditFunction{
     fn edit_pool_config(&self,liquidation:f64);
@@ -17,28 +20,66 @@ pub trait EditFunction{
 
 /*---------------------Main Modules---------------------------*/
 
-#[init]
-fn init(token_id: String, assets: Option<Vec<AssetConfig>>, maximum_token: NumTokens) {
+#[init] // 初始化池子的admin，先确定唯一作者
+fn init() {
     STATE.with(|s|{
         let mut state = s.borrow_mut();
         state.admin = msg_caller();
-        state.token_id = Principal::from_text(token_id).unwrap();
-        state.assets = assets.unwrap_or_default();
-        state.maximum_token = maximum_token;
     });
-    ic_cdk::println!("LendingPool initialized by {:?}", msg_caller());
+    ic_cdk::println!("Lending Contract initialized by {:?}", msg_caller());
 }
 
-#[update]
+struct PoolConfig{
+    name: String,
+    token_id: String,
+    collateral: Vec<String>,
+    maximum_token: Option<NumTokens>,
+}
+#[update] // 创建新的池子
+fn create_pool(pool_config: PoolConfig) -> Result<(),String>{
+    let token = Principal::from_text(pool_config.token_id).unwrap();
+    STATE.with(|s|{
+        let mut state = s.borrow_mut();
+        assert_eq!(state.admin, msg_caller(), "Only admin can edit");
+        assert_eq!(state.assets.contains_key(&token), true, "No information about this asset");
+        assert_eq!(!state.pool.contains_key(&token), true, "Already exists this pool");
+
+        let mut collaterals = Vec::<AssetConfig>::new();
+        for c in &pool_config.collateral{
+            let cc = Principal::from_text(c).unwrap();
+            let mut collateral = state.assets.get(&cc);
+            if collateral.is_some(){
+                collaterals.push(collateral.unwrap().clone());
+            }else{
+                return Err("No information about this collaterals".to_string())
+            }
+        };
+        let pool = Pool{
+            name: pool_config.name,
+            token_id: token.clone(),
+            pool_account: state.assets.get(&token).unwrap().clone(),
+            collateral: collaterals,
+            amount: NumTokens::default(),
+            maximum_token: pool_config.maximum_token.unwrap_or(NumTokens::default()),
+        };
+
+        state.pool.insert(token.clone(), pool);
+        Ok(())
+    })
+}
+
+
+#[update] // Supply 用户可以存入借贷池，也可以作为抵押品
 async fn supply(token_id: String, amount: NumTokens)-> Result<u64, String>{
     assert_eq!(amount.eq(&NumTokens::default()), false, "Supply must > 0");
     let token = Principal::from_text(token_id).unwrap();
-    if token != STATE.with(|s| s.borrow().token_id) {
-        return Err("Incorrect Token".to_string());
-    };
+    let exist_pool = STATE.with(|s| s.borrow().pool.contains_key(&token));
+    assert_eq!(exist_pool, true, "Not existing pool");
 
     // 执行交易，用户转入至pool
-    let block_index = transfer_token(msg_caller(), token, amount)
+    let from = Account{owner: msg_caller(), subaccount:None};
+    let to = STATE.with(|s| s.borrow().pool.get(&token).unwrap().clone());
+    let block_index = transfer_token(from, to.pool_account.account, amount)
         .await.expect("Transfer Token failed.");
     ic_cdk::println!("block_index: {:?}", block_index);
 
@@ -47,19 +88,23 @@ async fn supply(token_id: String, amount: NumTokens)-> Result<u64, String>{
     Ok(block_index)
 }
 
-#[update]
+#[update] // Borrow 用户从借贷池借钱，但必须提供借贷池要求的抵押品
 async fn borrow(token_id: String, amount: NumTokens) -> Result<u64, String>{
     assert_eq!(amount.eq(&NumTokens::default()), false, "Borrow must > 0");
-    let accept_collateral = check_user_collateral();
+    let token = Principal::from_text(token_id).unwrap();
+    let exist_pool = STATE.with(|s| s.borrow().pool.contains_key(&token));
+    assert_eq!(exist_pool, true, "Not existing pool");
+
+    let accept_collateral = check_user_collateral(token);
     assert_eq!(accept_collateral.len() > 0, true, "You don't have specified collateral for this pool");
 
-    let token = Principal::from_text(token_id).unwrap();
-    let user_account = STATE.with(|s| s.borrow().users.get(&msg_caller()).cloned());
+    let user_account = STATE.with(|s|
+        s.borrow().users.get(&msg_caller()).cloned()).unwrap();
 
     // 当前抵押品价值
     let mut total_collateral_value = 0.0;
     for collateral in accept_collateral {
-        if let Some(balance) = user_account.unwrap().deposits.get(&collateral) {
+        if let Some(balance) = user_account.supplies.get(&collateral) {
             // 抵押系数
             /**/
             let balance_u128 = numtokens_to_u64(&balance); // 先假设不超过u64
@@ -73,7 +118,9 @@ async fn borrow(token_id: String, amount: NumTokens) -> Result<u64, String>{
     assert_eq!(total_collateral_value > total_borrow_value, true, "Don't borrow too more");
 
     // 执行交易， pool转出至用户
-    let block_index = transfer_token(canister_self(), msg_caller(), amount.clone())
+    let from = STATE.with(|s| s.borrow().pool.get(&token).unwrap().clone());
+    let to = Account{owner: msg_caller(), subaccount:None};
+    let block_index = transfer_token(from.pool_account.account, to, amount.clone())
         .await.expect("Transfer Token failed.");
     ic_cdk::println!("block_index: {:?}", block_index);
 
@@ -84,19 +131,25 @@ async fn borrow(token_id: String, amount: NumTokens) -> Result<u64, String>{
 }
 
 
-#[update]
+#[update] // Repay 用户还款
 async fn repay(token_id: String, amount: NumTokens)-> Result<u64, String>{
     assert_eq!(amount.eq(&NumTokens::default()), false, "Repay must > 0");
     let token = Principal::from_text(token_id).unwrap();
+    let exist_pool = STATE.with(|s| s.borrow().pool.contains_key(&token));
+    assert_eq!(exist_pool, true, "Not existing pool");
+
     let current_user_borrow = STATE.with(|s|
         s.borrow().users.get(&msg_caller())
-            .and_then(|u| u.borrow.get(&token.clone()).cloned())
+            .and_then(|u| u.borrows.get(&token.clone()).cloned())
     ).unwrap_or_default();
 
     assert_eq!(current_user_borrow.eq(&NumTokens::default()), false, "No outstanding borrow");
     assert_eq!(amount.gt(&current_user_borrow), false, "Repay amount exceeds borrowed amount");
 
-    let block_index = transfer_token(msg_caller(), canister_self(), amount.clone())
+    // 执行交易， pool转出至用户
+    let from = Account{owner: msg_caller(), subaccount:None};
+    let to = STATE.with(|s| s.borrow().pool.get(&token).unwrap().clone());
+    let block_index = transfer_token(from, to.pool_account.account, amount.clone())
         .await.expect("Transfer Token failed.");
     ic_cdk::println!("block_index: {:?}", block_index);
 
@@ -107,16 +160,16 @@ async fn repay(token_id: String, amount: NumTokens)-> Result<u64, String>{
 
 /*-------------------------Purpose Function-------------------*/
 #[update]
-async fn transfer_token(from: Principal, to: Principal, amount: NumTokens) -> Result<u64, String> {
+async fn transfer_token(from: Account, to: Account, amount: NumTokens) -> Result<u64, String> {
     let arg = TransferArg{
-        from_subaccount: None,
-        to: Account::from(to),
+        from_subaccount: from.subaccount,
+        to,
         fee: None,
         created_at_time: Some(ic_cdk::api::time()),
         memo: None,
         amount: amount.clone(),
     };
-    let transfer_result = Call::bounded_wait(from, "icrc1_transfer")
+    let transfer_result = Call::bounded_wait(from.owner, "icrc1_transfer")
         .with_arg(arg)
         .await;
     match transfer_result {
@@ -133,51 +186,59 @@ async fn transfer_token(from: Principal, to: Principal, amount: NumTokens) -> Re
 
 }
 
-#[update]
+#[update] // 更新pool和user状态  supply
 fn pool_state_supply(token: Principal, amount: NumTokens){
     STATE.with(|s|{
         let mut state = s.borrow_mut();
         let user_account = state.users.entry(msg_caller()).or_default();
-        let deposit_amount = user_account.deposits.entry(token).or_default();
+        let deposit_amount = user_account.supplies.entry(token).or_default();
+        let pool_account = state.pool.entry(token).or_default();
+
         deposit_amount.add_assign(amount.clone());
-        state.amount.add_assign(amount.clone()); // 提供给池子 加
+        pool_account.amount.add_assign(amount.clone()); // 提供给池子 加
     });
 }
 
-#[update]
+#[update] // 更新pool和user状态  borrow
 fn pool_state_borrow(token: Principal, amount: NumTokens){
     STATE.with(|s|{
         let mut state = s.borrow_mut();
         let user_account = state.users.entry(msg_caller()).or_default();
-        let borrow_amount = user_account.borrow.entry(token).or_default();
+        let borrow_amount = user_account.borrows.entry(token).or_default();
+        let pool_account = state.pool.entry(token).or_default();
+
         borrow_amount.add_assign(amount.clone());
-        state.amount.sub_assign(amount.clone()); // 从池子里拿取 减
+        pool_account.amount.sub_assign(amount.clone()); // 从池子里拿取 减
     });
 }
 
-#[update]
+#[update] // 更新pool和user状态  repay
 fn pool_state_repay(token: Principal, amount: NumTokens){
     STATE.with(|s|{
         let mut state = s.borrow_mut();
         let user_account = state.users.entry(msg_caller()).or_default();
-        let borrow_amount = user_account.borrow.entry(token).or_default();
+        let borrow_amount = user_account.borrows.entry(token).or_default();
+        let pool_account = state.pool.entry(token).or_default();
+
         borrow_amount.sub_assign(amount.clone());
-        state.amount.add_assign(amount.clone()); // 还回给pool 加
+        pool_account.amount.add_assign(amount.clone()); // 还回给pool 加
     });
 }
 
-fn check_user_collateral()->Vec<Principal>{
+fn check_user_collateral(token: Principal)->Vec<Principal>{
     STATE.with(|s|{
         let state = s.borrow();
+        // 获取用户所有的抵押品Principal
         let user_set = state.users.get(&msg_caller()).cloned()
-            .unwrap().deposits.keys()
+            .unwrap().supplies.keys()
             .collect::<HashSet<Principal>>();
-        let overlaps = state.assets.clone().iter()
-            .filter_map(|asset| Some(asset.canister_id.clone()))
-            .filter(|cid| user_set.contains(&cid))
+        // 找出与池子要求的抵押品，并且要与用户所拥有的抵押品相同
+        let pool = state.pool.entry(token).or_default();
+        let collateral = pool.collateral.clone().iter()
+            .filter(|a| user_set.contains(&a.token_id))
             .collect::<Vec<Principal>>();
 
-        overlaps
+        collateral
     })
 }
 
@@ -185,10 +246,25 @@ fn get_price()->f64{
     100f64  // price = 100
 }
 
+fn generate_random_subaccount() -> Subaccount {
+    let caller = msg_caller().to_text();
+    let now = ic_cdk::api::time();
+    let rnd = random::<u64>();
+
+    let mut hash = sha2::Sha256::new();
+    hash.update(caller.as_bytes());
+    hash.update(&now.to_be_bytes());
+    hash.update(&rnd.to_be_bytes());
+
+    let result = hash.finalize();
+    let mut subaccount = Subaccount::default();
+    subaccount.copy_from_slice(&result[..32]);
+    subaccount
+}
 
 /* ------------------------Edit Function--------------------- */
-#[update]
-fn edit_pool_config(liquidation: f64){
+#[update] // 修改合约的清算阈值
+fn edit_contract_liquidation(liquidation: f64){
     STATE.with(|s|{
         let mut state = s.borrow_mut();
         assert_eq!(state.admin, msg_caller(), "Only admin can edit");
@@ -196,51 +272,117 @@ fn edit_pool_config(liquidation: f64){
     })
 }
 
-#[update]
-fn update_pool_collateral(config: AssetConfig){
+struct AssetParameter{
+    name: String,
+    token_id: String,
+    asset_type: AssetTypes,
+    decimals: u8,
+    collaterals: Option<f64>,
+    interest_rate: Option<f64>,
+}
+
+#[update]  // 添加合约的资产
+fn update_contract_assets(config: AssetParameter){
+    let token = Principal::from_text(config.token_id).unwrap();
     STATE.with(|s|{
         let mut state = s.borrow_mut();
         assert_eq!(state.admin, msg_caller(), "Only admin can edit");
-        let exists = state.assets.iter()
-            .any(|asset| asset.canister_id == config.canister_id);
-        assert_eq!(exists, false, "Already add on");
-        state.assets.push(config.clone());
+        assert_eq!(!state.assets.contains_key(&token), true, "Already exists this assets");
+
+        let asset = AssetConfig{
+            name: config.name.clone(),
+            token_id: token.clone(),
+            account: Account{
+                owner: canister_self(),
+                subaccount: Some(generate_random_subaccount()),
+            },
+            asset_type: config.asset_type.clone(),
+            decimals: config.decimals,
+            collateral_factor: config.collaterals.unwrap_or(0.0), // 抵押系数
+            interest_rate: config.interest_rate.unwrap_or(0.0), // 利息
+        };
+        state.assets.insert(token, asset);
     })
 }
 
-#[update]
-fn remove_pool_collateral(collateral: String){
+#[update] // 修改assets的参数（只有name + 后面两个参数可以修改）
+fn edit_contract_assets(token_id: String, name: Option<String>,
+                        collaterals_factor: Option<f64>, interest_rate: Option<f64>)
+{
+    let token = Principal::from_text(token_id).unwrap();
     STATE.with(|s|{
         let mut state = s.borrow_mut();
         assert_eq!(state.admin, msg_caller(), "Only admin can edit");
-        let collateral_id = Principal::from_text(collateral).unwrap();
-        let exists = state.assets.iter()
-            .any(|asset| asset.canister_id == collateral_id);
-        assert_eq!(exists, true, "Already remove on");
-        state.assets.retain(|asset|
-            asset.canister_id != collateral_id);
+        assert_eq!(state.assets.contains_key(&token), true, "Not exists this assets");
+        let asset_config = state.assets.entry(token).or_default();
+        asset_config.name = name.unwrap_or(asset_config.name.clone());
+        asset_config.collateral_factor = collaterals_factor.unwrap_or(asset_config.collateral_factor);
+        asset_config.interest_rate = interest_rate.unwrap_or(asset_config.interest_rate);
     })
 }
 
-#[update]
-fn increase_maximum_token(maximum_token: NumTokens){
+
+#[update] // 增加 该池子要求的抵押资产
+fn update_pool_collateral(token_id: String, collateral_id: String){
+    let token = Principal::from_text(token_id).unwrap();
+    let collateral = Principal::from_text(collateral_id).unwrap();
     STATE.with(|s|{
         let mut state = s.borrow_mut();
         assert_eq!(state.admin, msg_caller(), "Only admin can edit");
-        let result = PartialOrd::lt(&state.maximum_token, &maximum_token);
+        assert_eq!(state.assets.contains_key(&token), true, "Not exists this assets");
+        assert_eq!(state.pool.contains_key(&token), true, "Not exists this pool");
+
+        let asset_config = state.assets.get(&collateral.clone()).unwrap();
+        let pool_collateral = state.pool.entry(token).or_default();
+        let exist_collateral = pool_collateral.collateral.iter().any(|a| a.token_id == collateral);
+        assert_eq!(!exist_collateral, true, "Already have this collateral");
+        pool_collateral.collateral.push(asset_config.clone());
+    })
+}
+
+#[update] // 删除 该池子要求的抵押资产
+fn remove_pool_collateral(token_id: String, collateral_id: String){
+    let token = Principal::from_text(token_id).unwrap();
+    let collateral = Principal::from_text(collateral_id).unwrap();
+
+    STATE.with(|s|{
+        let mut state = s.borrow_mut();
+        assert_eq!(state.admin, msg_caller(), "Only admin can edit");
+        assert_eq!(state.assets.contains_key(&token), true, "Not exists this assets");
+        assert_eq!(state.pool.contains_key(&token), true, "Not exists this pool");
+
+        let pool_collateral = state.pool.entry(token).or_default();
+        let exist_collateral = pool_collateral.collateral.iter().any(|a| a.token_id == collateral);
+        assert_eq!(exist_collateral, true, "This collateral does not in the pool");
+        pool_collateral.collateral.retain(|a| a.token_id != collateral)
+    })
+}
+
+#[update] // 增加池子的容量
+fn increase_maximum_token(token_id: String, maximum_token: NumTokens){
+    let token = Principal::from_text(token_id).unwrap();
+    STATE.with(|s|{
+        let mut state = s.borrow_mut();
+        assert_eq!(state.admin, msg_caller(), "Only admin can edit");
+        assert_eq!(state.pool.contains_key(&token), true, "Not exists this pool");
+        let pool = state.pool.entry(token).or_default();
+        let result = PartialOrd::lt(*pool.maximum_token, &maximum_token);
         assert_eq!( result , true, "Must be greater than the current maximum token");
-        state.maximum_token = maximum_token.clone();
+        pool.maximum_token = maximum_token;
     })
 }
 
-#[update]
-fn decrease_maximum_token(maximum_token: NumTokens){
+#[update] // 减少池子的容量
+fn decrease_maximum_token(token_id: String, maximum_token: NumTokens){
+    let token = Principal::from_text(token_id).unwrap();
     STATE.with(|s|{
         let mut state = s.borrow_mut();
         assert_eq!(state.admin, msg_caller(), "Only admin can edit");
-        let result = PartialOrd::lt(&state.amount, &maximum_token);
+        assert_eq!(state.pool.contains_key(&token), true, "Not exists this pool");
+        let pool = state.pool.entry(token).or_default();
+        let result = PartialOrd::lt(*pool.amount, &maximum_token);
         assert_eq!(result, true, "Must be less than the current token's amount");
-        state.maximum_token = maximum_token.clone();
+        pool.maximum_token = maximum_token;
     })
 }
 
