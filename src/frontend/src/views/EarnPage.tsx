@@ -17,6 +17,7 @@ interface EarnPageProps {
   onError: (error: string) => void; // 错误处理回调
   setLoading: (loading: boolean) => void; // 加载状态设置
   onSelectVault: (vault: Vault) => void; // 选择金库回调
+  onUserInfoUpdate?: (updatedUserInfo: UserInfo) => void; // 用户信息更新回调
 }
 
 // 收益页面主组件
@@ -28,6 +29,7 @@ export const EarnPage = ({
   onError,
   setLoading,
   onSelectVault,
+  onUserInfoUpdate,
 }: EarnPageProps) => {
   // 多语言Hook
   const { t } = useLanguage();
@@ -310,11 +312,12 @@ export const EarnPage = ({
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100 pt-24 pb-12 dark:from-gray-900 dark:to-slate-800">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* 用户信息显示 */}
-        <UserInfoDisplay
+        {/* <UserInfoDisplay
           userInfo={userInfo}
           isAuthenticated={isAuthenticated}
           principal={principal}
-        />
+          onUserInfoUpdate={onUserInfoUpdate}
+        /> */}
 
         {/* 页面头部 */}
         <div className="mb-8 text-center">

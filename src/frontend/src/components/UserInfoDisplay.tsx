@@ -1,19 +1,25 @@
 // 用户信息显示组件
 // User information display component
 
-import { UserInfo } from "../services/InternetIdentityService";
+import { useState } from 'react';
+import { UserInfo } from '../services/InternetIdentityService';
+import { CkbtcBalanceManager } from './CkbtcBalanceManager';
 
 interface UserInfoDisplayProps {
   userInfo: UserInfo | null;
   isAuthenticated: boolean;
   principal: any;
+  onUserInfoUpdate?: (updatedUserInfo: UserInfo) => void;
 }
 
 export const UserInfoDisplay = ({
   userInfo,
   isAuthenticated,
   principal,
+  onUserInfoUpdate,
 }: UserInfoDisplayProps) => {
+  const [showBalanceManager, setShowBalanceManager] = useState(false);
+
   if (!isAuthenticated || !userInfo) {
     return null;
   }
@@ -36,6 +42,17 @@ export const UserInfoDisplay = ({
       { description: "查看金库列表", timestamp: BigInt(Date.now() - 60000) },
       { description: "连接钱包", timestamp: BigInt(Date.now() - 120000) },
     ],
+  };
+
+  // 处理余额更新
+  const handleBalanceUpdate = (newBalance: number) => {
+    if (onUserInfoUpdate && userInfo) {
+      const updatedUserInfo = {
+        ...userInfo,
+        ckbtc_balance: newBalance
+      };
+      onUserInfoUpdate(updatedUserInfo);
+    }
   };
 
   return (
@@ -82,16 +99,35 @@ export const UserInfoDisplay = ({
 
       {/* 资产信息 */}
       <div className="mt-6 border-t border-gray-200 pt-4 dark:border-gray-700">
-        <h3 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
-          资产概览
-        </h3>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            资产概览
+          </h3>
+          <button
+            onClick={() => setShowBalanceManager(!showBalanceManager)}
+            className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            {showBalanceManager ? '隐藏' : '管理余额'}
+          </button>
+        </div>
+        
+        {/* 余额管理组件 */}
+        {showBalanceManager && (
+          <div className="mb-4">
+            <CkbtcBalanceManager
+              currentBalance={displayUserInfo.ckbtc_balance}
+              onBalanceUpdate={handleBalanceUpdate}
+            />
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
             <div className="text-sm text-blue-600 dark:text-blue-400">
               ckBTC 余额
             </div>
             <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
-              {displayUserInfo.ckbtc_balance}
+              {displayUserInfo.ckbtc_balance.toFixed(8)}
             </div>
           </div>
 
@@ -100,7 +136,7 @@ export const UserInfoDisplay = ({
               总收益
             </div>
             <div className="text-2xl font-bold text-green-900 dark:text-green-100">
-              {displayUserInfo.total_earned}
+              {displayUserInfo.total_earned.toFixed(8)}
             </div>
           </div>
 
@@ -109,7 +145,7 @@ export const UserInfoDisplay = ({
               总借贷
             </div>
             <div className="text-2xl font-bold text-orange-900 dark:text-orange-100">
-              {displayUserInfo.total_borrowed}
+              {displayUserInfo.total_borrowed.toFixed(8)}
             </div>
           </div>
         </div>

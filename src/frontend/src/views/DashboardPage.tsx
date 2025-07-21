@@ -6,7 +6,15 @@ import {
   EarnPosition,
   BorrowPosition,
 } from "../services/InternetIdentityService"; // 导入II服务
+import { UserInfoDisplay } from '../components/UserInfoDisplay';
 
+// 新增 props 类型定义
+interface DashboardPageProps {
+  userInfo: UserInfo | null;
+  isAuthenticated: boolean;
+  principal: any;
+  onUserInfoUpdate?: (updatedUserInfo: any) => void;
+}
 // 总览数据结构
 interface PortfolioData {
   totalEarned: number; // 总收益
@@ -38,13 +46,17 @@ const StatCard = ({
   </div>
 );
 
-// 仪表板页面组件
-export default function DashboardPage() {
+// 修改导出函数签名，接收 props
+export default function DashboardPage({
+  userInfo,
+  isAuthenticated,
+  principal,
+  onUserInfoUpdate,
+}: DashboardPageProps) {
   const { t } = useLanguage(); // 多语言Hook
   const [activeTab, setActiveTab] = useState<"earn" | "borrow">("earn"); // 当前激活的标签页
 
-  // 用户数据状态
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null); // 用户信息
+  // 其余状态保留（收益、借贷位置、loading、error）
   const [earnPositions, setEarnPositions] = useState<EarnPosition[]>([]); // 收益位置
   const [borrowPositions, setBorrowPositions] = useState<BorrowPosition[]>([]); // 借贷位置
   const [loading, setLoading] = useState(true); // 加载状态
@@ -95,7 +107,8 @@ export default function DashboardPage() {
 
       // 处理用户信息
       if (userInfoResult.status === "fulfilled" && userInfoResult.value) {
-        setUserInfo(userInfoResult.value);
+        userInfo = userInfoResult.value; // 更新 props 中的 userInfo
+        onUserInfoUpdate?.(userInfoResult.value); // 调用 onUserInfoUpdate
       }
 
       // 处理收益位置
@@ -177,6 +190,13 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 pt-24 pb-12 dark:from-gray-900 dark:to-gray-800">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* 用户信息卡片 */}
+        <UserInfoDisplay
+          userInfo={userInfo}
+          isAuthenticated={isAuthenticated}
+          principal={principal}
+          onUserInfoUpdate={onUserInfoUpdate}
+        />
         {/* 页面头部 */}
         <div className="mb-8 text-center">
           <h1 className="mb-4 text-4xl font-bold text-gray-900 sm:text-5xl dark:text-white">

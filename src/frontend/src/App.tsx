@@ -34,7 +34,7 @@ function App() {
         return stored as PageRoute;
       }
     }
-    return "earn";
+    return "dashboard";
   });
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -78,6 +78,16 @@ function App() {
     };
 
     initializeII();
+
+    // 监听II登录成功事件
+    const handleIILogin = async () => {
+      const state = internetIdentityService.getAuthState();
+      setAuthState(state);
+    };
+    window.addEventListener('ii-login-success', handleIILogin);
+    return () => {
+      window.removeEventListener('ii-login-success', handleIILogin);
+    };
   }, []);
 
   // 处理错误显示
@@ -116,6 +126,14 @@ function App() {
     } catch (error) {
       handleError("登出失败");
     }
+  };
+
+  // 处理用户信息更新
+  const handleUserInfoUpdate = (updatedUserInfo: any) => {
+    setAuthState(prevState => ({
+      ...prevState,
+      userInfo: updatedUserInfo,
+    }));
   };
 
   // 处理页面切换
@@ -161,16 +179,15 @@ function App() {
         return selectedVault ? (
           <VaultDetailPage vault={selectedVault} onBack={handleBackToVaults} />
         ) : (
-          <EarnPage
-            walletAddress={
-              authState.principal ? formatPrincipal(authState.principal) : null
-            }
+          <EarnPage 
+            walletAddress={authState.principal ? formatPrincipal(authState.principal) : null}
             userInfo={authState.userInfo}
             isAuthenticated={authState.isAuthenticated}
             principal={authState.principal}
             onError={handleError}
             setLoading={setLoading}
             onSelectVault={handleSelectVault}
+            onUserInfoUpdate={handleUserInfoUpdate}
           />
         );
       case "borrow":
@@ -193,21 +210,19 @@ function App() {
       case "migrate":
         return <MigratePage />;
       case "dashboard":
-        return <DashboardPage />;
+        return <DashboardPage 
+          userInfo={authState.userInfo}
+          isAuthenticated={authState.isAuthenticated}
+          principal={authState.principal}
+          onUserInfoUpdate={handleUserInfoUpdate}
+        />;
       default:
-        return (
-          <EarnPage
-            walletAddress={
-              authState.principal ? formatPrincipal(authState.principal) : null
-            }
-            userInfo={authState.userInfo}
-            isAuthenticated={authState.isAuthenticated}
-            principal={authState.principal}
-            onError={handleError}
-            setLoading={setLoading}
-            onSelectVault={handleSelectVault}
-          />
-        );
+        return <DashboardPage 
+          userInfo={authState.userInfo}
+          isAuthenticated={authState.isAuthenticated}
+          principal={authState.principal}
+          onUserInfoUpdate={handleUserInfoUpdate}
+        />;
     }
   };
 

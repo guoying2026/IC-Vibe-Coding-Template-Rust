@@ -90,7 +90,7 @@ export class InternetIdentityService {
     const useLocalBackend = import.meta.env.VITE_USE_LOCAL_BACKEND === "true";
 
     // 统一使用本地后端进行开发
-    const host = useLocalBackend ? "http://localhost:4943" : "https://ic0.app";
+    const host = useLocalBackend ? "http://localhost:8080" : "https://ic0.app";
 
     console.log("=== Agent初始化信息 ===");
     console.log("使用host:", host);
@@ -183,8 +183,8 @@ export class InternetIdentityService {
       // 本地环境，使用推荐的URL格式
       const iiCanisterId = import.meta.env.VITE_II_CANISTER_ID;
 
-      // 使用推荐的格式：canisterId.localhost:4943
-      identityProvider = `http://${iiCanisterId}.localhost:4943/`;
+      // 使用推荐的格式：canisterId.localhost:8080
+      identityProvider = `http://${iiCanisterId}.localhost:8080/`;
 
       console.log("使用本地II推荐URL格式");
     }
@@ -207,6 +207,8 @@ export class InternetIdentityService {
             this.identity = this.authClient!.getIdentity();
             await this.initializeAgent();
             await this.checkAuthenticationStatus();
+            // 派发登录成功事件，通知主窗口
+            window.dispatchEvent(new Event('ii-login-success'));
             resolve();
           } catch (error) {
             console.error("登录后初始化失败:", error);
@@ -529,6 +531,34 @@ export class InternetIdentityService {
   async refreshAuthState(): Promise<void> {
     await this.checkAuthenticationStatus();
   }
+}
+
+// ckBTC minter canister 配置
+const CKBTC_MINTER_CANISTER_ID = "qjdve-lqaaa-aaaaa-aaaeq-cai"; // 主网 minter canister
+const CKBTC_MINTER_IDL = (IDL: any) => IDL.Service({
+  get_btc_deposit_state: IDL.Func([], [IDL.Record({
+    status: IDL.Text,
+    btcAddress: IDL.Text,
+    received: IDL.Float64,
+    required: IDL.Float64,
+    confirmations: IDL.Nat,
+    requiredConfirmations: IDL.Nat,
+  })], ["query"]),
+});
+
+// 查询充值进度
+export async function getCkbtcDepositState(): Promise<any> {
+  const agent = new HttpAgent({ host: "https://ic0.app" });
+  const minter = Actor.createActor(CKBTC_MINTER_IDL, {
+    agent,
+    canisterId: CKBTC_MINTER_CANISTER_ID,
+  });
+  // 这里只是伪实现，实际参数和返回结构请根据 minter candid 调整
+  const result = await minter.get_btc_deposit_state();
+  if (Array.isArray(result) && result.length > 0) {
+    return result[0];
+  }
+  return null;
 }
 
 // 创建全局实例

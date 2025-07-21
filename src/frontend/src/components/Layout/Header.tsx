@@ -20,6 +20,12 @@ interface HeaderProps {
 // 导航项配置
 const navItems: NavItem[] = [
   {
+    key: "dashboard",
+    label: { en: "Dashboard", zh: "个人中心" },
+    // icon: '📊',
+    path: "/dashboard",
+  },
+  {
     key: "earn",
     label: { en: "Earn", zh: "收益" },
     // icon: '💰',
@@ -42,12 +48,6 @@ const navItems: NavItem[] = [
     label: { en: "Migrate", zh: "教程" },
     // icon: '🔄',
     path: "/migrate",
-  },
-  {
-    key: "dashboard",
-    label: { en: "Dashboard", zh: "个人中心" },
-    // icon: '📊',
-    path: "/dashboard",
   },
 ];
 

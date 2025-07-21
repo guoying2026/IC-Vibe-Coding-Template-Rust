@@ -1,38 +1,71 @@
 {
-  "canisters": {
-    "internet_identity": {
-      "type": "custom",
-      "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2025-04-04-v3/internet_identity.did",
-      "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2025-04-04-v3/internet_identity_dev.wasm.gz",
-      "init_arg": "(opt record { captcha_config = opt record { max_unsolved_captchas= 50:nat64; captcha_trigger = variant {Static = variant {CaptchaDisabled}}}})",
-      "remote": {
-        "id": {
-          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
-        }
+    "defaults":{
+        "bitcoin":{
+          "enabled":true,
+          "nodes":[
+             "127.0.0.1:18444"
+          ],
+          "canister_init_arg":"(record { stability_threshold = 0 : nat; network = variant { regtest }; blocks_source = principal \"aaaaa-aa\"; fees = record { get_utxos_base = 0 : nat; get_utxos_cycles_per_ten_instructions = 0 : nat; get_utxos_maximum = 0 : nat; get_balance = 0 : nat; get_balance_maximum = 0 : nat; get_current_fee_percentiles = 0 : nat; get_current_fee_percentiles_maximum = 0 : nat;  send_transaction_base = 0 : nat; send_transaction_per_byte = 0 : nat; }; syncing = variant { enabled }; api_access = variant { enabled }; disable_api_if_not_fully_synced = variant { enabled }})"
+        }   
+    },
+    "canisters": {
+        "basic_bitcoin": {
+           "type": "custom",
+            "candid": "/Users/guoying/rust/examples/rust/basic_bitcoin/basic_bitcoin.did",
+            "wasm": "/Users/guoying/rust/examples/rust/basic_bitcoin/target/wasm32-unknown-unknown/release/basic_bitcoin.wasm",
+            "init_arg": "(variant { regtest })"
+        },
+        "ckbtc-minter": {
+            "type": "custom",
+            "candid": "https://github.com/dfinity/ic/blob/master/rs/bitcoin/ckbtc/minter/ckbtc_minter.did",
+            "wasm": "https://github.com/dfinity/ic/releases/download/release-2025-04-04-v3/ckbtc-minter.wasm.gz",
+            "specified_id": "ml52i-qqaaa-aaaar-qaaba-cai",
+            "init_arg_file": "https://github.com/dfinity/ic/releases/download/release-2025-04-04-v3/ckbtc-minter-init-args.did"
+        },
+        "ckbtc-ledger": {
+            "type": "custom",
+            "candid": "https://github.com/dfinity/ic/releases/download/release-2025-04-04-v3/ckbtc-ledger.did",
+            "wasm": "https://github.com/dfinity/ic/releases/download/release-2025-04-04-v3/ckbtc-ledger.wasm.gz",
+            "specified_id": "mc6ru-gyaaa-aaaar-qaaaq-cai",
+            "init_arg_file": "https://github.com/dfinity/ic/releases/download/release-2025-04-04-v3/ckbtc-ledger-init-args.did"
+        },
+       "internet_identity": {
+            "type": "custom",
+            "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2025-04-04-v3/internet_identity.did",
+            "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2025-04-04-v3/internet_identity_dev.wasm.gz",
+            "init_arg": "(opt record { captcha_config = opt record { max_unsolved_captchas= 50:nat64; captcha_trigger = variant {Static = variant {CaptchaDisabled}}}})",
+            "remote": {
+                "id": {
+                "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+                }
+            },
+            "specified_id": "umunu-kh777-77774-qaaca-cai",
+            "frontend": {}
+        },
+        "backend": {
+        "candid": "src/backend/backend.did",
+        "package": "backend",
+        "type": "custom",
+        "shrink": true,
+        "gzip": true,
+        "wasm": "target/wasm32-unknown-unknown/release/backend.wasm",
+        "build": ["bash ./scripts/generate-candid.sh backend"],
+        "specified_id": "uxrrr-q7777-77774-qaaaq-cai",
+        "metadata": [
+          {
+            "name": "candid:service"
+          }
+        ]
       },
-      "frontend": {}
+      "frontend": {
+        "dependencies": ["backend"],
+        "type": "assets",
+        "source": ["src/frontend/dist/"],
+        "specified_id": "uzt4z-lp777-77774-qaabq-cai"
+      }
     },
-    "backend": {
-      "candid": "src/backend/backend.did",
-      "package": "backend",
-      "type": "custom",
-      "shrink": true,
-      "gzip": true,
-      "wasm": "target/wasm32-unknown-unknown/release/backend.wasm",
-      "build": ["bash ./scripts/generate-candid.sh backend"],
-      "metadata": [
-        {
-          "name": "candid:service"
-        }
-      ]
-    },
-    "frontend": {
-      "dependencies": ["backend"],
-      "type": "assets",
-      "source": ["src/frontend/dist/"]
-    }
-  },
-  "output_env_file": ".env",
-  "version": 1,
-  "dfx": "0.28.0"
-}
+    "output_env_file": ".env",
+    "version": 1,
+    "dfx": "0.28.0"
+  }
+  
