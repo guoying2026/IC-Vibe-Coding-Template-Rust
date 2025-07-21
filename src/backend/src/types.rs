@@ -19,17 +19,10 @@ pub struct AssetConfig{
     pub token_id: Principal,
     pub account : Account,
     pub asset_type: AssetTypes,
-    pub decimals: u8,
+    pub decimals: u32,
     pub collateral_factor: f64,
     pub interest_rate: f64,
 }
-
-#[derive(Debug, Clone, Default, CandidType, Deserialize, Serialize)]
-pub struct UserAccount{
-    pub deposits: HashMap<Principal, NumTokens>,
-    pub borrow: HashMap<Principal, NumTokens>,
-}
-
 
 #[derive(Debug, Clone, Default, CandidType, Deserialize, Serialize)]
 pub struct UserAccounts{
