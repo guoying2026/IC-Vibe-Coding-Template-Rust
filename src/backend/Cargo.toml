@@ -10,9 +10,16 @@ crate-type = ["cdylib"]
 
 [dependencies]
 candid = "0.10"
-ic-cdk = "0.17"
+serde = "1.0"
+icrc-ledger-types = "0.1.10"
+ic-cdk = "0.18"
 ic-cdk-timers = "0.11" # Feel free to remove this dependency if you don't need timers
 ic-llm = "1.0.0"
+<<<<<<< HEAD
 ic-stable-structures = "0.6.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+=======
+rand = "0.8.5"
+sha2 = "0.10.8"
+>>>>>>> branch
