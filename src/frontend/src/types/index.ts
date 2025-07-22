@@ -126,6 +126,7 @@ export interface UserPortfolio {
   avgBorrowApy: number; // 平均借贷APY
 }
 
+<<<<<<< HEAD
 // 迁移数据接口
 export interface MigrationData {
   id: string; // 迁移ID
@@ -139,6 +140,8 @@ export interface MigrationData {
   status: "pending" | "in_progress" | "completed" | "failed"; // 迁移状态
 }
 
+=======
+>>>>>>> upstream/main
 // 钱包连接状态接口
 export interface WalletState {
   address: string | null; // 钱包地址

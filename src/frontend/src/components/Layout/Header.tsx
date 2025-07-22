@@ -4,12 +4,18 @@
 import { useState } from "react";
 import { PageRoute, NavItem, Language } from "../../types";
 import { useLanguage } from "../../hooks/useLanguage";
+<<<<<<< HEAD
+=======
+import { UserInfo } from "../../services/InternetIdentityService";
+>>>>>>> upstream/main
 
 // 组件属性接口
 interface HeaderProps {
   currentPage: PageRoute; // 当前页面路由
   onPageChange: (page: PageRoute) => void; // 页面切换回调
   walletAddress: string | null; // 钱包地址
+  userInfo: UserInfo | null; // 用户信息
+  isAuthenticated: boolean; // 认证状态
   onConnectWallet: () => void; // 连接钱包回调
   onDisconnectWallet: () => void; // 断开钱包回调
 }
@@ -17,6 +23,7 @@ interface HeaderProps {
 // 导航项配置
 const navItems: NavItem[] = [
   {
+<<<<<<< HEAD
     key: "earn",
     label: { en: "Earn", zh: "收益" },
     // icon: '💰',
@@ -46,6 +53,37 @@ const navItems: NavItem[] = [
     // icon: '📊',
     path: "/dashboard",
   },
+=======
+    key: "dashboard",
+    label: { en: "Dashboard", zh: "个人中心" },
+    // icon: '📊',
+    path: "/dashboard",
+  },
+  {
+    key: "earn",
+    label: { en: "Earn", zh: "收益" },
+    // icon: '💰',
+    path: "/earn",
+  },
+  {
+    key: "borrow",
+    label: { en: "Borrow", zh: "借贷" },
+    // icon: '🏦',
+    path: "/borrow",
+  },
+  {
+    key: "explore",
+    label: { en: "Explore", zh: "探索" },
+    // icon: '🔍',
+    path: "/explore",
+  },
+  {
+    key: "migrate",
+    label: { en: "Migrate", zh: "教程" },
+    // icon: '🔄',
+    path: "/migrate",
+  },
+>>>>>>> upstream/main
 ];
 
 // 顶部导航栏主组件
@@ -53,6 +91,11 @@ export const Header = ({
   currentPage,
   onPageChange,
   walletAddress,
+<<<<<<< HEAD
+=======
+  userInfo,
+  isAuthenticated,
+>>>>>>> upstream/main
   onConnectWallet,
   onDisconnectWallet,
 }: HeaderProps) => {
@@ -116,7 +159,7 @@ export const Header = ({
             ))}
           </nav>
 
-          {/* 右侧：语言切换和钱包连接 */}
+          {/* 右侧：语言切换和Internet Identity连接 */}
           <div className="flex items-center space-x-4">
             {/* 语言切换按钮 */}
             <button
@@ -126,7 +169,7 @@ export const Header = ({
               {language === "en" ? "EN" : "CN"}
             </button>
 
-            {/* 钱包连接区域 */}
+            {/* Internet Identity连接区域 */}
             {walletAddress ? (
               <div className="relative">
                 <button
@@ -152,6 +195,7 @@ export const Header = ({
                   </svg>
                 </button>
                 {isWalletMenuOpen && (
+<<<<<<< HEAD
                   <div className="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
                     <div className="border-b border-gray-200 px-4 py-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
                       {t("balance")}: 0.0 BTC
@@ -162,6 +206,63 @@ export const Header = ({
                     >
                       {t("disconnect")}
                     </button>
+=======
+                  <div className="absolute right-0 z-50 mt-2 w-64 rounded-lg border border-gray-200 bg-white py-2 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                    {/* 用户信息 */}
+                    <div className="border-b border-gray-200 px-4 py-2 dark:border-gray-700">
+                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {userInfo?.username || "用户"}
+                      </div>
+                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        {walletAddress}
+                      </div>
+                      <div className="mt-1 text-xs text-green-600 dark:text-green-400">
+                        ✓ 已认证
+                      </div>
+                    </div>
+
+                    {/* 余额信息 */}
+                    <div className="border-b border-gray-200 px-4 py-2 dark:border-gray-700">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        ckBTC 余额
+                      </div>
+                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {userInfo?.ckbtc_balance || 0} ckBTC
+                      </div>
+                    </div>
+
+                    {/* 统计信息 */}
+                    <div className="border-b border-gray-200 px-4 py-2 dark:border-gray-700">
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <div className="text-gray-500 dark:text-gray-400">
+                            总收益
+                          </div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {userInfo?.total_earned || 0}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500 dark:text-gray-400">
+                            总借贷
+                          </div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {userInfo?.total_borrowed || 0}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 操作按钮 */}
+                    <div className="px-2 py-1">
+                      <button
+                        onClick={handleDisconnect}
+                        className="w-full rounded px-2 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                      >
+                        {t("disconnect")}
+                      </button>
+                    </div>
+>>>>>>> upstream/main
                   </div>
                 )}
               </div>
@@ -170,7 +271,11 @@ export const Header = ({
                 onClick={onConnectWallet}
                 className="rounded-lg border border-white/70 bg-white/20 px-4 py-2 font-semibold text-white shadow-sm transition-all duration-200 hover:bg-white/30 hover:text-white active:scale-95"
               >
+<<<<<<< HEAD
                 {t("connect_wallet")}
+=======
+                {t("connect_internet_identity")}
+>>>>>>> upstream/main
               </button>
             )}
 

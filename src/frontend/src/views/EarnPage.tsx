@@ -5,21 +5,40 @@ import { useState, useEffect } from "react";
 import { Vault } from "../types";
 import { useLanguage } from "../hooks/useLanguage";
 import { VaultListItem } from "../components/Earn/VaultListItem";
+<<<<<<< HEAD
+=======
+import { UserInfoDisplay } from "../components/UserInfoDisplay";
+import { UserInfo } from "../services/InternetIdentityService";
+>>>>>>> upstream/main
 
 // 组件属性接口
 interface EarnPageProps {
   walletAddress: string | null; // 钱包地址
+  userInfo: UserInfo | null; // 用户信息
+  isAuthenticated: boolean; // 认证状态
+  principal: any; // Principal对象
   onError: (error: string) => void; // 错误处理回调
   setLoading: (loading: boolean) => void; // 加载状态设置
   onSelectVault: (vault: Vault) => void; // 选择金库回调
+  onUserInfoUpdate?: (updatedUserInfo: UserInfo) => void; // 用户信息更新回调
 }
 
 // 收益页面主组件
 export const EarnPage = ({
   walletAddress,
+<<<<<<< HEAD
   onError,
   setLoading,
   onSelectVault,
+=======
+  userInfo,
+  isAuthenticated,
+  principal,
+  onError,
+  setLoading,
+  onSelectVault,
+  onUserInfoUpdate,
+>>>>>>> upstream/main
 }: EarnPageProps) => {
   // 多语言Hook
   const { t } = useLanguage();
@@ -301,6 +320,17 @@ export const EarnPage = ({
     // 页面主容器
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100 pt-24 pb-12 dark:from-gray-900 dark:to-slate-800">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<<<<<<< HEAD
+=======
+        {/* 用户信息显示 */}
+        {/* <UserInfoDisplay
+          userInfo={userInfo}
+          isAuthenticated={isAuthenticated}
+          principal={principal}
+          onUserInfoUpdate={onUserInfoUpdate}
+        /> */}
+
+>>>>>>> upstream/main
         {/* 页面头部 */}
         <div className="mb-8 text-center">
           <h1 className="mb-4 text-4xl font-bold text-gray-900 sm:text-5xl dark:text-white">

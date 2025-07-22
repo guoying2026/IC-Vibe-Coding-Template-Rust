@@ -24,11 +24,23 @@ const translations: Translations = {
   nav_earn: { en: "Earn", zh: "收益" },
   nav_borrow: { en: "Borrow", zh: "借贷" },
   nav_explore: { en: "Explore", zh: "探索" },
+<<<<<<< HEAD
   nav_migrate: { en: "Migrate", zh: "迁移" },
   nav_dashboard: { en: "Dashboard", zh: "仪表板" },
 
   // 通用文本
   connect_wallet: { en: "Connect Wallet", zh: "连接钱包" },
+=======
+  nav_migrate: { en: "Migrate", zh: "教程" },
+  nav_dashboard: { en: "Dashboard", zh: "个人中心" },
+
+  // 通用文本
+  connect_wallet: { en: "Connect Wallet", zh: "连接钱包" },
+  connect_internet_identity: {
+    en: "Connect Internet Identity",
+    zh: "连接互联网身份",
+  },
+>>>>>>> upstream/main
   disconnect: { en: "Disconnect", zh: "断开连接" },
   loading: { en: "Loading...", zh: "加载中..." },
   error: { en: "Error", zh: "错误" },
@@ -36,6 +48,20 @@ const translations: Translations = {
   pending: { en: "Pending", zh: "待处理" },
   failed: { en: "Failed", zh: "失败" },
 
+<<<<<<< HEAD
+=======
+  // Internet Identity相关
+  internet_identity_login: {
+    en: "Login with Internet Identity",
+    zh: "使用互联网身份登录",
+  },
+  internet_identity_logout: { en: "Logout", zh: "退出登录" },
+  internet_identity_connecting: { en: "Connecting...", zh: "连接中..." },
+  internet_identity_connected: { en: "Connected", zh: "已连接" },
+  internet_identity_failed: { en: "Connection failed", zh: "连接失败" },
+  internet_identity_principal: { en: "Principal ID", zh: "主体ID" },
+
+>>>>>>> upstream/main
   // 资产相关
   total_supply: { en: "Total Supply", zh: "总供应量" },
   total_borrow: { en: "Total Borrow", zh: "总借贷量" },
@@ -107,11 +133,14 @@ const translations: Translations = {
     en: "Discover the best Bitcoin DeFi opportunities",
     zh: "发现最佳的比特币DeFi机会",
   },
+<<<<<<< HEAD
   page_migrate_title: { en: "Migrate Positions", zh: "迁移头寸" },
   page_migrate_subtitle: {
     en: "Move your positions to better protocols",
     zh: "将您的头寸迁移到更好的协议",
   },
+=======
+>>>>>>> upstream/main
   page_dashboard_title: { en: "Your Portfolio", zh: "您的投资组合" },
   page_dashboard_subtitle: {
     en: "Manage your Bitcoin DeFi positions",
@@ -137,12 +166,137 @@ const translations: Translations = {
   price: { en: "Price", zh: "价格" },
   price_change_24h: { en: "24h Change", zh: "24小时变化" },
 
+<<<<<<< HEAD
   // 迁移相关
   migrate_from: { en: "Migrate From", zh: "从...迁移" },
   migrate_to: { en: "Migrate To", zh: "迁移到" },
   estimated_gas: { en: "Estimated Gas", zh: "预估Gas费" },
   estimated_time: { en: "Estimated Time", zh: "预估时间" },
   migration_benefits: { en: "Migration Benefits", zh: "迁移收益" },
+=======
+  // 教程相关
+  "Go to Earn": { en: "Go to Earn", zh: "前往收益" },
+  "Go to Borrow": { en: "Go to Borrow", zh: "前往借贷" },
+  Guide: { en: "Guide", zh: "教程" },
+  "How Earn & Borrow Work on ICP DeFi": {
+    en: "How Earn & Borrow Work on ICP DeFi",
+    zh: "ICP DeFi 的收益与借贷原理",
+  },
+  "This page explains the underlying logic and advantages of the Earn and Borrow features on our platform.":
+    {
+      en: "This page explains the underlying logic and advantages of the Earn and Borrow features on our platform.",
+      zh: "本页介绍本平台收益（Earn）和借贷（Borrow）功能的底层逻辑与优势。",
+    },
+  "Earn: How You Earn Yield": {
+    en: "Earn: How You Earn Yield",
+    zh: "收益：如何赚取收益",
+  },
+  "Deposit Assets": { en: "Deposit Assets", zh: "存入资产" },
+  "You supply supported assets (e.g., BTC, ETH) into the platform's vaults.": {
+    en: "You supply supported assets (e.g., BTC, ETH) into the platform's vaults.",
+    zh: "您将支持的资产（如BTC、ETH）存入平台金库。",
+  },
+  "Assets are Matched to Borrowers": {
+    en: "Assets are Matched to Borrowers",
+    zh: "资产与借款人撮合",
+  },
+  "Your supplied assets are algorithmically matched to borrowers, maximizing utilization and yield.":
+    {
+      en: "Your supplied assets are algorithmically matched to borrowers, maximizing utilization and yield.",
+      zh: "您的资产通过算法与借款人撮合，提升利用率和收益。",
+    },
+  "Earn Interest": { en: "Earn Interest", zh: "赚取利息" },
+  "You earn interest paid by borrowers, with rates determined by market supply and demand.":
+    {
+      en: "You earn interest paid by borrowers, with rates determined by market supply and demand.",
+      zh: "您获得借款人支付的利息，利率由市场供需决定。",
+    },
+  Advantages: { en: "Advantages", zh: "优势" },
+  "Non-custodial, assets always in your control.": {
+    en: "Non-custodial, assets always in your control.",
+    zh: "非托管，资产始终归您所有。",
+  },
+  "Competitive yields, optimized by smart matching.": {
+    en: "Competitive yields, optimized by smart matching.",
+    zh: "收益有竞争力，智能撮合优化。",
+  },
+  "Transparent, on-chain operations.": {
+    en: "Transparent, on-chain operations.",
+    zh: "透明，链上操作。",
+  },
+  "Borrow: How You Borrow Assets": {
+    en: "Borrow: How You Borrow Assets",
+    zh: "借贷：如何借出资产",
+  },
+  "Provide Collateral": { en: "Provide Collateral", zh: "提供抵押品" },
+  "Deposit supported assets as collateral (e.g., BTC, ETH).": {
+    en: "Deposit supported assets as collateral (e.g., BTC, ETH).",
+    zh: "将支持的资产作为抵押品存入（如BTC、ETH）。",
+  },
+  "Borrow Against Collateral": {
+    en: "Borrow Against Collateral",
+    zh: "以抵押品借贷",
+  },
+  "Borrow other assets up to a safe loan-to-value (LTV) ratio.": {
+    en: "Borrow other assets up to a safe loan-to-value (LTV) ratio.",
+    zh: "在安全的抵押率范围内借出其他资产。",
+  },
+  "Repay and Withdraw": { en: "Repay and Withdraw", zh: "还款与提取" },
+  "Repay your loan to unlock and withdraw your collateral.": {
+    en: "Repay your loan to unlock and withdraw your collateral.",
+    zh: "还清贷款后可解锁并提取抵押品。",
+  },
+  "Flexible borrowing, multiple supported assets.": {
+    en: "Flexible borrowing, multiple supported assets.",
+    zh: "灵活借贷，支持多种资产。",
+  },
+  "Over-collateralized, reducing risk of bad debt.": {
+    en: "Over-collateralized, reducing risk of bad debt.",
+    zh: "超额抵押，降低坏账风险。",
+  },
+  "Transparent interest rates and liquidation rules.": {
+    en: "Transparent interest rates and liquidation rules.",
+    zh: "透明的利率和清算规则。",
+  },
+  FAQ: { en: "FAQ", zh: "常见问题" },
+  "Is my asset safe?": { en: "Is my asset safe?", zh: "我的资产安全吗？" },
+  "All operations are non-custodial and on-chain. You always control your assets.":
+    {
+      en: "All operations are non-custodial and on-chain. You always control your assets.",
+      zh: "所有操作均为非托管且链上执行，资产始终归您所有。",
+    },
+  "How is the interest rate determined?": {
+    en: "How is the interest rate determined?",
+    zh: "利率如何决定？",
+  },
+  "Interest rates are dynamically adjusted based on market supply and demand.":
+    {
+      en: "Interest rates are dynamically adjusted based on market supply and demand.",
+      zh: "利率根据市场供需动态调整。",
+    },
+  "What happens if my collateral value drops?": {
+    en: "What happens if my collateral value drops?",
+    zh: "如果我的抵押品价值下跌会怎样？",
+  },
+  "If your collateral value falls below the liquidation threshold, your position may be liquidated to protect the protocol.":
+    {
+      en: "If your collateral value falls below the liquidation threshold, your position may be liquidated to protect the protocol.",
+      zh: "如果抵押品价值低于清算阈值，您的仓位可能会被清算以保护协议安全。",
+    },
+
+  //个人中心
+  Dashboard: { en: "Dashboard", zh: "个人中心" },
+  "Total Earned": { en: "Total Earned", zh: "总收益" },
+  "Total Borrowed": { en: "Total Borrowed", zh: "总借贷" },
+  "My Earn Positions": { en: "My Earn Positions", zh: "我的收益仓位" },
+  "My Borrow Positions": { en: "My Borrow Positions", zh: "我的借贷仓位" },
+  Asset: { en: "Asset", zh: "资产" },
+  Amount: { en: "Amount", zh: "数量" },
+  APY: { en: "APY", zh: "年化收益率" },
+  Earned: { en: "Earned", zh: "已赚取" },
+  Rate: { en: "Rate", zh: "利率" },
+  "Health Factor": { en: "Health Factor", zh: "健康因子" },
+>>>>>>> upstream/main
 
   // 品牌相关
   app_name: { en: "ICP BTC DeFi", zh: "ICP 比特币 DeFi" },
