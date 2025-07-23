@@ -62,20 +62,30 @@ export class InternetIdentityService {
   // 初始化认证客户端
   async initialize(): Promise<void> {
     try {
-      // 创建认证客户端
-      this.authClient = await AuthClient.create();
+      // 根据环境变量决定使用本地还是主网 Internet Identity
+      const isLocal = import.meta.env.VITE_DFX_NETWORK === "local";
+      
+      if (isLocal) {
+        console.log("使用本地 dfx identity");
+        // 本地环境：直接使用 dfx identity，不需要 AuthClient
+        await this.loginWithDfxIdentity();
+      } else {
+        console.log("使用主网 Internet Identity");
+        // 主网环境：使用 AuthClient
+        this.authClient = await AuthClient.create();
 
-      // 检查是否已有身份
-      const isAuthenticated = await this.authClient.isAuthenticated();
+        // 检查是否已有身份
+        const isAuthenticated = await this.authClient.isAuthenticated();
 
-      if (isAuthenticated) {
-        // 如果已认证，获取身份并初始化
-        this.identity = this.authClient.getIdentity();
-        await this.initializeAgent();
-        await this.checkAuthenticationStatus();
+        if (isAuthenticated) {
+          // 如果已认证，获取身份并初始化
+          this.identity = this.authClient.getIdentity();
+          await this.initializeAgent();
+          await this.checkAuthenticationStatus();
+        }
       }
     } catch (error) {
-      console.error("初始化Internet Identity失败:", error);
+      console.error("初始化认证失败:", error);
       throw error;
     }
   }
@@ -86,15 +96,11 @@ export class InternetIdentityService {
       throw new Error("身份未初始化");
     }
 
-    // 创建HTTP代理 - 统一使用主网II登录，但连接到本地后端
-    const useLocalBackend = import.meta.env.VITE_USE_LOCAL_BACKEND === "true";
+    // 根据环境变量决定使用本地还是主网后端
+    const isLocal = import.meta.env.VITE_DFX_NETWORK === "local";
+    const host = isLocal ? "http://localhost:8080" : "https://ic0.app";
 
-    // 统一使用本地后端进行开发
-    const host = useLocalBackend ? "http://localhost:8080" : "https://ic0.app";
-
-    console.log("=== Agent初始化信息 ===");
     console.log("使用host:", host);
-    console.log("使用本地后端配置:", useLocalBackend);
     console.log("网络配置:", import.meta.env.VITE_DFX_NETWORK);
 
     this.agent = new HttpAgent({
@@ -103,7 +109,7 @@ export class InternetIdentityService {
     });
 
     // 如果是本地环境，需要获取root key
-    if (useLocalBackend) {
+    if (isLocal) {
       try {
         console.log("获取本地环境的root key...");
         await this.agent.fetchRootKey();
@@ -129,7 +135,7 @@ export class InternetIdentityService {
     });
   }
 
-  // 登录方法 - 统一使用主网 Internet Identity
+  // 登录方法
   async login(): Promise<void> {
     console.log("=== 开始登录流程 ===");
     console.log("当前环境变量:", {
@@ -139,14 +145,46 @@ export class InternetIdentityService {
       canisterId: import.meta.env.VITE_CANISTER_ID_BACKEND,
     });
 
-    if (!this.authClient) {
-      console.error("认证客户端未初始化");
-      throw new Error("认证客户端未初始化");
-    }
+    // 根据环境变量决定使用本地还是主网 Internet Identity
+    const isLocal = import.meta.env.VITE_DFX_NETWORK === "local";
+    
+    if (isLocal) {
+      console.log("本地环境：使用 dfx identity 登录");
+      // 本地环境使用 dfx identity
+      await this.loginWithDfxIdentity();
+    } else {
+      console.log("主网环境：使用 Internet Identity 登录");
+      if (!this.authClient) {
+        console.error("认证客户端未初始化");
+        throw new Error("认证客户端未初始化");
+      }
+      // 主网环境使用正常的 AuthClient 登录
+      return new Promise((resolve, reject) => {
+        const loginOptions: any = {
+          onSuccess: async () => {
+            console.log("Internet Identity登录成功");
+            try {
+              // 登录成功，获取身份并初始化
+              this.identity = this.authClient!.getIdentity();
+              await this.initializeAgent();
+              await this.checkAuthenticationStatus();
+              resolve();
+            } catch (error) {
+              console.error("登录后初始化失败:", error);
+              reject(error);
+            }
+          },
+          onError: (error: any) => {
+            console.error("Internet Identity登录失败:", error);
+            reject(error);
+          },
+        };
 
-    // 统一使用主网 Internet Identity 登录
-    console.log("使用主网 Internet Identity 进行认证");
-    await this.loginWithInternetIdentity();
+        console.log("使用主网 Internet Identity");
+        // 开始登录流程
+        this.authClient!.login(loginOptions);
+      });
+    }
   }
 
   // 使用 dfx identity 登录（开发环境）
@@ -531,6 +569,26 @@ export class InternetIdentityService {
   async refreshAuthState(): Promise<void> {
     await this.checkAuthenticationStatus();
   }
+
+  // 获取 ckBTC 余额
+  async getCkbtcBalance(): Promise<number> {
+    if (!this.actor) {
+      throw new Error("Actor未初始化");
+    }
+
+    try {
+      const result = await this.actor.get_ckbtc_balance();
+
+      if ("Ok" in result) {
+        return result.Ok;
+      } else {
+        throw new Error(result.Err);
+      }
+    } catch (error) {
+      console.error("获取ckBTC余额失败:", error);
+      throw error;
+    }
+  }
 }
 
 // ckBTC minter canister 配置
@@ -563,3 +621,51 @@ export async function getCkbtcDepositState(): Promise<any> {
 
 // 创建全局实例
 export const internetIdentityService = new InternetIdentityService();
+
+// 通用 ICRC-1 ledger 接口（.did 格式）
+const ICRC1_IDL = ({ IDL }: { IDL: any }) => IDL.Service({
+  icrc1_balance_of: IDL.Func([IDL.Record({ owner: IDL.Principal, subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)) })], [IDL.Nat], ["query"]),
+});
+
+// 获取单个代币余额
+export async function getTokenBalance(canisterId: string, principal: Principal): Promise<bigint> {
+  const host = "http://localhost:8080";
+  const agent = new HttpAgent({ host });
+  
+  try {
+    await agent.fetchRootKey();
+  } catch (error) {
+    console.error("获取本地root key失败:", error);
+    throw new Error("无法连接到本地环境，请确保dfx正在运行");
+  }
+  
+  const ledger = Actor.createActor(ICRC1_IDL, { agent, canisterId });
+  const balance = await ledger.icrc1_balance_of({ owner: principal, subaccount: null });
+  
+  // 确保返回 bigint 类型
+  if (typeof balance === 'bigint') {
+    return balance;
+  } else if (typeof balance === 'number') {
+    return BigInt(balance);
+  } else if (typeof balance === 'string') {
+    return BigInt(balance);
+  } else {
+    return BigInt(0);
+  }
+}
+
+// 获取用户所有币种余额（传入 canister ID 列表）
+export async function getAllBalances(principal: Principal, canisterIds: string[]): Promise<Record<string, bigint>> {
+  const balances: Record<string, bigint> = {};
+  
+  for (const id of canisterIds) {
+    try {
+      balances[id] = await getTokenBalance(id, principal);
+    } catch (error) {
+      console.error(`查询 ${id} 余额失败:`, error);
+      balances[id] = BigInt(0);
+    }
+  }
+  
+  return balances;
+}

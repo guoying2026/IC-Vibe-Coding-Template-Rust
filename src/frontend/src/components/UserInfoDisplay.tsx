@@ -1,9 +1,9 @@
 // 用户信息显示组件
 // User information display component
 
-import { useState } from 'react';
-import { UserInfo } from '../services/InternetIdentityService';
-import { CkbtcBalanceManager } from './CkbtcBalanceManager';
+import { useState } from "react";
+import { UserInfo } from "../services/InternetIdentityService";
+import { CkbtcBalanceManager } from "./CkbtcBalanceManager";
 
 interface UserInfoDisplayProps {
   userInfo: UserInfo | null;
@@ -49,7 +49,7 @@ export const UserInfoDisplay = ({
     if (onUserInfoUpdate && userInfo) {
       const updatedUserInfo = {
         ...userInfo,
-        ckbtc_balance: newBalance
+        ckbtc_balance: newBalance,
       };
       onUserInfoUpdate(updatedUserInfo);
     }
@@ -105,12 +105,12 @@ export const UserInfoDisplay = ({
           </h3>
           <button
             onClick={() => setShowBalanceManager(!showBalanceManager)}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="rounded-lg bg-blue-600 px-3 py-1 text-sm text-white transition-colors hover:bg-blue-700"
           >
-            {showBalanceManager ? '隐藏' : '管理余额'}
+            {showBalanceManager ? "隐藏" : "管理余额"}
           </button>
         </div>
-        
+
         {/* 余额管理组件 */}
         {showBalanceManager && (
           <div className="mb-4">
@@ -120,7 +120,7 @@ export const UserInfoDisplay = ({
             />
           </div>
         )}
-        
+
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
             <div className="text-sm text-blue-600 dark:text-blue-400">

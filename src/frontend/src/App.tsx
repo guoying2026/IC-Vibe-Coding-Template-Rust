@@ -84,9 +84,9 @@ function App() {
       const state = internetIdentityService.getAuthState();
       setAuthState(state);
     };
-    window.addEventListener('ii-login-success', handleIILogin);
+    window.addEventListener("ii-login-success", handleIILogin);
     return () => {
-      window.removeEventListener('ii-login-success', handleIILogin);
+      window.removeEventListener("ii-login-success", handleIILogin);
     };
   }, []);
 
@@ -130,7 +130,7 @@ function App() {
 
   // 处理用户信息更新
   const handleUserInfoUpdate = (updatedUserInfo: any) => {
-    setAuthState(prevState => ({
+    setAuthState((prevState) => ({
       ...prevState,
       userInfo: updatedUserInfo,
     }));
@@ -179,8 +179,10 @@ function App() {
         return selectedVault ? (
           <VaultDetailPage vault={selectedVault} onBack={handleBackToVaults} />
         ) : (
-          <EarnPage 
-            walletAddress={authState.principal ? formatPrincipal(authState.principal) : null}
+          <EarnPage
+            walletAddress={
+              authState.principal ? formatPrincipal(authState.principal) : null
+            }
             userInfo={authState.userInfo}
             isAuthenticated={authState.isAuthenticated}
             principal={authState.principal}
@@ -210,19 +212,23 @@ function App() {
       case "migrate":
         return <MigratePage />;
       case "dashboard":
-        return <DashboardPage 
-          userInfo={authState.userInfo}
-          isAuthenticated={authState.isAuthenticated}
-          principal={authState.principal}
-          onUserInfoUpdate={handleUserInfoUpdate}
-        />;
+        return (
+          <DashboardPage
+            userInfo={authState.userInfo}
+            isAuthenticated={authState.isAuthenticated}
+            principal={authState.principal}
+            onUserInfoUpdate={handleUserInfoUpdate}
+          />
+        );
       default:
-        return <DashboardPage 
-          userInfo={authState.userInfo}
-          isAuthenticated={authState.isAuthenticated}
-          principal={authState.principal}
-          onUserInfoUpdate={handleUserInfoUpdate}
-        />;
+        return (
+          <DashboardPage
+            userInfo={authState.userInfo}
+            isAuthenticated={authState.isAuthenticated}
+            principal={authState.principal}
+            onUserInfoUpdate={handleUserInfoUpdate}
+          />
+        );
     }
   };
 
