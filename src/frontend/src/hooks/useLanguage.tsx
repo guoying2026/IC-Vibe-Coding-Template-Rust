@@ -24,6 +24,13 @@ const translations: Translations = {
   nav_earn: { en: "Earn", zh: "收益" },
   nav_borrow: { en: "Borrow", zh: "借贷" },
   nav_explore: { en: "Explore", zh: "探索" },
+<<<<<<< HEAD
+  nav_migrate: { en: "Migrate", zh: "迁移" },
+  nav_dashboard: { en: "Dashboard", zh: "仪表板" },
+
+  // 通用文本
+  connect_wallet: { en: "Connect Wallet", zh: "连接钱包" },
+=======
   nav_migrate: { en: "Migrate", zh: "教程" },
   nav_dashboard: { en: "Dashboard", zh: "个人中心" },
 
@@ -33,6 +40,7 @@ const translations: Translations = {
     en: "Connect Internet Identity",
     zh: "连接互联网身份",
   },
+>>>>>>> upstream/main
   disconnect: { en: "Disconnect", zh: "断开连接" },
   loading: { en: "Loading...", zh: "加载中..." },
   error: { en: "Error", zh: "错误" },
@@ -40,6 +48,8 @@ const translations: Translations = {
   pending: { en: "Pending", zh: "待处理" },
   failed: { en: "Failed", zh: "失败" },
 
+<<<<<<< HEAD
+=======
   // Internet Identity相关
   internet_identity_login: {
     en: "Login with Internet Identity",
@@ -51,6 +61,7 @@ const translations: Translations = {
   internet_identity_failed: { en: "Connection failed", zh: "连接失败" },
   internet_identity_principal: { en: "Principal ID", zh: "主体ID" },
 
+>>>>>>> upstream/main
   // 资产相关
   total_supply: { en: "Total Supply", zh: "总供应量" },
   total_borrow: { en: "Total Borrow", zh: "总借贷量" },
@@ -122,6 +133,14 @@ const translations: Translations = {
     en: "Discover the best Bitcoin DeFi opportunities",
     zh: "发现最佳的比特币DeFi机会",
   },
+<<<<<<< HEAD
+  page_migrate_title: { en: "Migrate Positions", zh: "迁移头寸" },
+  page_migrate_subtitle: {
+    en: "Move your positions to better protocols",
+    zh: "将您的头寸迁移到更好的协议",
+  },
+=======
+>>>>>>> upstream/main
   page_dashboard_title: { en: "Your Portfolio", zh: "您的投资组合" },
   page_dashboard_subtitle: {
     en: "Manage your Bitcoin DeFi positions",
@@ -147,6 +166,14 @@ const translations: Translations = {
   price: { en: "Price", zh: "价格" },
   price_change_24h: { en: "24h Change", zh: "24小时变化" },
 
+<<<<<<< HEAD
+  // 迁移相关
+  migrate_from: { en: "Migrate From", zh: "从...迁移" },
+  migrate_to: { en: "Migrate To", zh: "迁移到" },
+  estimated_gas: { en: "Estimated Gas", zh: "预估Gas费" },
+  estimated_time: { en: "Estimated Time", zh: "预估时间" },
+  migration_benefits: { en: "Migration Benefits", zh: "迁移收益" },
+=======
   // 教程相关
   "Go to Earn": { en: "Go to Earn", zh: "前往收益" },
   "Go to Borrow": { en: "Go to Borrow", zh: "前往借贷" },
@@ -269,6 +296,7 @@ const translations: Translations = {
   Earned: { en: "Earned", zh: "已赚取" },
   Rate: { en: "Rate", zh: "利率" },
   "Health Factor": { en: "Health Factor", zh: "健康因子" },
+>>>>>>> upstream/main
 
   // 品牌相关
   app_name: { en: "ICP BTC DeFi", zh: "ICP 比特币 DeFi" },

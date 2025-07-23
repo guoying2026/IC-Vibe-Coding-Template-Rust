@@ -34,7 +34,11 @@ function App() {
         return stored as PageRoute;
       }
     }
+<<<<<<< HEAD
+    return "earn";
+=======
     return "dashboard";
+>>>>>>> upstream/main
   });
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -48,12 +52,17 @@ function App() {
   // 当前选中的金库，用于显示详情页
   const [selectedVault, setSelectedVault] = useState<Vault | null>(null);
 
+<<<<<<< HEAD
+  // 钱包连接状态
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+=======
   // Internet Identity认证状态
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     principal: null,
     userInfo: null,
   });
+>>>>>>> upstream/main
 
   // 加载状态
   const [loading, setLoading] = useState(false);
@@ -104,9 +113,17 @@ function App() {
   const handleConnectWallet = async () => {
     setLoading(true);
     try {
+<<<<<<< HEAD
+      // 模拟钱包连接过程
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // 生成模拟钱包地址
+      const mockAddress = `0x${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}`;
+      setWalletAddress(mockAddress);
+=======
       await internetIdentityService.login();
       const state = internetIdentityService.getAuthState();
       setAuthState(state);
+>>>>>>> upstream/main
     } catch (error) {
       handleError("Internet Identity登录失败");
     } finally {
@@ -179,11 +196,16 @@ function App() {
         return selectedVault ? (
           <VaultDetailPage vault={selectedVault} onBack={handleBackToVaults} />
         ) : (
+<<<<<<< HEAD
+          <EarnPage
+            walletAddress={walletAddress}
+=======
           <EarnPage 
             walletAddress={authState.principal ? formatPrincipal(authState.principal) : null}
             userInfo={authState.userInfo}
             isAuthenticated={authState.isAuthenticated}
             principal={authState.principal}
+>>>>>>> upstream/main
             onError={handleError}
             setLoading={setLoading}
             onSelectVault={handleSelectVault}
@@ -199,15 +221,69 @@ function App() {
           />
         ) : (
           <BorrowPage
+<<<<<<< HEAD
+            walletAddress={walletAddress}
+=======
             walletAddress={
               authState.principal ? formatPrincipal(authState.principal) : null
             }
+>>>>>>> upstream/main
             onSelectMarket={handleSelectMarket}
           />
         );
       case "explore":
         return <ExplorePage />;
       case "migrate":
+<<<<<<< HEAD
+        return (
+          // 迁移页面占位符
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 pt-20 dark:from-gray-900 dark:to-gray-800">
+            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+              <div className="text-center">
+                <h1 className="mb-4 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-4xl font-bold text-transparent">
+                  Migrate Positions
+                </h1>
+                <p className="mb-8 text-xl text-gray-600 dark:text-gray-400">
+                  Coming Soon - Move your positions to better protocols
+                </p>
+                <div className="mb-4 text-6xl">🔄</div>
+                <p className="text-gray-500 dark:text-gray-400">
+                  This page is under development
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      case "dashboard":
+        return (
+          // 仪表板页面占位符
+          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-50 pt-20 dark:from-gray-900 dark:to-gray-800">
+            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+              <div className="text-center">
+                <h1 className="mb-4 bg-gradient-to-r from-gray-600 to-slate-600 bg-clip-text text-4xl font-bold text-transparent">
+                  Your Portfolio Dashboard
+                </h1>
+                <p className="mb-8 text-xl text-gray-600 dark:text-gray-400">
+                  Coming Soon - Manage your Bitcoin DeFi positions
+                </p>
+                <div className="mb-4 text-6xl">📊</div>
+                <p className="text-gray-500 dark:text-gray-400">
+                  This page is under development
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <EarnPage
+            walletAddress={walletAddress}
+            onError={handleError}
+            setLoading={setLoading}
+            onSelectVault={handleSelectVault}
+          />
+        );
+=======
         return <MigratePage />;
       case "dashboard":
         return <DashboardPage 
@@ -223,6 +299,7 @@ function App() {
           principal={authState.principal}
           onUserInfoUpdate={handleUserInfoUpdate}
         />;
+>>>>>>> upstream/main
     }
   };
 
@@ -248,7 +325,16 @@ function App() {
       {/* 全局加载遮罩 */}
       {loading && !error && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+<<<<<<< HEAD
+          <div className="rounded-2xl bg-white p-8 shadow-2xl dark:bg-gray-800">
+            <Loader />
+            <p className="mt-4 text-center text-gray-600 dark:text-gray-400">
+              Processing...
+            </p>
+          </div>
+=======
           <Loader />
+>>>>>>> upstream/main
         </div>
       )}
 

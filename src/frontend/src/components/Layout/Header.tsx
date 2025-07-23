@@ -4,7 +4,10 @@
 import { useState } from "react";
 import { PageRoute, NavItem, Language } from "../../types";
 import { useLanguage } from "../../hooks/useLanguage";
+<<<<<<< HEAD
+=======
 import { UserInfo } from "../../services/InternetIdentityService";
+>>>>>>> upstream/main
 
 // 组件属性接口
 interface HeaderProps {
@@ -20,6 +23,37 @@ interface HeaderProps {
 // 导航项配置
 const navItems: NavItem[] = [
   {
+<<<<<<< HEAD
+    key: "earn",
+    label: { en: "Earn", zh: "收益" },
+    // icon: '💰',
+    path: "/earn",
+  },
+  {
+    key: "borrow",
+    label: { en: "Borrow", zh: "借贷" },
+    // icon: '🏦',
+    path: "/borrow",
+  },
+  {
+    key: "explore",
+    label: { en: "Explore", zh: "探索" },
+    // icon: '🔍',
+    path: "/explore",
+  },
+  {
+    key: "migrate",
+    label: { en: "Migrate", zh: "迁移" },
+    // icon: '🔄',
+    path: "/migrate",
+  },
+  {
+    key: "dashboard",
+    label: { en: "Dashboard", zh: "仪表板" },
+    // icon: '📊',
+    path: "/dashboard",
+  },
+=======
     key: "dashboard",
     label: { en: "Dashboard", zh: "个人中心" },
     // icon: '📊',
@@ -49,6 +83,7 @@ const navItems: NavItem[] = [
     // icon: '🔄',
     path: "/migrate",
   },
+>>>>>>> upstream/main
 ];
 
 // 顶部导航栏主组件
@@ -56,8 +91,11 @@ export const Header = ({
   currentPage,
   onPageChange,
   walletAddress,
+<<<<<<< HEAD
+=======
   userInfo,
   isAuthenticated,
+>>>>>>> upstream/main
   onConnectWallet,
   onDisconnectWallet,
 }: HeaderProps) => {
@@ -157,6 +195,18 @@ export const Header = ({
                   </svg>
                 </button>
                 {isWalletMenuOpen && (
+<<<<<<< HEAD
+                  <div className="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                    <div className="border-b border-gray-200 px-4 py-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                      {t("balance")}: 0.0 BTC
+                    </div>
+                    <button
+                      onClick={handleDisconnect}
+                      className="w-full px-4 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                    >
+                      {t("disconnect")}
+                    </button>
+=======
                   <div className="absolute right-0 z-50 mt-2 w-64 rounded-lg border border-gray-200 bg-white py-2 shadow-lg dark:border-gray-700 dark:bg-gray-800">
                     {/* 用户信息 */}
                     <div className="border-b border-gray-200 px-4 py-2 dark:border-gray-700">
@@ -212,6 +262,7 @@ export const Header = ({
                         {t("disconnect")}
                       </button>
                     </div>
+>>>>>>> upstream/main
                   </div>
                 )}
               </div>
@@ -220,7 +271,11 @@ export const Header = ({
                 onClick={onConnectWallet}
                 className="rounded-lg border border-white/70 bg-white/20 px-4 py-2 font-semibold text-white shadow-sm transition-all duration-200 hover:bg-white/30 hover:text-white active:scale-95"
               >
+<<<<<<< HEAD
+                {t("connect_wallet")}
+=======
                 {t("connect_internet_identity")}
+>>>>>>> upstream/main
               </button>
             )}
 
