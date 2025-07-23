@@ -64,7 +64,7 @@ export class InternetIdentityService {
     try {
       // 根据环境变量决定使用本地还是主网 Internet Identity
       const isLocal = import.meta.env.VITE_DFX_NETWORK === "local";
-      
+
       if (isLocal) {
         console.log("使用本地 dfx identity");
         // 本地环境：直接使用 dfx identity，不需要 AuthClient
@@ -147,7 +147,7 @@ export class InternetIdentityService {
 
     // 根据环境变量决定使用本地还是主网 Internet Identity
     const isLocal = import.meta.env.VITE_DFX_NETWORK === "local";
-    
+
     if (isLocal) {
       console.log("本地环境：使用 dfx identity 登录");
       // 本地环境使用 dfx identity
@@ -246,7 +246,7 @@ export class InternetIdentityService {
             await this.initializeAgent();
             await this.checkAuthenticationStatus();
             // 派发登录成功事件，通知主窗口
-            window.dispatchEvent(new Event('ii-login-success'));
+            window.dispatchEvent(new Event("ii-login-success"));
             resolve();
           } catch (error) {
             console.error("登录后初始化失败:", error);
@@ -593,16 +593,23 @@ export class InternetIdentityService {
 
 // ckBTC minter canister 配置
 const CKBTC_MINTER_CANISTER_ID = "qjdve-lqaaa-aaaaa-aaaeq-cai"; // 主网 minter canister
-const CKBTC_MINTER_IDL = (IDL: any) => IDL.Service({
-  get_btc_deposit_state: IDL.Func([], [IDL.Record({
-    status: IDL.Text,
-    btcAddress: IDL.Text,
-    received: IDL.Float64,
-    required: IDL.Float64,
-    confirmations: IDL.Nat,
-    requiredConfirmations: IDL.Nat,
-  })], ["query"]),
-});
+const CKBTC_MINTER_IDL = (IDL: any) =>
+  IDL.Service({
+    get_btc_deposit_state: IDL.Func(
+      [],
+      [
+        IDL.Record({
+          status: IDL.Text,
+          btcAddress: IDL.Text,
+          received: IDL.Float64,
+          required: IDL.Float64,
+          confirmations: IDL.Nat,
+          requiredConfirmations: IDL.Nat,
+        }),
+      ],
+      ["query"],
+    ),
+  });
 
 // 查询充值进度
 export async function getCkbtcDepositState(): Promise<any> {
@@ -623,31 +630,47 @@ export async function getCkbtcDepositState(): Promise<any> {
 export const internetIdentityService = new InternetIdentityService();
 
 // 通用 ICRC-1 ledger 接口（.did 格式）
-const ICRC1_IDL = ({ IDL }: { IDL: any }) => IDL.Service({
-  icrc1_balance_of: IDL.Func([IDL.Record({ owner: IDL.Principal, subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)) })], [IDL.Nat], ["query"]),
-});
+const ICRC1_IDL = ({ IDL }: { IDL: any }) =>
+  IDL.Service({
+    icrc1_balance_of: IDL.Func(
+      [
+        IDL.Record({
+          owner: IDL.Principal,
+          subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
+        }),
+      ],
+      [IDL.Nat],
+      ["query"],
+    ),
+  });
 
 // 获取单个代币余额
-export async function getTokenBalance(canisterId: string, principal: Principal): Promise<bigint> {
+export async function getTokenBalance(
+  canisterId: string,
+  principal: Principal,
+): Promise<bigint> {
   const host = "http://localhost:8080";
   const agent = new HttpAgent({ host });
-  
+
   try {
     await agent.fetchRootKey();
   } catch (error) {
     console.error("获取本地root key失败:", error);
     throw new Error("无法连接到本地环境，请确保dfx正在运行");
   }
-  
+
   const ledger = Actor.createActor(ICRC1_IDL, { agent, canisterId });
-  const balance = await ledger.icrc1_balance_of({ owner: principal, subaccount: null });
-  
+  const balance = await ledger.icrc1_balance_of({
+    owner: principal,
+    subaccount: null,
+  });
+
   // 确保返回 bigint 类型
-  if (typeof balance === 'bigint') {
+  if (typeof balance === "bigint") {
     return balance;
-  } else if (typeof balance === 'number') {
+  } else if (typeof balance === "number") {
     return BigInt(balance);
-  } else if (typeof balance === 'string') {
+  } else if (typeof balance === "string") {
     return BigInt(balance);
   } else {
     return BigInt(0);
@@ -655,9 +678,12 @@ export async function getTokenBalance(canisterId: string, principal: Principal):
 }
 
 // 获取用户所有币种余额（传入 canister ID 列表）
-export async function getAllBalances(principal: Principal, canisterIds: string[]): Promise<Record<string, bigint>> {
+export async function getAllBalances(
+  principal: Principal,
+  canisterIds: string[],
+): Promise<Record<string, bigint>> {
   const balances: Record<string, bigint> = {};
-  
+
   for (const id of canisterIds) {
     try {
       balances[id] = await getTokenBalance(id, principal);
@@ -666,6 +692,6 @@ export async function getAllBalances(principal: Principal, canisterIds: string[]
       balances[id] = BigInt(0);
     }
   }
-  
+
   return balances;
 }

@@ -122,6 +122,7 @@ const translations: Translations = {
     en: "Discover the best Bitcoin DeFi opportunities",
     zh: "发现最佳的比特币DeFi机会",
   },
+
   page_dashboard_title: { en: "Your Portfolio", zh: "您的投资组合" },
   page_dashboard_subtitle: {
     en: "Manage your Bitcoin DeFi positions",

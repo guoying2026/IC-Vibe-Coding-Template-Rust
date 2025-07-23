@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { PageRoute, NavItem, Language } from "../../types";
 import { useLanguage } from "../../hooks/useLanguage";
+
 import { UserInfo } from "../../services/InternetIdentityService";
 
 // 组件属性接口
@@ -56,6 +57,7 @@ export const Header = ({
   currentPage,
   onPageChange,
   walletAddress,
+
   userInfo,
   isAuthenticated,
   onConnectWallet,

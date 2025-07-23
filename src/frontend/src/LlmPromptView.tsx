@@ -1,33 +1,33 @@
 import React, { useState } from "react";
-import { Button, Card, TextArea } from "./components";
+import { Button, Card, ErrorDisplay, InputField } from "./components";
 import { backendService } from "./services/backendService";
 
-interface LlmPromptViewProps {
+interface BorrowViewProps {
   onError: (error: string) => void;
   setLoading: (loading: boolean) => void;
 }
 
 /**
- * LlmPromptView component for handling LLM prompt interactions
+ * BorrowView component for handling token borrowing functionality
  */
-export function LlmPromptView({ onError, setLoading }: LlmPromptViewProps) {
-  const [prompt, setPrompt] = useState<string>("");
-  const [response, setResponse] = useState<string>("");
+export function BorrowView({ onError, setLoading }: BorrowViewProps) {
+  const [tokenId, setTokenId] = useState<string>("");
+  const [amount, setAmount] = useState<string>("");
 
-  const handleChangePrompt = (
-    event: React.ChangeEvent<HTMLTextAreaElement>,
-  ): void => {
-    if (!event?.target.value && event?.target.value !== "") {
+  const handleBorrow = async () => {
+    if (!tokenId || !amount) {
+      onError("Please enter both token ID and amount");
       return;
     }
-    setPrompt(event.target.value);
-  };
 
-  const sendPrompt = async () => {
     try {
       setLoading(true);
-      const res = await backendService.sendLlmPrompt(prompt);
-      setResponse(res);
+      const result = await backendService.borrow(tokenId, BigInt(amount));
+      if ("Ok" in result) {
+        onError(`Borrow successful! Block index: ${result.Ok}`);
+      } else {
+        onError(result.Err || "Borrow failed");
+      }
     } catch (err) {
       console.error(err);
       onError(String(err));
@@ -37,22 +37,21 @@ export function LlmPromptView({ onError, setLoading }: LlmPromptViewProps) {
   };
 
   return (
-    <Card title="LLM Prompt">
-      <TextArea
-        value={prompt}
-        onChange={handleChangePrompt}
-        placeholder="Enter your prompt here..."
-        rows={4}
-      />
-      <Button onClick={sendPrompt} disabled={!prompt.trim()}>
-        Send Prompt
-      </Button>
-      {response && (
-        <div className="mt-4 rounded-lg bg-gray-100 p-4">
-          <h3 className="mb-2 font-semibold">Response:</h3>
-          <p className="whitespace-pre-wrap">{response}</p>
-        </div>
-      )}
+    <Card title="Borrow Tokens">
+      <div style={{ marginBottom: "1rem" }}>
+        <InputField
+          value={tokenId}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTokenId(e.target.value)}
+          placeholder="Enter token ID"
+        />
+        <InputField
+          value={amount}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)}
+          placeholder="Enter amount"
+          type="number"
+        />
+      </div>
+      <Button onClick={handleBorrow}>Borrow Tokens</Button>
     </Card>
   );
 }

@@ -1,23 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { Button, Card, ErrorDisplay, Loader } from "./components";
 import { backendService } from "./services/backendService";
+import { Principal } from "@dfinity/principal";
 
-interface CounterViewProps {
+interface LendingViewProps {
   onError: (error: string) => void;
   setLoading: (loading: boolean) => void;
 }
 
 /**
- * CounterView component for handling the counter functionality
+ * LendingView component for handling the lending contract functionality
  */
-export function CounterView({ onError, setLoading }: CounterViewProps) {
-  const [count, setCount] = useState<bigint>(BigInt(0));
+export function LendingView({ onError, setLoading }: LendingViewProps) {
+  const [collateralValue, setCollateralValue] = useState<number>(0);
+  const [borrowValue, setBorrowValue] = useState<number>(0);
+  const [healthFactor, setHealthFactor] = useState<number>(0);
 
-  const fetchCount = async () => {
+  const fetchUserStats = async () => {
     try {
       setLoading(true);
-      const res = await backendService.getCount();
-      setCount(res);
+      // Use a default principal for demo purposes
+      const user = Principal.fromText("aaaaa-aa");
+      const collateral = await backendService.getCollateralValue(user);
+      const borrow = await backendService.getBorrowValue(user);
+      const health = await backendService.getHealthFactor(user);
+      
+      setCollateralValue(collateral);
+      setBorrowValue(borrow);
+      setHealthFactor(health);
     } catch (err) {
       console.error(err);
       onError(String(err));
@@ -26,11 +36,21 @@ export function CounterView({ onError, setLoading }: CounterViewProps) {
     }
   };
 
-  const incrementCounter = async () => {
+  const createPool = async () => {
     try {
       setLoading(true);
-      const res = await backendService.incrementCounter();
-      setCount(res);
+      const poolConfig = {
+        name: "Demo Pool",
+        token_id: "demo-token",
+        collateral: ["collateral1"],
+        maximum_token: [] as [] | [bigint],
+      };
+      const result = await backendService.createPool(poolConfig);
+      if ("Ok" in result) {
+        onError("Pool created successfully!");
+      } else {
+        onError(result.Err || "Failed to create pool");
+      }
     } catch (err) {
       console.error(err);
       onError(String(err));
@@ -39,15 +59,20 @@ export function CounterView({ onError, setLoading }: CounterViewProps) {
     }
   };
 
-  // Fetch the initial count when component mounts
+  // Fetch the initial stats when component mounts
   useEffect(() => {
-    fetchCount();
+    fetchUserStats();
   }, []);
 
   return (
-    <Card title={`Counter: ${count.toString()}`}>
-      <Button onClick={incrementCounter}>Increment</Button>
-      <Button onClick={fetchCount}>Refresh Count</Button>
+    <Card title="Lending Contract Dashboard">
+      <div style={{ marginBottom: "1rem" }}>
+        <p><strong>Collateral Value:</strong> ${collateralValue.toFixed(2)}</p>
+        <p><strong>Borrow Value:</strong> ${borrowValue.toFixed(2)}</p>
+        <p><strong>Health Factor:</strong> {healthFactor.toFixed(2)}</p>
+      </div>
+      <Button onClick={createPool}>Create Demo Pool</Button>
+      <Button onClick={fetchUserStats}>Refresh Stats</Button>
     </Card>
   );
 }

@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { Vault } from "../types";
 import { useLanguage } from "../hooks/useLanguage";
 import { VaultListItem } from "../components/Earn/VaultListItem";
+
 import { UserInfoDisplay } from "../components/UserInfoDisplay";
 import { UserInfo } from "../services/InternetIdentityService";
 
@@ -23,6 +24,7 @@ interface EarnPageProps {
 // 收益页面主组件
 export const EarnPage = ({
   walletAddress,
+
   userInfo,
   isAuthenticated,
   principal,

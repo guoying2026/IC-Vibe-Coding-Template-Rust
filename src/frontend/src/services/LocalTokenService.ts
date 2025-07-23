@@ -2,28 +2,53 @@ import { Actor, HttpAgent } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 
 // ICRC-1 Ledger 接口
-const ICRC1_LEDGER_IDL = ({ IDL }: { IDL: any }) => IDL.Service({
-  icrc1_balance_of: IDL.Func([IDL.Record({ owner: IDL.Principal, subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)) })], [IDL.Nat], ["query"]),
-  icrc1_transfer: IDL.Func([
-    IDL.Record({
-      to: IDL.Record({ owner: IDL.Principal, subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)) }),
-      amount: IDL.Nat,
-      fee: IDL.Opt(IDL.Nat),
-      memo: IDL.Opt(IDL.Vec(IDL.Nat8)),
-      from_subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
-      created_at_time: IDL.Opt(IDL.Nat64)
-    })
-  ], [IDL.Variant({ Ok: IDL.Nat, Err: IDL.Text })], []),
-  icrc1_metadata: IDL.Func([], [IDL.Vec(IDL.Record({ 
-    name: IDL.Text, 
-    value: IDL.Variant({ 
-      Text: IDL.Text, 
-      Nat: IDL.Nat, 
-      Int: IDL.Int, 
-      Blob: IDL.Vec(IDL.Nat8) 
-    }) 
-  }))], ["query"]),
-});
+const ICRC1_LEDGER_IDL = ({ IDL }: { IDL: any }) =>
+  IDL.Service({
+    icrc1_balance_of: IDL.Func(
+      [
+        IDL.Record({
+          owner: IDL.Principal,
+          subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
+        }),
+      ],
+      [IDL.Nat],
+      ["query"],
+    ),
+    icrc1_transfer: IDL.Func(
+      [
+        IDL.Record({
+          to: IDL.Record({
+            owner: IDL.Principal,
+            subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
+          }),
+          amount: IDL.Nat,
+          fee: IDL.Opt(IDL.Nat),
+          memo: IDL.Opt(IDL.Vec(IDL.Nat8)),
+          from_subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
+          created_at_time: IDL.Opt(IDL.Nat64),
+        }),
+      ],
+      [IDL.Variant({ Ok: IDL.Nat, Err: IDL.Text })],
+      [],
+    ),
+    icrc1_metadata: IDL.Func(
+      [],
+      [
+        IDL.Vec(
+          IDL.Record({
+            name: IDL.Text,
+            value: IDL.Variant({
+              Text: IDL.Text,
+              Nat: IDL.Nat,
+              Int: IDL.Int,
+              Blob: IDL.Vec(IDL.Nat8),
+            }),
+          }),
+        ),
+      ],
+      ["query"],
+    ),
+  });
 
 // 本地代币配置 - 使用 ckBTC 作为本地代币
 const LOCAL_TOKEN_CONFIG = {
@@ -47,7 +72,7 @@ export class LocalTokenService {
     try {
       // 获取本地 root key
       await this.agent.fetchRootKey();
-      
+
       // 创建 ledger actor
       this.ledgerActor = Actor.createActor(ICRC1_LEDGER_IDL, {
         agent: this.agent,
@@ -72,7 +97,7 @@ export class LocalTokenService {
         owner: principal,
         subaccount: null,
       });
-      
+
       return BigInt(balance);
     } catch (error) {
       console.error("查询余额失败:", error);
@@ -81,7 +106,11 @@ export class LocalTokenService {
   }
 
   // 转账
-  async transfer(from: Principal, to: Principal, amount: bigint): Promise<bigint> {
+  async transfer(
+    from: Principal,
+    to: Principal,
+    amount: bigint,
+  ): Promise<bigint> {
     if (!this.ledgerActor) {
       throw new Error("代币服务未初始化");
     }
@@ -127,8 +156,10 @@ export class LocalTokenService {
     const divisor = BigInt(10 ** LOCAL_TOKEN_CONFIG.decimals);
     const whole = balance / divisor;
     const fraction = balance % divisor;
-    
-    const fractionStr = fraction.toString().padStart(LOCAL_TOKEN_CONFIG.decimals, '0');
+
+    const fractionStr = fraction
+      .toString()
+      .padStart(LOCAL_TOKEN_CONFIG.decimals, "0");
     return `${whole}.${fractionStr}`;
   }
 
@@ -147,4 +178,4 @@ export class LocalTokenService {
 }
 
 // 创建全局实例
-export const localTokenService = new LocalTokenService(); 
+export const localTokenService = new LocalTokenService();
