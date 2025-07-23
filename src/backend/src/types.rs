@@ -18,6 +18,7 @@ pub struct AssetConfig{
     pub name: String,
     pub token_id: Principal,
     pub account : Account,
+    pub price_id: String, // from Pyth Network
     pub asset_type: AssetTypes,
     pub decimals: u32,
     pub collateral_factor: f64,
@@ -37,6 +38,7 @@ pub struct Pool{
     pub pool_account: AssetConfig,
     pub collateral: Vec<AssetConfig>,
     pub amount: NumTokens,
+    pub used_amount: NumTokens,
     pub maximum_token: NumTokens,
 }
 
@@ -47,6 +49,7 @@ pub struct LendingContract{
     pub users: HashMap<Principal, UserAccounts>,
     pub pool: HashMap<Principal, Pool>,
     pub liquidation_threshold: f64,
+    pub safety_vault_percentage: f64
 }
 
 impl Default for LendingContract{
@@ -55,8 +58,9 @@ impl Default for LendingContract{
             admin: Principal::anonymous(),
             assets: HashMap::new(),
             users: HashMap::new(),
-            liquidation_threshold: 0.0,
             pool: HashMap::new(),
+            liquidation_threshold: 0.0,
+            safety_vault_percentage: 0.1  // 10%
         }
     }
 }
