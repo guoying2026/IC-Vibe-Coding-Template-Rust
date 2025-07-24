@@ -1,6 +1,12 @@
 import { backend } from "../../../declarations/backend";
 import { Principal } from "@dfinity/principal";
-import type { PoolConfig, AssetParameter, AssetTypes, Result, Result_1 } from "../../../declarations/backend/backend.did";
+import type {
+  PoolConfig,
+  AssetParameter,
+  AssetTypes,
+  Result,
+  Result_1,
+} from "../../../declarations/backend/backend.did";
 
 /**
  * Service for handling all backend canister API calls

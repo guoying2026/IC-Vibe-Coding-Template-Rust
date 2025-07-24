@@ -41,12 +41,16 @@ export function SupplyView({ onError, setLoading }: SupplyViewProps) {
       <div style={{ marginBottom: "1rem" }}>
         <InputField
           value={tokenId}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTokenId(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setTokenId(e.target.value)
+          }
           placeholder="Enter token ID"
         />
         <InputField
           value={amount}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setAmount(e.target.value)
+          }
           placeholder="Enter amount"
           type="number"
         />

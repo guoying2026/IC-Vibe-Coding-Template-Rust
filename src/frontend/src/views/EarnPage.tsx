@@ -5,9 +5,8 @@ import { useState, useEffect } from "react";
 import { Vault } from "../types";
 import { useLanguage } from "../hooks/useLanguage";
 import { VaultListItem } from "../components/Earn/VaultListItem";
-
 import { UserInfoDisplay } from "../components/UserInfoDisplay";
-import { UserInfo } from "../services/InternetIdentityService";
+import { UserInfo, internetIdentityService } from "../services/InternetIdentityService";
 
 // 组件属性接口
 interface EarnPageProps {
@@ -24,7 +23,6 @@ interface EarnPageProps {
 // 收益页面主组件
 export const EarnPage = ({
   walletAddress,
-
   userInfo,
   isAuthenticated,
   principal,
@@ -48,413 +46,230 @@ export const EarnPage = ({
   // 管理者筛选状态
   const [curatorFilter, setCuratorFilter] = useState("All");
 
+  // 加载金库数据
+  const loadVaults = async () => {
+    try {
+      setLoading(true);
+      
+      if (!isAuthenticated) {
+        console.log("用户未认证，跳过加载金库数据");
+        return;
+      }
+
+      // 从后端获取所有池子信息
+      const pools = await internetIdentityService.getAllPools();
+      
+      // 转换为前端需要的 Vault 格式
+      const vaultsData: Vault[] = pools.map((pool) => ({
+        id: pool.token_id.toText(),
+        name: pool.name,
+        asset: pool.pool_account.name,
+        apy: pool.pool_account.interest_rate,
+        tvl: Number(pool.amount),
+        userDeposit: 0, // 暂时设为0，后续可以从用户供应信息获取
+        earned: 0, // 暂时设为0，后续可以计算
+        collateral_factor: pool.pool_account.collateral_factor,
+        interest_rate: pool.pool_account.interest_rate,
+        amount: pool.amount,
+        used_amount: pool.used_amount,
+        maximum_token: pool.maximum_token,
+      }));
+
+      setVaults(vaultsData);
+      console.log("加载金库数据成功:", vaultsData);
+    } catch (error) {
+      console.error("加载金库数据失败:", error);
+      onError("加载金库数据失败");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 初始化金库数据
   useEffect(() => {
-    // 模拟金库数据，匹配图片中的内容
-    const mockVaults: Vault[] = [
-      {
-        id: "1",
-        name: "Spark USDC Vault",
-        curator: "SparkDAO",
-        curatorIcon: "⚡",
-        allocation: 490640000,
-        supplyShare: 81.76,
-        asset: "USDC",
-        deposits: 490.64,
-        apy: 4.54,
-        liquidity: 490590000,
-        totalDeposits: 490640000,
-        collateral: ["₿"],
-        description:
-          "SparkDAO managed USDC vault with optimized yield strategies",
-        performanceData: {
-          nativeApy: 4.54,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 4.54,
-          chartData: [],
-        },
-      },
-      {
-        id: "2",
-        name: "Moonwell Flagship USDC",
-        curator: "B.Protocol",
-        curatorIcon: "🌙",
-        allocation: 50460000,
-        supplyShare: 80.0,
-        asset: "USDC",
-        deposits: 50.46,
-        apy: 7.21,
-        liquidity: 50460000,
-        totalDeposits: 50460000,
-        collateral: ["₿", "🔵", "🟡", "🔶"],
-        description:
-          "Moonwell flagship USDC vault curated by B.Protocol and Block Analitica",
-        performanceData: {
-          nativeApy: 7.21,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 7.21,
-          chartData: [],
-        },
-      },
-      {
-        id: "3",
-        name: "Seamless USDC Vault",
-        curator: "Gauntlet",
-        curatorIcon: "🎯",
-        allocation: 42060000,
-        supplyShare: 80.0,
-        asset: "USDC",
-        deposits: 42.06,
-        apy: 7.25,
-        liquidity: 42050000,
-        totalDeposits: 42060000,
-        collateral: ["₿", "🔵", "🟡", "🔶", "⚡"],
-        description: "Seamless USDC vault with multiple collateral support",
-        performanceData: {
-          nativeApy: 7.25,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 7.25,
-          chartData: [],
-        },
-      },
-      {
-        id: "4",
-        name: "Moonwell Flagship ETH",
-        curator: "Block Analitica",
-        curatorIcon: "📊",
-        allocation: 10290000,
-        supplyShare: 80.0,
-        asset: "WETH",
-        deposits: 10.29,
-        apy: 3.76,
-        liquidity: 10290000,
-        totalDeposits: 10290000,
-        collateral: ["⚡", "🔵", "🟡", "🔶"],
-        description:
-          "Ethereum focused vault with diversified collateral options",
-        performanceData: {
-          nativeApy: 3.76,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 3.76,
-          chartData: [],
-        },
-      },
-      {
-        id: "5",
-        name: "Moonwell Frontier cbBTC",
-        curator: "B.Protocol",
-        curatorIcon: "🌙",
-        allocation: 203350000,
-        supplyShare: 80.0,
-        asset: "cbBTC",
-        deposits: 203.35,
-        apy: 0.72,
-        liquidity: 24000000,
-        totalDeposits: 203350000,
-        collateral: ["₿", "🔵", "🟡"],
-        description: "Coinbase wrapped Bitcoin vault with frontier strategies",
-        performanceData: {
-          nativeApy: 0.72,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 0.72,
-          chartData: [],
-        },
-      },
-      {
-        id: "6",
-        name: "Seamless WETH Vault",
-        curator: "Gauntlet",
-        curatorIcon: "🎯",
-        allocation: 7617270000,
-        supplyShare: 80.0,
-        asset: "WETH",
-        deposits: 7617.27,
-        apy: 4.11,
-        liquidity: 22760000,
-        totalDeposits: 7617270000,
-        collateral: ["⚡", "🔵", "🟡", "🔶"],
-        description:
-          "High-volume WETH vault with institutional-grade management",
-        performanceData: {
-          nativeApy: 4.11,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 4.11,
-          chartData: [],
-        },
-      },
-      {
-        id: "7",
-        name: "Extrafi XLend WETH",
-        curator: "Gauntlet",
-        curatorIcon: "🎯",
-        allocation: 3869410000,
-        supplyShare: 80.0,
-        asset: "WETH",
-        deposits: 3869.41,
-        apy: 4.08,
-        liquidity: 11560000,
-        totalDeposits: 3869410000,
-        collateral: ["⚡", "🔵", "🟡", "🔶"],
-        description: "Extrafi lending protocol WETH vault",
-        performanceData: {
-          nativeApy: 4.08,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 4.08,
-          chartData: [],
-        },
-      },
-      {
-        id: "8",
-        name: "Seamless cbBTC Vault",
-        curator: "Gauntlet",
-        curatorIcon: "🎯",
-        allocation: 82030000,
-        supplyShare: 80.0,
-        asset: "cbBTC",
-        deposits: 82.03,
-        apy: 1.14,
-        liquidity: 9860000,
-        totalDeposits: 82030000,
-        collateral: ["₿", "🔵", "🟡", "🔶"],
-        description: "Seamless cbBTC vault with balanced risk management",
-        performanceData: {
-          nativeApy: 1.14,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 1.14,
-          chartData: [],
-        },
-      },
-      {
-        id: "9",
-        name: "Steakhouse USDC",
-        curator: "Steakhouse Financial",
-        curatorIcon: "🥩",
-        allocation: 9460000,
-        supplyShare: 80.0,
-        asset: "USDC",
-        deposits: 9.46,
-        apy: 6.39,
-        liquidity: 9460000,
-        totalDeposits: 9460000,
-        collateral: ["₿", "🔵", "🟡"],
-        description: "Steakhouse Financial managed USDC vault",
-        performanceData: {
-          nativeApy: 6.39,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 6.39,
-          chartData: [],
-        },
-      },
-      {
-        id: "10",
-        name: "Re7 - eUSD",
-        curator: "RE7 Labs",
-        curatorIcon: "🔬",
-        allocation: 8870000,
-        supplyShare: 80.0,
-        asset: "eUSD",
-        deposits: 8.87,
-        apy: 8.93,
-        liquidity: 8870000,
-        totalDeposits: 8870000,
-        collateral: ["⚡", "🔵", "🟡", "🔶"],
-        description:
-          "RE7 Labs experimental eUSD vault with high yield potential",
-        performanceData: {
-          nativeApy: 8.93,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 8.93,
-          chartData: [],
-        },
-      },
-    ];
+    loadVaults();
+  }, [isAuthenticated]);
 
-    setVaults(mockVaults);
-  }, []);
-
-  // 根据筛选条件过滤金库
+  // 筛选金库列表
   const filteredVaults = vaults.filter((vault) => {
-    const matchesSearch =
-      vault.name.toLowerCase().includes(filter.toLowerCase()) ||
-      vault.curator.toLowerCase().includes(filter.toLowerCase()) ||
-      vault.asset?.toLowerCase().includes(filter.toLowerCase());
-
-    const matchesDeposit =
-      depositFilter === "All" || vault.asset === depositFilter;
-    const matchesCurator =
-      curatorFilter === "All" || vault.curator === curatorFilter;
-
-    return matchesSearch && matchesDeposit && matchesCurator;
+    const matchesFilter = vault.name.toLowerCase().includes(filter.toLowerCase()) ||
+                         vault.asset.toLowerCase().includes(filter.toLowerCase());
+    
+    const matchesDepositFilter = depositFilter === "All" || 
+                                (depositFilter === "Deposited" && vault.userDeposit > 0) ||
+                                (depositFilter === "Not Deposited" && vault.userDeposit === 0);
+    
+    const matchesCuratorFilter = curatorFilter === "All" || 
+                                vault.name.toLowerCase().includes(curatorFilter.toLowerCase());
+    
+    return matchesFilter && matchesDepositFilter && matchesCuratorFilter;
   });
 
-  // 获取唯一的存款类型
-  const depositTypes = [
-    "All",
-    ...Array.from(new Set(vaults.map((v) => v.asset).filter(Boolean))),
-  ];
+  // 计算总TVL
+  const totalTVL = vaults.reduce((sum, vault) => sum + vault.tvl, 0);
 
-  // 获取唯一的管理者
-  const curators = [
-    "All",
-    ...Array.from(new Set(vaults.map((v) => v.curator))),
-  ];
+  // 计算用户总存款
+  const totalUserDeposits = vaults.reduce((sum, vault) => sum + vault.userDeposit, 0);
 
   return (
-    // 页面主容器
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100 pt-24 pb-12 dark:from-gray-900 dark:to-slate-800">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* 用户信息显示 */}
-        {/* <UserInfoDisplay
-          userInfo={userInfo}
-          isAuthenticated={isAuthenticated}
-          principal={principal}
-          onUserInfoUpdate={onUserInfoUpdate}
-        /> */}
-
-        {/* 页面头部 */}
-        <div className="mb-8 text-center">
-          <h1 className="mb-4 text-4xl font-bold text-gray-900 sm:text-5xl dark:text-white">
-            {t("page_earn_title")}
-          </h1>
-          <p className="mx-auto max-w-3xl text-lg text-gray-600 dark:text-gray-400">
-            {t("page_earn_subtitle")}
-          </p>
-        </div>
-
-        {/* 连接钱包提示 */}
-        {!walletAddress && (
-          <div className="mb-8 text-center">
-            <button className="rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-8 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:from-blue-600 hover:to-purple-600 hover:shadow-xl active:scale-95">
-              {t("connect_wallet")}
-            </button>
-          </div>
-        )}
-
-        {/* 金库列表容器 */}
-        <div className="rounded-3xl border border-gray-200/50 bg-white/50 p-4 shadow-xl backdrop-blur-2xl sm:p-6 dark:border-gray-700/50 dark:bg-gray-800/50">
-          {/* 筛选和操作栏 */}
-          <div className="mb-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setDepositFilter("All")}
-                className={`rounded-lg px-4 py-2 text-sm font-semibold shadow transition-colors ${
-                  depositFilter === "All"
-                    ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
-                    : "bg-gray-100/70 text-gray-600 dark:bg-gray-700/70 dark:text-gray-300"
-                }`}
-              >
-                {t("deposit")}: {t("all")}
-              </button>
-              <button
-                onClick={() => setCuratorFilter("All")}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  curatorFilter === "All"
-                    ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
-                    : "bg-gray-100/70 text-gray-600 dark:bg-gray-700/70 dark:text-gray-300"
-                }`}
-              >
-                {t("curator")}: {t("all")}
-              </button>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* 顶部用户信息区域 */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {t("earn.title")}
+              </h1>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {t("earn.subtitle")}
+              </p>
             </div>
-            <div className="relative w-full sm:w-64">
-              <svg
-                className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <input
-                type="text"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                placeholder={t("filter_vaults")}
-                className="w-full rounded-xl border border-gray-200 bg-white/70 py-2.5 pr-4 pl-10 text-gray-900 placeholder-gray-400 transition-all focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900/70 dark:text-white"
+            
+            {/* 用户信息显示 */}
+            <div className="mt-4 lg:mt-0">
+              <UserInfoDisplay
+                userInfo={userInfo}
+                isAuthenticated={isAuthenticated}
+                principal={principal}
+                onUserInfoUpdate={onUserInfoUpdate}
               />
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* 列表头部 */}
-          <div className="grid grid-cols-12 gap-4 border-b border-gray-200/70 px-4 pb-3 text-xs font-medium text-gray-500 dark:border-gray-700/70 dark:text-gray-400">
-            <div className="col-span-3">{t("vault")}</div>
-            <div className="col-span-2">{t("deposits")}</div>
-            <div className="col-span-2">{t("curator")}</div>
-            <div className="col-span-2">{t("collateral")}</div>
-            <div className="col-span-3 text-right">{t("apy")}</div>
-          </div>
-
-          {/* 金库列表 */}
-          <div className="mt-2 space-y-2">
-            {filteredVaults.length > 0 ? (
-              filteredVaults.map((vault) => (
-                <VaultListItem
-                  key={vault.id}
-                  vault={vault}
-                  onSelect={onSelectVault}
-                />
-              ))
-            ) : (
-              <div className="py-12 text-center text-gray-500 dark:text-gray-400">
-                <p className="text-lg font-medium">{t("no_vaults_found")}</p>
-                <p>{t("try_adjusting_filters")}</p>
+      {/* 统计卡片区域 */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* 总TVL */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">$</span>
+                </div>
               </div>
-            )}
-          </div>
-
-          {/* 分页控制 */}
-          <div className="mt-6 flex items-center justify-center">
-            <div className="flex items-center space-x-2">
-              <button className="cursor-not-allowed rounded-lg bg-gray-100/70 p-2 text-gray-500 dark:bg-gray-700/70 dark:text-gray-400">
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </button>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t("page")} 1 {t("of")} 1
-              </span>
-              <button className="cursor-not-allowed rounded-lg bg-gray-100/70 p-2 text-gray-500 dark:bg-gray-700/70 dark:text-gray-400">
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  {t("earn.totalTVL")}
+                </p>
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                  ${totalTVL.toLocaleString()}
+                </p>
+              </div>
             </div>
           </div>
+
+          {/* 用户总存款 */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">💰</span>
+                </div>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  {t("earn.yourDeposits")}
+                </p>
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                  ${totalUserDeposits.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 活跃金库数量 */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">🏦</span>
+                </div>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  {t("earn.activeVaults")}
+                </p>
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                  {vaults.length}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 筛选和搜索区域 */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
+          <div className="p-6">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
+              {/* 搜索框 */}
+              <div className="flex-1">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder={t("earn.searchPlaceholder")}
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* 筛选下拉菜单 */}
+              <div className="flex space-x-4">
+                <select
+                  value={depositFilter}
+                  onChange={(e) => setDepositFilter(e.target.value)}
+                  className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="All">{t("earn.allDeposits")}</option>
+                  <option value="Deposited">{t("earn.deposited")}</option>
+                  <option value="Not Deposited">{t("earn.notDeposited")}</option>
+                </select>
+
+                <select
+                  value={curatorFilter}
+                  onChange={(e) => setCuratorFilter(e.target.value)}
+                  className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="All">{t("earn.allCurators")}</option>
+                  <option value="SparkDAO">SparkDAO</option>
+                  <option value="B.Protocol">B.Protocol</option>
+                  <option value="Block Analitica">Block Analitica</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 金库列表 */}
+        <div className="space-y-4">
+          {filteredVaults.length > 0 ? (
+            filteredVaults.map((vault) => (
+              <VaultListItem
+                key={vault.id}
+                vault={vault}
+                onSelect={() => onSelectVault(vault)}
+              />
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-gray-500 dark:text-gray-400">
+                {vaults.length === 0 ? (
+                  <p>{t("earn.noVaultsAvailable")}</p>
+                ) : (
+                  <p>{t("earn.noVaultsMatchFilter")}</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

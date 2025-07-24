@@ -7,7 +7,7 @@ import { Principal } from "@dfinity/principal"; // 导入主体类型
 import { Actor, HttpAgent } from "@dfinity/agent"; // 导入Actor和HTTP代理
 import { idlFactory } from "../../../declarations/backend"; // 导入后端接口定义
 
-// 用户信息接口
+// 用户信息接口 - 与后端对齐
 export interface UserInfo {
   principal: Principal; // 用户主体ID
   username: string; // 用户名
@@ -22,19 +22,45 @@ export interface UserInfo {
   }>; // 最近活动
 }
 
-// 借贷位置接口
+// 资产配置接口 - 与后端对齐
+export interface AssetConfig {
+  name: string;
+  token_id: Principal;
+  account: {
+    owner: Principal;
+    subaccount: [] | [Uint8Array | number[]];
+  };
+  price_id: string;
+  asset_type: { ICP: null } | { ICRC2: null };
+  decimals: number;
+  collateral_factor: number;
+  interest_rate: number;
+}
+
+// 池子接口 - 与后端对齐
+export interface Pool {
+  name: string;
+  token_id: Principal;
+  pool_account: AssetConfig;
+  collateral: AssetConfig[];
+  amount: bigint;
+  used_amount: bigint;
+  maximum_token: bigint;
+}
+
+// 借贷位置接口 - 基于后端数据
 export interface BorrowPosition {
-  id: string; // 位置ID
-  asset: string; // 资产类型
+  id: string; // token_id
+  asset: string; // 资产名称
   amount: number; // 借贷金额
   rate: number; // 利率
   health_factor: number; // 健康因子
 }
 
-// 收益位置接口
+// 收益位置接口 - 基于后端数据
 export interface EarnPosition {
-  id: string; // 位置ID
-  asset: string; // 资产类型
+  id: string; // token_id
+  asset: string; // 资产名称
   amount: number; // 存入金额
   apy: number; // 年化收益率
   earned: number; // 已赚取收益
@@ -65,15 +91,22 @@ export class InternetIdentityService {
       // 根据环境变量决定使用本地还是主网 Internet Identity
       const isLocal = import.meta.env.VITE_DFX_NETWORK === "local";
 
+      // 无论是本地还是主网，都使用 AuthClient
+      this.authClient = await AuthClient.create();
+
       if (isLocal) {
-        console.log("使用本地 dfx identity");
-        // 本地环境：直接使用 dfx identity，不需要 AuthClient
-        await this.loginWithDfxIdentity();
+        console.log("使用本地 Internet Identity");
+        // 本地环境：使用本地 Internet Identity canister
+        // 检查是否已有身份
+        const isAuthenticated = await this.authClient.isAuthenticated();
+        if (isAuthenticated) {
+          this.identity = this.authClient.getIdentity();
+          await this.initializeAgent();
+          await this.checkAuthenticationStatus();
+        }
       } else {
         console.log("使用主网 Internet Identity");
-        // 主网环境：使用 AuthClient
-        this.authClient = await AuthClient.create();
-
+        // 主网环境：使用主网 Internet Identity
         // 检查是否已有身份
         const isAuthenticated = await this.authClient.isAuthenticated();
 
@@ -149,11 +182,11 @@ export class InternetIdentityService {
     const isLocal = import.meta.env.VITE_DFX_NETWORK === "local";
 
     if (isLocal) {
-      console.log("本地环境：使用 dfx identity 登录");
-      // 本地环境使用 dfx identity
-      await this.loginWithDfxIdentity();
+      console.log("本地环境：使用本地 Internet Identity 登录");
+      // 本地环境使用本地 Internet Identity
+      await this.loginWithInternetIdentity();
     } else {
-      console.log("主网环境：使用 Internet Identity 登录");
+      console.log("主网环境：使用主网 Internet Identity 登录");
       if (!this.authClient) {
         console.error("认证客户端未初始化");
         throw new Error("认证客户端未初始化");
@@ -184,29 +217,6 @@ export class InternetIdentityService {
         // 开始登录流程
         this.authClient!.login(loginOptions);
       });
-    }
-  }
-
-  // 使用 dfx identity 登录（开发环境）
-  private async loginWithDfxIdentity(): Promise<void> {
-    try {
-      // 在开发环境中，直接使用 dfx identity
-      // 这里我们需要创建一个简单的身份验证流程
-      console.log("使用 dfx identity 登录...");
-
-      // 获取当前 dfx identity 的 principal
-      const principal = await this.getDfxIdentityPrincipal();
-
-      // 初始化 agent 和 actor
-      await this.initializeAgent();
-
-      // 检查认证状态
-      await this.checkAuthenticationStatus();
-
-      console.log("dfx identity 登录成功");
-    } catch (error) {
-      console.error("dfx identity 登录失败:", error);
-      throw error;
     }
   }
 
@@ -259,22 +269,6 @@ export class InternetIdentityService {
         },
       });
     });
-  }
-
-  // 获取 dfx identity 的 principal
-  private async getDfxIdentityPrincipal(): Promise<any> {
-    // 这里我们需要通过某种方式获取 dfx identity 的 principal
-    // 可以通过调用本地 dfx 命令或者使用其他方式
-    try {
-      // 临时方案：创建一个匿名身份
-      const { Ed25519KeyIdentity } = await import("@dfinity/identity");
-      const key = Ed25519KeyIdentity.generate();
-      this.identity = key;
-      return key.getPrincipal();
-    } catch (error) {
-      console.error("获取 dfx identity principal 失败:", error);
-      throw error;
-    }
   }
 
   // 登出方法
@@ -448,114 +442,194 @@ export class InternetIdentityService {
     }
   }
 
-  // 更新ckBTC余额
-  async updateCkbtcBalance(amount: number): Promise<number> {
+  // 获取所有资产配置
+  async getAllAssets(): Promise<AssetConfig[]> {
     if (!this.actor) {
       throw new Error("Actor未初始化");
     }
 
     try {
-      const result = await this.actor.update_ckbtc_balance(amount);
+      return await this.actor.get_all_assets();
+    } catch (error) {
+      console.error("获取所有资产失败:", error);
+      throw error;
+    }
+  }
 
+  // 获取所有池子信息
+  async getAllPools(): Promise<Pool[]> {
+    if (!this.actor) {
+      throw new Error("Actor未初始化");
+    }
+
+    try {
+      return await this.actor.get_all_pools();
+    } catch (error) {
+      console.error("获取所有池子失败:", error);
+      throw error;
+    }
+  }
+
+  // 获取用户的供应信息
+  async getUserSupplies(user: Principal): Promise<Array<[Principal, bigint]>> {
+    if (!this.actor) {
+      throw new Error("Actor未初始化");
+    }
+
+    try {
+      return await this.actor.get_user_supplies(user);
+    } catch (error) {
+      console.error("获取用户供应信息失败:", error);
+      throw error;
+    }
+  }
+
+  // 获取用户的借贷信息
+  async getUserBorrows(user: Principal): Promise<Array<[Principal, bigint]>> {
+    if (!this.actor) {
+      throw new Error("Actor未初始化");
+    }
+
+    try {
+      return await this.actor.get_user_borrows(user);
+    } catch (error) {
+      console.error("获取用户借贷信息失败:", error);
+      throw error;
+    }
+  }
+
+  // 获取池子详情
+  async getPoolInfo(tokenId: string): Promise<Pool> {
+    if (!this.actor) {
+      throw new Error("Actor未初始化");
+    }
+
+    try {
+      const result = await this.actor.get_pool_info(tokenId);
       if ("Ok" in result) {
-        // 更新本地用户信息
-        if (this.authState.userInfo) {
-          this.authState.userInfo.ckbtc_balance = result.Ok;
-        }
         return result.Ok;
       } else {
         throw new Error(result.Err);
       }
     } catch (error) {
-      console.error("更新ckBTC余额失败:", error);
+      console.error("获取池子详情失败:", error);
       throw error;
     }
   }
 
-  // 获取借贷位置
-  async getBorrowPositions(): Promise<BorrowPosition[]> {
+  // 获取资产详情
+  async getAssetInfo(tokenId: string): Promise<AssetConfig> {
     if (!this.actor) {
       throw new Error("Actor未初始化");
     }
 
     try {
-      const result = await this.actor.get_borrow_positions();
-
+      const result = await this.actor.get_asset_info(tokenId);
       if ("Ok" in result) {
         return result.Ok;
       } else {
         throw new Error(result.Err);
       }
+    } catch (error) {
+      console.error("获取资产详情失败:", error);
+      throw error;
+    }
+  }
+
+  // 获取用户的总供应价值
+  async getUserTotalSupplyValue(user: Principal): Promise<number> {
+    if (!this.actor) {
+      throw new Error("Actor未初始化");
+    }
+
+    try {
+      return await this.actor.get_user_total_supply_value(user);
+    } catch (error) {
+      console.error("获取用户总供应价值失败:", error);
+      throw error;
+    }
+  }
+
+  // 获取用户的总借贷价值
+  async getUserTotalBorrowValue(user: Principal): Promise<number> {
+    if (!this.actor) {
+      throw new Error("Actor未初始化");
+    }
+
+    try {
+      return await this.actor.get_user_total_borrow_value(user);
+    } catch (error) {
+      console.error("获取用户总借贷价值失败:", error);
+      throw error;
+    }
+  }
+
+  // 获取用户的健康因子
+  async getUserHealthFactor(user: Principal): Promise<number> {
+    if (!this.actor) {
+      throw new Error("Actor未初始化");
+    }
+
+    try {
+      return await this.actor.get_user_health_factor(user);
+    } catch (error) {
+      console.error("获取用户健康因子失败:", error);
+      throw error;
+    }
+  }
+
+  // 获取借贷位置 - 基于后端数据转换
+  async getBorrowPositions(): Promise<BorrowPosition[]> {
+    if (!this.actor || !this.authState.principal) {
+      throw new Error("Actor未初始化或用户未认证");
+    }
+
+    try {
+      const borrows = await this.getUserBorrows(this.authState.principal);
+      const assets = await this.getAllAssets();
+      
+      return borrows.map(([tokenId, amount]) => {
+        const asset = assets.find(a => a.token_id.toText() === tokenId.toText());
+        const assetName = asset?.name || tokenId.toText().slice(0, 8);
+        
+        return {
+          id: tokenId.toText(),
+          asset: assetName,
+          amount: Number(amount),
+          rate: asset?.interest_rate || 0,
+          health_factor: this.authState.userInfo?.health_factor || 0,
+        };
+      });
     } catch (error) {
       console.error("获取借贷位置失败:", error);
       throw error;
     }
   }
 
-  // 获取收益位置
+  // 获取收益位置 - 基于后端数据转换
   async getEarnPositions(): Promise<EarnPosition[]> {
-    if (!this.actor) {
-      throw new Error("Actor未初始化");
+    if (!this.actor || !this.authState.principal) {
+      throw new Error("Actor未初始化或用户未认证");
     }
 
     try {
-      const result = await this.actor.get_earn_positions();
-
-      if ("Ok" in result) {
-        return result.Ok;
-      } else {
-        throw new Error(result.Err);
-      }
+      const supplies = await this.getUserSupplies(this.authState.principal);
+      const assets = await this.getAllAssets();
+      
+      return supplies.map(([tokenId, amount]) => {
+        const asset = assets.find(a => a.token_id.toText() === tokenId.toText());
+        const assetName = asset?.name || tokenId.toText().slice(0, 8);
+        
+        return {
+          id: tokenId.toText(),
+          asset: assetName,
+          amount: Number(amount),
+          apy: asset?.interest_rate || 0,
+          earned: 0, // 暂时设为0，后续可以计算
+        };
+      });
     } catch (error) {
       console.error("获取收益位置失败:", error);
-      throw error;
-    }
-  }
-
-  // 添加借贷位置
-  async addBorrowPosition(
-    asset: string,
-    amount: number,
-    rate: number,
-  ): Promise<BorrowPosition> {
-    if (!this.actor) {
-      throw new Error("Actor未初始化");
-    }
-
-    try {
-      const result = await this.actor.add_borrow_position(asset, amount, rate);
-
-      if ("Ok" in result) {
-        return result.Ok;
-      } else {
-        throw new Error(result.Err);
-      }
-    } catch (error) {
-      console.error("添加借贷位置失败:", error);
-      throw error;
-    }
-  }
-
-  // 添加收益位置
-  async addEarnPosition(
-    asset: string,
-    amount: number,
-    apy: number,
-  ): Promise<EarnPosition> {
-    if (!this.actor) {
-      throw new Error("Actor未初始化");
-    }
-
-    try {
-      const result = await this.actor.add_earn_position(asset, amount, apy);
-
-      if ("Ok" in result) {
-        return result.Ok;
-      } else {
-        throw new Error(result.Err);
-      }
-    } catch (error) {
-      console.error("添加收益位置失败:", error);
       throw error;
     }
   }
@@ -569,129 +643,7 @@ export class InternetIdentityService {
   async refreshAuthState(): Promise<void> {
     await this.checkAuthenticationStatus();
   }
-
-  // 获取 ckBTC 余额
-  async getCkbtcBalance(): Promise<number> {
-    if (!this.actor) {
-      throw new Error("Actor未初始化");
-    }
-
-    try {
-      const result = await this.actor.get_ckbtc_balance();
-
-      if ("Ok" in result) {
-        return result.Ok;
-      } else {
-        throw new Error(result.Err);
-      }
-    } catch (error) {
-      console.error("获取ckBTC余额失败:", error);
-      throw error;
-    }
-  }
-}
-
-// ckBTC minter canister 配置
-const CKBTC_MINTER_CANISTER_ID = "qjdve-lqaaa-aaaaa-aaaeq-cai"; // 主网 minter canister
-const CKBTC_MINTER_IDL = (IDL: any) =>
-  IDL.Service({
-    get_btc_deposit_state: IDL.Func(
-      [],
-      [
-        IDL.Record({
-          status: IDL.Text,
-          btcAddress: IDL.Text,
-          received: IDL.Float64,
-          required: IDL.Float64,
-          confirmations: IDL.Nat,
-          requiredConfirmations: IDL.Nat,
-        }),
-      ],
-      ["query"],
-    ),
-  });
-
-// 查询充值进度
-export async function getCkbtcDepositState(): Promise<any> {
-  const agent = new HttpAgent({ host: "https://ic0.app" });
-  const minter = Actor.createActor(CKBTC_MINTER_IDL, {
-    agent,
-    canisterId: CKBTC_MINTER_CANISTER_ID,
-  });
-  // 这里只是伪实现，实际参数和返回结构请根据 minter candid 调整
-  const result = await minter.get_btc_deposit_state();
-  if (Array.isArray(result) && result.length > 0) {
-    return result[0];
-  }
-  return null;
 }
 
 // 创建全局实例
 export const internetIdentityService = new InternetIdentityService();
-
-// 通用 ICRC-1 ledger 接口（.did 格式）
-const ICRC1_IDL = ({ IDL }: { IDL: any }) =>
-  IDL.Service({
-    icrc1_balance_of: IDL.Func(
-      [
-        IDL.Record({
-          owner: IDL.Principal,
-          subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
-        }),
-      ],
-      [IDL.Nat],
-      ["query"],
-    ),
-  });
-
-// 获取单个代币余额
-export async function getTokenBalance(
-  canisterId: string,
-  principal: Principal,
-): Promise<bigint> {
-  const host = "http://localhost:8080";
-  const agent = new HttpAgent({ host });
-
-  try {
-    await agent.fetchRootKey();
-  } catch (error) {
-    console.error("获取本地root key失败:", error);
-    throw new Error("无法连接到本地环境，请确保dfx正在运行");
-  }
-
-  const ledger = Actor.createActor(ICRC1_IDL, { agent, canisterId });
-  const balance = await ledger.icrc1_balance_of({
-    owner: principal,
-    subaccount: null,
-  });
-
-  // 确保返回 bigint 类型
-  if (typeof balance === "bigint") {
-    return balance;
-  } else if (typeof balance === "number") {
-    return BigInt(balance);
-  } else if (typeof balance === "string") {
-    return BigInt(balance);
-  } else {
-    return BigInt(0);
-  }
-}
-
-// 获取用户所有币种余额（传入 canister ID 列表）
-export async function getAllBalances(
-  principal: Principal,
-  canisterIds: string[],
-): Promise<Record<string, bigint>> {
-  const balances: Record<string, bigint> = {};
-
-  for (const id of canisterIds) {
-    try {
-      balances[id] = await getTokenBalance(id, principal);
-    } catch (error) {
-      console.error(`查询 ${id} 余额失败:`, error);
-      balances[id] = BigInt(0);
-    }
-  }
-
-  return balances;
-}

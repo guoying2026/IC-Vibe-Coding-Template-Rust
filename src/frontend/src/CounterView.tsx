@@ -24,7 +24,7 @@ export function LendingView({ onError, setLoading }: LendingViewProps) {
       const collateral = await backendService.getCollateralValue(user);
       const borrow = await backendService.getBorrowValue(user);
       const health = await backendService.getHealthFactor(user);
-      
+
       setCollateralValue(collateral);
       setBorrowValue(borrow);
       setHealthFactor(health);
@@ -67,9 +67,15 @@ export function LendingView({ onError, setLoading }: LendingViewProps) {
   return (
     <Card title="Lending Contract Dashboard">
       <div style={{ marginBottom: "1rem" }}>
-        <p><strong>Collateral Value:</strong> ${collateralValue.toFixed(2)}</p>
-        <p><strong>Borrow Value:</strong> ${borrowValue.toFixed(2)}</p>
-        <p><strong>Health Factor:</strong> {healthFactor.toFixed(2)}</p>
+        <p>
+          <strong>Collateral Value:</strong> ${collateralValue.toFixed(2)}
+        </p>
+        <p>
+          <strong>Borrow Value:</strong> ${borrowValue.toFixed(2)}
+        </p>
+        <p>
+          <strong>Health Factor:</strong> {healthFactor.toFixed(2)}
+        </p>
       </div>
       <Button onClick={createPool}>Create Demo Pool</Button>
       <Button onClick={fetchUserStats}>Refresh Stats</Button>

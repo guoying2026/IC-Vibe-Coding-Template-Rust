@@ -7,7 +7,6 @@ import {
   BorrowPosition,
 } from "../services/InternetIdentityService"; // 导入II服务
 import { UserInfoDisplay } from "../components/UserInfoDisplay";
-import { TokenBalanceDisplay } from "../components/TokenBalanceDisplay";
 import { LocalTokenManager } from "../components/LocalTokenManager";
 
 // 新增 props 类型定义
@@ -208,13 +207,6 @@ export default function DashboardPage({
             {t("page_dashboard_subtitle")}
           </p>
         </div>
-
-        {/* 代币余额显示 */}
-        {isAuthenticated && principal && (
-          <div className="mb-8">
-            <TokenBalanceDisplay principal={principal} />
-          </div>
-        )}
 
         {/* 本地代币管理 */}
         {isAuthenticated && principal && (

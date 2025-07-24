@@ -57,20 +57,18 @@ export const MarketDetailPage = ({ market, onBack }: MarketDetailPageProps) => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center -space-x-2">
               <div className="z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white text-4xl shadow-md dark:bg-gray-800">
-                {market.collateral.icon}
+                🏪
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-4xl shadow-md dark:bg-gray-800">
-                {market.loan.icon}
+                💰
               </div>
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl dark:text-white">
-                {market.collateral.symbol} / {market.loan.symbol}
+                {market.baseAsset} / {market.quoteAsset}
               </h1>
               <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-                <span>{market.collateral.name}</span>
-                <span>/</span>
-                <span>{market.loan.name}</span>
+                <span>{market.name}</span>
               </div>
             </div>
           </div>
@@ -84,20 +82,20 @@ export const MarketDetailPage = ({ market, onBack }: MarketDetailPageProps) => {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
               <StatCard
                 title={t("Total Market Size")}
-                value={formatCurrency(market.totalMarketSize, true)}
+                value={formatCurrency(market.volume24h, true)}
               />
               <StatCard
                 title={t("Total Liquidity")}
-                value={formatCurrency(market.totalLiquidity, true)}
+                value={formatCurrency(market.liquidity, true)}
               />
               <StatCard
                 title={t("Borrow Rate")}
-                value={`${market.borrowRate.toFixed(2)}%`}
+                value={`${market.interest_rate.toFixed(2)}%`}
                 color="text-green-500"
               />
               <StatCard
-                title={t("Trusted By")}
-                icons={market.trustedBy || []}
+                title={t("Collateral Factor")}
+                value={`${market.collateral_factor.toFixed(2)}%`}
               />
             </div>
 
@@ -114,12 +112,23 @@ export const MarketDetailPage = ({ market, onBack }: MarketDetailPageProps) => {
             {/* 金库列表 */}
             <div>
               <h3 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">
-                Vaults Listing The Market
+                Market Information
               </h3>
               <div className="space-y-3">
-                {market.vaults.map((vault) => (
-                  <VaultListItem key={vault.id} vault={vault} />
-                ))}
+                <div className="rounded-lg bg-white/70 p-4 shadow-sm backdrop-blur-md dark:bg-gray-800/70">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Market ID: {market.id}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Amount: {Number(market.amount)}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Used Amount: {Number(market.used_amount)}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Maximum Token: {Number(market.maximum_token)}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -135,7 +144,7 @@ export const MarketDetailPage = ({ market, onBack }: MarketDetailPageProps) => {
                 {/* 供应抵押品 */}
                 <div className="mb-4">
                   <label className="mb-2 block text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Supply Collateral {market.collateral.symbol}
+                    Supply Collateral {market.baseAsset}
                   </label>
                   <input
                     type="number"
@@ -147,7 +156,7 @@ export const MarketDetailPage = ({ market, onBack }: MarketDetailPageProps) => {
                 {/* 借贷 */}
                 <div className="mb-6">
                   <label className="mb-2 block text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Borrow {market.loan.symbol}
+                    Borrow {market.quoteAsset}
                   </label>
                   <input
                     type="number"
@@ -208,24 +217,24 @@ const StatCard = ({
 const VaultListItem = ({ vault }: { vault: Vault }) => (
   <div className="grid grid-cols-12 items-center gap-4 rounded-lg bg-white/70 px-4 py-3 shadow-sm backdrop-blur-md transition-colors hover:bg-white/90 dark:bg-gray-800/70 dark:hover:bg-gray-700/90">
     <div className="col-span-1 flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-lg dark:bg-gray-600">
-      {vault.curatorIcon}
+      🏦
     </div>
     <div className="col-span-4">
       <p className="font-semibold text-gray-900 dark:text-white">
         {vault.name}
       </p>
       <p className="text-xs text-gray-500 dark:text-gray-400">
-        {vault.curator}
+        {vault.asset}
       </p>
     </div>
     <div className="col-span-4 text-left">
       <p className="font-medium text-gray-800 dark:text-gray-200">
-        {formatCurrency(vault.allocation)}
+        {formatCurrency(vault.tvl)}
       </p>
     </div>
     <div className="col-span-3 text-right">
       <p className="font-medium text-gray-800 dark:text-gray-200">
-        {vault.supplyShare.toFixed(2)}%
+        {vault.apy.toFixed(2)}%
       </p>
     </div>
   </div>

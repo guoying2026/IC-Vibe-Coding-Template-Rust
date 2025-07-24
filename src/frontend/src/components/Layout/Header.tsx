@@ -21,34 +21,39 @@ interface HeaderProps {
 // 导航项配置
 const navItems: NavItem[] = [
   {
+    id: "dashboard",
     key: "dashboard",
-    label: { en: "Dashboard", zh: "个人中心" },
-    // icon: '📊',
-    path: "/dashboard",
+    label: "Dashboard", // 改为字符串
+    icon: '📊',
+    href: "/dashboard",
   },
   {
+    id: "earn",
     key: "earn",
-    label: { en: "Earn", zh: "收益" },
-    // icon: '💰',
-    path: "/earn",
+    label: "Earn", // 改为字符串
+    icon: '💰',
+    href: "/earn",
   },
   {
+    id: "borrow",
     key: "borrow",
-    label: { en: "Borrow", zh: "借贷" },
-    // icon: '🏦',
-    path: "/borrow",
+    label: "Borrow", // 改为字符串
+    icon: '🏦',
+    href: "/borrow",
   },
   {
+    id: "explore",
     key: "explore",
-    label: { en: "Explore", zh: "探索" },
-    // icon: '🔍',
-    path: "/explore",
+    label: "Explore", // 改为字符串
+    icon: '🔍',
+    href: "/explore",
   },
   {
+    id: "migrate",
     key: "migrate",
-    label: { en: "Migrate", zh: "教程" },
-    // icon: '🔄',
-    path: "/migrate",
+    label: "Migrate", // 改为字符串
+    icon: '🔄',
+    href: "/migrate",
   },
 ];
 
@@ -111,14 +116,14 @@ export const Header = ({
             {navItems.map((item) => (
               <button
                 key={item.key}
-                onClick={() => handleNavClick(item.key)}
+                onClick={() => handleNavClick(item.id)}
                 className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
-                  currentPage === item.key
+                  currentPage === item.id
                     ? "bg-white/20 font-bold text-white shadow" // 选中态
                     : "text-white/90 hover:bg-white/10 hover:text-white"
                 }`}
               >
-                {item.label[language as Language]}
+                {item.label}
               </button>
             ))}
           </nav>
@@ -264,15 +269,15 @@ export const Header = ({
               {navItems.map((item) => (
                 <button
                   key={item.key}
-                  onClick={() => handleNavClick(item.key)}
+                  onClick={() => handleNavClick(item.id)}
                   className={`flex items-center rounded-lg px-4 py-3 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
-                    currentPage === item.key
+                    currentPage === item.id
                       ? "bg-white/20 font-bold text-white"
                       : "text-white/90 hover:bg-white/10 hover:text-white"
                   }`}
                 >
                   <span className="font-semibold">
-                    {item.label[language as Language]}
+                    {item.label}
                   </span>
                 </button>
               ))}

@@ -23,7 +23,6 @@
           "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
         }
       },
-      "specified_id": "umunu-kh777-77774-qaaca-cai",
       "frontend": {}
     },
     "backend": {
@@ -34,7 +33,6 @@
       "gzip": true,
       "wasm": "target/wasm32-unknown-unknown/release/backend.wasm",
       "build": ["bash ./scripts/generate-candid.sh backend"],
-      "specified_id": "uxrrr-q7777-77774-qaaaq-cai",
       "metadata": [
         {
           "name": "candid:service"
@@ -44,8 +42,7 @@
     "frontend": {
       "dependencies": ["backend"],
       "type": "assets",
-      "source": ["src/frontend/dist/"],
-      "specified_id": "uzt4z-lp777-77774-qaabq-cai"
+      "source": ["src/frontend/dist/"]
     }
   },
   "output_env_file": ".env",

@@ -1,302 +1,484 @@
-# 🧪🔥 Ultimate IC Vibe Coding Template
+# 🏦 ICP Lending Protocol
 
-This template was built for the **IC Vibe Coding Bootcamp (Rust Edition)** and it's meant to be used in Advance Challenge or in a future Hackathon.
+A decentralized lending protocol built on the Internet Computer (ICP) platform, featuring supply, borrow, repay, and withdraw functionalities with real-time data integration between frontend and backend.
 
-## Welcome! 👋
+## 🚀 Features
 
-This repository offers a high-quality, production-ready template to jumpstart your Internet Computer (ICP) development.
+### Core Lending Protocol
+- **Supply**: Users can deposit assets into lending pools as collateral
+- **Borrow**: Users can borrow assets against their collateral
+- **Repay**: Users can repay their borrowed amounts
+- **Withdraw**: Users can withdraw their supplied assets
+- **Liquidation**: Automatic liquidation for undercollateralized positions
 
-It includes:
+### Technical Features
+- **Real-time Data**: All frontend lists fetch data directly from backend canisters
+- **Type Safety**: Full TypeScript integration with backend Candid interfaces
+- **Authentication**: Internet Identity integration for secure user authentication
+- **Price Feeds**: Integration with Pyth Network for real-time price data
+- **Responsive UI**: Modern React + Tailwind CSS interface
 
-- 🦀 **Rust-based Canister** backend
-- ⚛️ **React + Tailwind + Typescript** frontend
-- 🤖 **IC LLM Canister** integration for Agentic workflows
-- 🧪 **Full Test Suite**: Vitest + PocketIC for backend and frontend
-- 🔁 **CI/CD** with GitHub Actions for automated tests and code quality
-- 🤖 **Copilot Integration** to auto-generate tests, code, and changelogs
+### Architecture
+- **Backend**: Rust canister with comprehensive lending logic
+- **Frontend**: React + TypeScript with real-time backend integration
+- **Authentication**: Internet Identity for secure user management
+- **Data Flow**: Direct canister-to-frontend data fetching
 
-Whether you're building full-stack dapps or agents, this template gives you a solid foundation to start fast and scale smoothly. 🚀
+## 📋 Prerequisites
 
-![Template Screenshot](.github/assets/template-screenshot.png)
+- Node.js (v18 or higher)
+- DFX (v0.28.0 or higher)
+- Rust (latest stable)
+- Internet connection for canister deployment
 
----
+## 🛠️ Installation & Setup
 
-## 📜 Table of Contents
+### 1. Clone the Repository
 
-- [🎥 Recording](#-recording)
-- [🚀 Getting Started](#-getting-started)
-- [📁 Project Structure](#-project-structure)
-- [✅ Testing Patterns](#-testing-patterns)
-- [🔄 CI/CD Workflow](#-cicd-workflow)
-- [🧠 GitHub Copilot Integration](#-github-copilot-integration)
-- [🔗 Resources & Documentation](#-learning-resources)
-- [📩 Submit Your Project!](#-submit-your-project)
-
----
-
-## 🎥 Recording
-
-There was an Advanced Challenge Lab session, that was recorded and had a lot of information and showcase of Vibe Coding using this template.
-
-You can see here the full recording: https://www.youtube.com/watch?v=ZuNUy13wmlI
-
----
-
-## 🚀 Getting Started
-
-### 🧑‍💻 1. Get Codespace Ready
-
-A **devcontainer** is preconfigured for you to start coding instantly!
-
-- Click on "Use this Template" → "Create a new repository".
-- Click "Code → Open with Codespaces"
-- Change machine type to 4-core 16GB RAM • 32GB
-- Once the codespace is created, you can open it in VS Code Local
-- Everything is pre-installed and ready for you to run the following commands
+```bash
+git clone <repository-url>
+cd icp_1
+```
 
 ### 2. Install Dependencies
 
 ```bash
+# Install root dependencies
 npm install
+
+# Install frontend dependencies
+cd src/frontend
+npm install
+cd ../..
 ```
 
-### 3. Running Ollama
-
-To be able to test the agent locally, you'll need a server for processing the agent's prompts. For that, we'll use `ollama`, which is a tool that can download and serve LLMs.
-See the documentation on the [Ollama website](https://ollama.com/). Run:
+### 3. Start Local Environment
 
 ```bash
-ollama serve
-# Expected to start listening on port 11434
+# Start DFX replica
+dfx start --clean --background
+
+# In a new terminal, deploy all canisters
+dfx deploy
 ```
 
-The above command will start the Ollama server, so that it can process requests by the agent. Additionally, and in a separate window, run the following command to download the LLM that will be used by the agent:
+### 4. Start Development Server
 
 ```bash
-ollama run llama3.1:8b
-```
-
-Once the command executes and the model is loaded, you can terminate it by typing /bye. You won't need to do this step again.
-
-### 4. Deployment
-
-Then, in one terminal window, run:
-
-```bash
-dfx start --clean
-```
-
-Keep this tab open for reading logs.
-
-Then pull the dependency and deploy the canisters in another window:
-
-```bash
-dfx deploy # deploys the backend and frontend canisters
-```
-
-```bash
-dfx deps pull
-dfx deps deploy  # deploys the llm canister
-```
-
-### 5. Start the Development Server
-
-You can start the frontend development server with:
-
-```bash
-# Just the frontend development server
+# Start frontend development server
 npm start
-
 ```
 
-### 6. Run Tests
+## 🏗️ Project Structure
+
+```
+icp_1/
+├── src/
+│   ├── backend/                    # Rust backend canister
+│   │   ├── src/
+│   │   │   ├── lib.rs             # Main lending protocol logic
+│   │   │   └── types.rs           # Data structures and types
+│   │   ├── Cargo.toml             # Rust dependencies
+│   │   └── backend.did            # Auto-generated Candid interface
+│   ├── frontend/                   # React frontend application
+│   │   ├── src/
+│   │   │   ├── components/        # Reusable UI components
+│   │   │   │   ├── Borrow/        # Borrow-related components
+│   │   │   │   ├── Earn/          # Earn-related components
+│   │   │   │   └── Layout/        # Layout components
+│   │   │   ├── services/          # Backend service layer
+│   │   │   ├── views/             # Page components
+│   │   │   ├── types/             # TypeScript type definitions
+│   │   │   └── hooks/             # Custom React hooks
+│   │   ├── package.json           # Frontend dependencies
+│   │   └── vite.config.ts         # Build configuration
+│   └── declarations/              # Auto-generated canister interfaces
+├── dfx.json                       # DFX configuration
+├── Cargo.toml                     # Root Rust workspace
+└── package.json                   # Root dependencies
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+# DFX Network Configuration
+DFX_NETWORK=local
+
+# Canister IDs (auto-generated after deployment)
+CANISTER_ID_BACKEND=your_backend_canister_id
+CANISTER_ID_FRONTEND=your_frontend_canister_id
+CANISTER_ID_INTERNET_IDENTITY=your_ii_canister_id
+
+# Development Settings
+VITE_DFX_NETWORK=local
+VITE_CANISTER_ID_BACKEND=your_backend_canister_id
+VITE_II_CANISTER_ID=your_ii_canister_id
+```
+
+## 🚀 Deployment
+
+### Local Development
 
 ```bash
+# Start local replica
+dfx start --clean --background
+
+# Deploy all canisters
+dfx deploy
+
+# Start frontend development server
+npm start
+```
+
+### Mainnet Deployment
+
+```bash
+# Set network to mainnet
+dfx config --network ic
+
+# Deploy to mainnet
+dfx deploy --network ic
+```
+
+## 📊 Backend API
+
+### Core Lending Functions
+
+#### Supply Assets
+```rust
+#[update]
+async fn supply(token_id: String, amount: NumTokens) -> Result<u64, String>
+```
+
+#### Borrow Assets
+```rust
+#[update]
+async fn borrow(token_id: String, amount: NumTokens) -> Result<u64, String>
+```
+
+#### Repay Borrowed Assets
+```rust
+#[update]
+async fn repay(token_id: String, amount: NumTokens) -> Result<u64, String>
+```
+
+#### Withdraw Supplied Assets
+```rust
+#[update]
+async fn withdraw(token_id: String, amount: NumTokens) -> Result<u64, String>
+```
+
+### Query Functions
+
+#### Get All Pools
+```rust
+#[query]
+fn get_all_pools() -> Vec<Pool>
+```
+
+#### Get User Supplies
+```rust
+#[query]
+fn get_user_supplies(user: Principal) -> Vec<(Principal, NumTokens)>
+```
+
+#### Get User Borrows
+```rust
+#[query]
+fn get_user_borrows(user: Principal) -> Vec<(Principal, NumTokens)>
+```
+
+#### Get User Health Factor
+```rust
+#[query]
+fn get_user_health_factor(user: Principal) -> f64
+```
+
+### Authentication Functions
+
+#### Check Authentication
+```rust
+#[query]
+fn is_authenticated() -> bool
+```
+
+#### Get User Info
+```rust
+#[query]
+fn get_user_info() -> Result<UserInfo, String>
+```
+
+#### Register User
+```rust
+#[update]
+fn register_user(username: String) -> Result<UserInfo, String>
+```
+
+## 🎨 Frontend Features
+
+### Pages
+
+#### Dashboard
+- User portfolio overview
+- Total supplied and borrowed amounts
+- Health factor monitoring
+- Recent activity feed
+
+#### Earn Page
+- List of available vaults
+- APY rates and TVL information
+- User deposit tracking
+- Filter and search functionality
+
+#### Borrow Page
+- Available lending markets
+- Collateral requirements
+- Interest rates and fees
+- Market statistics
+
+#### Market Detail Page
+- Detailed market information
+- Supply and borrow actions
+- Market statistics and charts
+- Risk metrics
+
+#### Vault Detail Page
+- Vault-specific information
+- Performance metrics
+- Deposit and withdrawal actions
+- Historical data
+
+### Components
+
+#### UserInfoDisplay
+- User authentication status
+- Balance information
+- Health factor display
+- Recent activities
+
+#### MarketListItem
+- Market overview cards
+- Key metrics display
+- Interactive selection
+- Real-time data updates
+
+#### VaultListItem
+- Vault information cards
+- APY and TVL display
+- User position tracking
+- Action buttons
+
+## 🔐 Authentication
+
+The application uses Internet Identity for secure authentication:
+
+1. **Local Development**: Uses local Internet Identity canister
+2. **Mainnet**: Uses production Internet Identity
+3. **Auto-registration**: New users are automatically registered
+4. **Session Management**: Persistent authentication state
+
+### Authentication Flow
+
+```typescript
+// Initialize authentication
+await internetIdentityService.initialize();
+
+// Login with Internet Identity
+await internetIdentityService.login();
+
+// Check authentication status
+const authState = internetIdentityService.getAuthState();
+
+// Get user information
+const userInfo = await internetIdentityService.getUserInfo();
+```
+
+## 📈 Data Integration
+
+### Real-time Data Flow
+
+All frontend data is fetched directly from backend canisters:
+
+```typescript
+// Fetch pools data
+const pools = await internetIdentityService.getAllPools();
+
+// Fetch user supplies
+const supplies = await internetIdentityService.getUserSupplies(principal);
+
+// Fetch user borrows
+const borrows = await internetIdentityService.getUserBorrows(principal);
+
+// Fetch user health factor
+const healthFactor = await internetIdentityService.getUserHealthFactor(principal);
+```
+
+### Type Safety
+
+Frontend types are aligned with backend Candid interfaces:
+
+```typescript
+// Backend-aligned interfaces
+interface Pool {
+  name: string;
+  token_id: Principal;
+  pool_account: AssetConfig;
+  collateral: AssetConfig[];
+  amount: bigint;
+  used_amount: bigint;
+  maximum_token: bigint;
+}
+
+interface AssetConfig {
+  name: string;
+  token_id: Principal;
+  account: Account;
+  price_id: string;
+  asset_type: AssetTypes;
+  decimals: number;
+  collateral_factor: number;
+  interest_rate: number;
+}
+```
+
+## 🧪 Testing
+
+### Run Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run specific test file
+npm test tests/src/backend.test.ts
+
+# Run frontend tests
+cd src/frontend
 npm test
 ```
 
-You can also run:
+### Test Coverage
 
-```bash
-npm test tests/src/backend.test.ts    # individual test
+- Backend canister logic testing
+- Frontend component testing
+- Integration testing
+- Authentication flow testing
+
+## 🔧 Development
+
+### Adding New Features
+
+1. **Backend Changes**:
+   - Add new functions to `src/backend/src/lib.rs`
+   - Update Candid interface
+   - Add tests
+
+2. **Frontend Changes**:
+   - Add new components in `src/frontend/src/components/`
+   - Update types in `src/frontend/src/types/`
+   - Add service methods in `src/frontend/src/services/`
+
+### Code Quality
+
+- **Rust**: Follow Clippy and Rust FMT guidelines
+- **TypeScript**: ESLint and Prettier configuration
+- **Testing**: Comprehensive test coverage
+- **Documentation**: Inline code documentation
+
+## 🚀 Production Deployment
+
+### Mainnet Deployment Steps
+
+1. **Prepare Environment**:
+   ```bash
+   dfx config --network ic
+   ```
+
+2. **Deploy Canisters**:
+   ```bash
+   dfx deploy --network ic
+   ```
+
+3. **Update Environment Variables**:
+   - Set production canister IDs
+   - Configure Internet Identity
+   - Update price feed endpoints
+
+4. **Verify Deployment**:
+   - Test all functionality
+   - Verify authentication
+   - Check data integration
+
+### Security Considerations
+
+- **Access Control**: Admin-only functions for pool management
+- **Input Validation**: Comprehensive parameter validation
+- **Error Handling**: Graceful error handling throughout
+- **Rate Limiting**: Implement rate limiting for critical functions
+
+## 📚 API Documentation
+
+### Candid Interface
+
+The complete Candid interface is available in `src/backend/backend.did`:
+
+```candid
+service : () -> {
+  // Core lending functions
+  supply : (text, nat) -> (Result);
+  borrow : (text, nat) -> (Result);
+  repay : (text, nat) -> (Result);
+  withdraw : (text, nat) -> (Result);
+  
+  // Query functions
+  get_all_pools : () -> (vec Pool) query;
+  get_user_supplies : (principal) -> (vec record { principal; nat }) query;
+  get_user_borrows : (principal) -> (vec record { principal; nat }) query;
+  
+  // Authentication functions
+  is_authenticated : () -> (bool) query;
+  get_user_info : () -> (Result_4) query;
+  register_user : (text) -> (Result_4);
+}
 ```
 
----
+## 🤝 Contributing
 
-## 📁 Project Structure
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
 
-```
-ICP-Bootcamp-Vibe-Coding/
-├── .devcontainer/devcontainer.json       # Container config for running your own codespace
-├── .github/instructions/                 # Copilot general and language specific instructions
-├── .github/prompts/                      # Copilot Prompts, like add feature and changes review
-├── .github/workflows/                    # GitHub CI/CD pipelines
-├── src/
-│   ├── backend/                          # Rust backend canister
-│   │   ├── src/
-│   │   │   └── lib.rs                    # Main Rust file
-│   │   └── Cargo.toml                    # Rust dependencies
-│   ├── frontend/                         # React + Tailwind + TypeScript frontend
-│   │   ├── src/
-│   │   │   ├── App.tsx                   # Main App component
-│   │   │   ├── index.css                 # Global styles with Tailwind
-│   │   │   ├── components/               # Reusable UI components
-│   │   │   ├── services/                 # Canister service layers
-│   │   │   └── views/                    # Page-level components
-│   │   ├── assets/                       # Static assets (images, icons)
-│   │   ├── tests/                        # Frontend unit tests
-│   │   ├── index.html                    # Frontend entry point
-│   │   ├── main.tsx                      # React main file
-│   │   ├── package.json                  # Frontend dependencies
-│   │   ├── tsconfig.json                 # TypeScript configuration
-│   │   ├── vite.config.ts                # Vite build configuration
-│   │   └── vite-env.d.ts                 # Vite type definitions
-│   └── declarations/                     # Auto-generated canister interfaces
-├── tests/
-│   ├── src/                              # Backend test files
-│   ├── backend-test-setup.ts             # PocketIC instance
-│   └── vitest.config.ts                  # Vitest configuration
-├── scripts/
-│   ├── dev-container-setup.sh            # Extra set up steps for codespace
-│   └── generate-candid.sh                # Useful one way script to build, generate candid and did files
-├── dfx.json                              # ICP config
-├── Cargo.toml                            # Root Rust workspace config
-└── CHANGELOG.md
-```
+### Development Guidelines
+
+- Follow existing code style
+- Add comprehensive tests
+- Update documentation
+- Ensure type safety
+- Test on both local and mainnet
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For support and questions:
+
+- Create an issue in the repository
+- Check the documentation
+- Review the code examples
+- Test with the provided setup
+
+## 🔄 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes and updates.
 
 ---
 
-## 🔄 CI/CD Workflow
-
-Located under `.github/workflows/`, this includes:
-
-- 🧪 Automated end-2-end test runs
-
-It could be extended to:
-
-- check for security updates (audit);
-- test coverage;
-- code quality.
-
----
-
-## 🧠 **GitHub Copilot Integration**
-
-This project leverages two key customization folders:
-
-- `.github/instructions/` – Provides essential context to guide AI responses.
-- `.github/prompts/` – Defines workflow prompts to effectively assist you.
-
-Think of the AI as a super-fast junior developer, handling the heavy lifting while you focus on quality control. Instead of using PRs, you’re reviewing and refining code directly in the IDE through Copilot chat.
-
-### 📝 **About Instructions**
-
-Instructions provide "context" that applies to specific files using regex patterns defined in `applyTo`. They are ideal for project-wide or language-specific guidance.
-
-**Current Instructions:**
-
-- **general:** `applyTo: **`
-- **rust:** `applyTo: */*.rs`
-- **test:** `applyTo: tests/**`
-
-**Examples of Context You Can Define:**
-
-- This is an ICP project using Rust canisters.
-- For Rust, we follow Clippy and Rust FMT style guides and linting tools.
-- For tests, we use **Pocket IC** and maintain a specific test structure.
-
-### 🛠️ **About Prompts**
-
-Prompts define specific tasks and guide the AI through a structured workflow. They are especially useful for maintaining a consistent development process.
-
----
-
-#### ✨ **Add Feature Prompt**
-
-```markdown
-/add-feature Add a function to decrease the counter value
-```
-
-In this workflow, Copilot follows a Spec Driven Workflow:
-
-1. Clarification Phase:
-   • Updates the changelog and asks for any necessary clarifications.
-2. Test First Approach:
-   • Generates a test case and ensures it fails, confirming that the test is effectively targeting the desired behavior.
-3. Human Confirmation:
-   • The AI pauses for a human to review and confirm the spec, ensuring alignment before proceeding.
-4. Implementation Phase:
-   • Implements the code, self-checks for errors, installs necessary libraries, lints, formats, and runs tests to confirm they pass.
-
-**✅ Key Takeaways**
-
-When you explore the prompt, please notice:
-
-- CRITICAL PAUSE POINTS
-  - Strategic pauses allow the human to verify the work in small, reviewable chunks and redirect if necessary.
-- Command Explanations
-  - The prompt can include specific commands or scripts, guiding the AI in self-checking, running scripts, or managing dependencies.
-- Task-Specific Advice
-  - The prompt is the place to add any specific guidance or notes relevant only to the particular task at hand.
-
-#### 🚧 **Changes Review Prompt**
-
-To run a review, simply call the prompt:
-
-```markdown
-/changes-review
-```
-
-The AI will analyze the current git diffs, then reference other files in the repo for context. It will generate a comprehensive report for you to review before committing.
-
-#### ✅ **Focus Areas**
-
-1. **Business Logic:**
-
-   - Detects potential unwanted side effects or missing edge cases.
-
-2. **Code Quality:**
-
-   - Suggests improvements or refactor opportunities.
-
-3. **Security & Performance:**
-   - Identifies vulnerabilities or inefficiencies.
-
-#### 📌 **Why It Matters**
-
-- AI can handle the heavy lifting, but it's **your responsibility as the Senior** to validate the findings.
-- Double-check and ensure quality – small issues now can become big problems later. 😉
-
----
-
-## 📚 Learning Resources
-
-- [Instruction and Prompt Files](https://code.visualstudio.com/docs/copilot/copilot-customization)
-- [Agent Mode](https://code.visualstudio.com/docs/copilot/chat/chat-agent-mode)
-- [Copilot Reference](https://code.visualstudio.com/docs/copilot/reference/copilot-vscode-features)
-- [ICP Dev Docs](https://internetcomputer.org/docs)
-- [Rust CDK](https://internetcomputer.org/docs/current/developer-docs/backend/rust/)
-- [PicJS Doc](https://dfinity.github.io/pic-js/)
-- [Vitest Testing Framework](https://vitest.dev/)
-
----
-
-### 🤝 **Contributing**
-
-We welcome contributions! If you encounter a bug, have a feature request, or want to suggest improvements, please open an issue or submit a Pull Request.
-
-We especially welcome candidates of limits you face, consider using the **Limit Candidate Form Issue** – it helps us prioritize and address the most impactful limits effectively.
-
----
-
-## 📩 Submit Your Project!
-
-🎯 **Completed your challenge? Submit your project here:**  
-📢 [Taikai Submission](https://taikai.network/icp-eu-alliance/hackathons/VIBATHON)
-
-📌 **Want to explore more challenges? Return to the index:**  
-🔗 [IC Vibathon Index](https://github.com/pt-icp-hub/IC-Vibathon-Index)
-
----
-
-**Now go build something fast, tested, and production-ready 🚀🦀**
+**Built with ❤️ for the Internet Computer ecosystem**
