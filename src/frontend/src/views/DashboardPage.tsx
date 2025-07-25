@@ -249,7 +249,7 @@ export default function DashboardPage({
                 </svg>
               }
             />
-        </div>
+          </div>
 
           {/* 代币余额显示 */}
           <TokenBalanceDisplay isAuthenticated={isAuthenticated} />
@@ -259,25 +259,25 @@ export default function DashboardPage({
         <div className="rounded-xl border border-gray-200 bg-white p-8 dark:border-gray-700 dark:bg-gray-800">
           {/* Tab切换栏 */}
           <div className="mb-6 flex space-x-8 border-b border-gray-200 dark:border-gray-700">
-          <button
+            <button
               className={`px-2 py-3 text-base font-semibold transition-colors ${activeTab === "earn" ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500 hover:text-blue-600"}`}
               onClick={() => setActiveTab("earn")}
-          >
+            >
               {t("My Earn Positions")}
-          </button>
-          <button
+            </button>
+            <button
               className={`px-2 py-3 text-base font-semibold transition-colors ${activeTab === "borrow" ? "border-b-2 border-purple-600 text-purple-600" : "text-gray-500 hover:text-purple-600"}`}
               onClick={() => setActiveTab("borrow")}
-          >
+            >
               {t("My Borrow Positions")}
-          </button>
-        </div>
+            </button>
+          </div>
 
           {/* Tab内容区 - 扁平化表格 */}
           <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
                   <tr className="bg-gray-100 dark:bg-gray-600">
                     <th className="px-6 py-3 text-left text-xs font-semibold tracking-wider text-gray-700 dark:text-gray-300">
                       {t("Asset")}
@@ -291,13 +291,13 @@ export default function DashboardPage({
                     <th className="px-6 py-3 text-right text-xs font-semibold tracking-wider text-gray-700 dark:text-gray-300">
                       {activeTab === "earn" ? t("Earned") : t("Health Factor")}
                     </th>
-                </tr>
-              </thead>
-              <tbody>
+                  </tr>
+                </thead>
+                <tbody>
                   {(activeTab === "earn" ? earnPositions : borrowPositions).map(
                     (pos) => (
-                  <tr
-                    key={pos.id}
+                      <tr
+                        key={pos.id}
                         className="border-b border-gray-200 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-600"
                       >
                         <td className="px-6 py-3 font-medium text-gray-900 dark:text-white">
@@ -315,7 +315,7 @@ export default function DashboardPage({
                           {activeTab === "earn"
                             ? (pos as EarnPosition).earned
                             : (pos as BorrowPosition).health_factor}
-                    </td>
+                        </td>
                       </tr>
                     ),
                   )}
@@ -330,15 +330,15 @@ export default function DashboardPage({
                         {activeTab === "earn"
                           ? t("no_earn_positions")
                           : t("no_borrow_positions")}
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
                   )}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}
