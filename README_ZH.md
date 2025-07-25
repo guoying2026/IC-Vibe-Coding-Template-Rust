@@ -213,6 +213,7 @@ const { t, language, toggleLanguage } = useLanguage();
 ```
 
 支持的语言键包括：
+
 - 用户界面文本
 - 错误消息
 - 操作提示
@@ -269,7 +270,8 @@ const supplies = await internetIdentityService.getUserSupplies(principal);
 const borrows = await internetIdentityService.getUserBorrows(principal);
 
 // 获取用户健康因子
-const healthFactor = await internetIdentityService.getUserHealthFactor(principal);
+const healthFactor =
+  await internetIdentityService.getUserHealthFactor(principal);
 ```
 
 ### 代币余额查询
@@ -286,7 +288,7 @@ const ckbtcBalance = await tokenBalanceService.queryCkbtcBalance(principal);
 // 查询自定义代币余额
 const customBalance = await tokenBalanceService.queryTokenBalance(
   tokenCanisterId,
-  accountId
+  accountId,
 );
 ```
 
@@ -374,6 +376,7 @@ npm test
 ### 添加新功能
 
 1. **后端更改**:
+
    - 在`src/backend/src/lib.rs`中添加新函数
    - 更新Candid接口
    - 添加测试
@@ -396,16 +399,19 @@ npm test
 ### 主网部署步骤
 
 1. **准备环境**:
+
    ```bash
    dfx config --network ic
    ```
 
 2. **部署罐子**:
+
    ```bash
    dfx deploy --network ic
    ```
 
 3. **更新环境变量**:
+
    - 设置生产罐子ID
    - 配置Internet Identity
    - 更新价格预言机端点

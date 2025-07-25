@@ -213,6 +213,7 @@ const { t, language, toggleLanguage } = useLanguage();
 ```
 
 Supported language keys include:
+
 - User interface text
 - Error messages
 - Operation prompts
@@ -269,7 +270,8 @@ const supplies = await internetIdentityService.getUserSupplies(principal);
 const borrows = await internetIdentityService.getUserBorrows(principal);
 
 // Get user health factor
-const healthFactor = await internetIdentityService.getUserHealthFactor(principal);
+const healthFactor =
+  await internetIdentityService.getUserHealthFactor(principal);
 ```
 
 ### Token Balance Queries
@@ -286,7 +288,7 @@ const ckbtcBalance = await tokenBalanceService.queryCkbtcBalance(principal);
 // Query custom token balance
 const customBalance = await tokenBalanceService.queryTokenBalance(
   tokenCanisterId,
-  accountId
+  accountId,
 );
 ```
 
@@ -374,6 +376,7 @@ npm test
 ### Adding New Features
 
 1. **Backend Changes**:
+
    - Add new functions in `src/backend/src/lib.rs`
    - Update Candid interface
    - Add tests
@@ -396,16 +399,19 @@ npm test
 ### Mainnet Deployment Steps
 
 1. **Prepare Environment**:
+
    ```bash
    dfx config --network ic
    ```
 
 2. **Deploy Canisters**:
+
    ```bash
    dfx deploy --network ic
    ```
 
 3. **Update Environment Variables**:
+
    - Set production canister IDs
    - Configure Internet Identity
    - Update price oracle endpoints
@@ -497,4 +503,4 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes and update history.
 
 ---
 
-**Built for the Internet Computer ecosystem ❤️** 
+**Built for the Internet Computer ecosystem ❤️**
