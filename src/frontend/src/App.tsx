@@ -20,7 +20,13 @@ import { useLanguage } from "./hooks/useLanguage";
 import { LanguageProvider } from "./hooks/useLanguage";
 
 // 错误提示组件
-const ErrorBanner = ({ message, onClose }: { message: string; onClose: () => void }) => (
+const ErrorBanner = ({
+  message,
+  onClose,
+}: {
+  message: string;
+  onClose: () => void;
+}) => (
   <div className="mb-4 rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">
     <div className="flex items-center justify-between">
       <div className="flex items-center">
@@ -37,8 +43,18 @@ const ErrorBanner = ({ message, onClose }: { message: string; onClose: () => voi
         onClick={onClose}
         className="ml-2 text-red-400 hover:text-red-600 dark:hover:text-red-300"
       >
-        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
     </div>
@@ -120,9 +136,12 @@ function App() {
       let errorMessage = t("internet_identity_failed");
       if (error instanceof Error) {
         if (error.message.includes("无法连接到后端服务")) {
-          errorMessage = t("backend_connection_error") || "无法连接到后端服务，请确保dfx正在运行";
+          errorMessage =
+            t("backend_connection_error") ||
+            "无法连接到后端服务，请确保dfx正在运行";
         } else if (error.message.includes("用户取消")) {
-          errorMessage = t("authentication_cancelled") || "用户取消了身份验证操作";
+          errorMessage =
+            t("authentication_cancelled") || "用户取消了身份验证操作";
         } else {
           errorMessage = error.message;
         }
@@ -284,9 +303,7 @@ function App() {
       )}
 
       {/* 全局错误显示 */}
-      {error && (
-        <ErrorBanner message={error} onClose={clearError} />
-      )}
+      {error && <ErrorBanner message={error} onClose={clearError} />}
     </div>
   );
 }

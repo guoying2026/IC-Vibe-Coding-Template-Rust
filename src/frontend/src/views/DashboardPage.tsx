@@ -38,9 +38,9 @@ const StatCard = ({
   color?: string;
   icon?: React.ReactNode;
 }) => (
-  <div className="mt-4 group relative overflow-hidden rounded-2xl bg-gradient-to-br from-white to-slate-50 p-6 shadow-sm transition-all duration-300 hover:shadow-md dark:from-slate-800 dark:to-slate-700">
+  <div className="group relative mt-4 overflow-hidden rounded-2xl bg-gradient-to-br from-white to-slate-50 p-6 shadow-sm transition-all duration-300 hover:shadow-md dark:from-slate-800 dark:to-slate-700">
     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
-    
+
     <div className="relative">
       <div className="mb-2 text-sm font-medium tracking-wide text-gray-500 dark:text-gray-400">
         {title}
@@ -49,11 +49,7 @@ const StatCard = ({
         <div className="text-2xl font-bold text-gray-900 tabular-nums dark:text-white">
           {value}
         </div>
-        {icon && (
-          <div className="text-gray-400 dark:text-gray-500">
-            {icon}
-          </div>
-        )}
+        {icon && <div className="text-gray-400 dark:text-gray-500">{icon}</div>}
       </div>
     </div>
   </div>
@@ -177,8 +173,18 @@ export default function DashboardPage({
               title={t("Total Earned")}
               value={portfolioData.totalEarned.toFixed(2)}
               icon={
-                <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                <svg
+                  className="h-8 w-8"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                  />
                 </svg>
               }
             />
@@ -186,8 +192,18 @@ export default function DashboardPage({
               title={t("Total Borrowed")}
               value={portfolioData.totalBorrowed.toFixed(2)}
               icon={
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                  />
                 </svg>
               }
             />
@@ -195,8 +211,18 @@ export default function DashboardPage({
               title={t("net_worth")}
               value={portfolioData.netWorth.toFixed(2)}
               icon={
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
                 </svg>
               }
             />
@@ -208,12 +234,22 @@ export default function DashboardPage({
                   : portfolioData.healthFactor.toFixed(2)
               }
               icon={
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
                 </svg>
               }
             />
-        </div>
+          </div>
 
           {/* 代币余额显示 */}
           <TokenBalanceDisplay isAuthenticated={isAuthenticated} />
@@ -223,25 +259,25 @@ export default function DashboardPage({
         <div className="rounded-xl border border-gray-200 bg-white p-8 dark:border-gray-700 dark:bg-gray-800">
           {/* Tab切换栏 */}
           <div className="mb-6 flex space-x-8 border-b border-gray-200 dark:border-gray-700">
-          <button
+            <button
               className={`px-2 py-3 text-base font-semibold transition-colors ${activeTab === "earn" ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500 hover:text-blue-600"}`}
               onClick={() => setActiveTab("earn")}
-          >
+            >
               {t("My Earn Positions")}
-          </button>
-          <button
+            </button>
+            <button
               className={`px-2 py-3 text-base font-semibold transition-colors ${activeTab === "borrow" ? "border-b-2 border-purple-600 text-purple-600" : "text-gray-500 hover:text-purple-600"}`}
               onClick={() => setActiveTab("borrow")}
-          >
+            >
               {t("My Borrow Positions")}
-          </button>
-        </div>
+            </button>
+          </div>
 
           {/* Tab内容区 - 扁平化表格 */}
           <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
                   <tr className="bg-gray-100 dark:bg-gray-600">
                     <th className="px-6 py-3 text-left text-xs font-semibold tracking-wider text-gray-700 dark:text-gray-300">
                       {t("Asset")}
@@ -255,15 +291,15 @@ export default function DashboardPage({
                     <th className="px-6 py-3 text-right text-xs font-semibold tracking-wider text-gray-700 dark:text-gray-300">
                       {activeTab === "earn" ? t("Earned") : t("Health Factor")}
                     </th>
-                </tr>
-              </thead>
-              <tbody>
+                  </tr>
+                </thead>
+                <tbody>
                   {(activeTab === "earn" ? earnPositions : borrowPositions).map(
                     (pos) => (
-                  <tr
-                    key={pos.id}
+                      <tr
+                        key={pos.id}
                         className="border-b border-gray-200 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-600"
-                  >
+                      >
                         <td className="px-6 py-3 font-medium text-gray-900 dark:text-white">
                           {pos.asset}
                         </td>
@@ -279,7 +315,7 @@ export default function DashboardPage({
                           {activeTab === "earn"
                             ? (pos as EarnPosition).earned
                             : (pos as BorrowPosition).health_factor}
-                    </td>
+                        </td>
                       </tr>
                     ),
                   )}
@@ -294,15 +330,15 @@ export default function DashboardPage({
                         {activeTab === "earn"
                           ? t("no_earn_positions")
                           : t("no_borrow_positions")}
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
                   )}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}

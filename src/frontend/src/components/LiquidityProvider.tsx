@@ -25,15 +25,18 @@ export const LiquidityProvider = ({
   // 点击外部关闭模态框
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(event.target as Node)
+      ) {
         onClose();
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [onClose]);
 
@@ -63,7 +66,10 @@ export const LiquidityProvider = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div ref={modalRef} className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+      <div
+        ref={modalRef}
+        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-2xl dark:bg-gray-900"
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 p-6 dark:border-gray-700">
           <div className="flex items-center space-x-3">
@@ -99,26 +105,26 @@ export const LiquidityProvider = ({
 
         {/* Tabs */}
         <div className="flex border-b border-gray-200 dark:border-gray-700">
-            <button
-              onClick={() => setActiveTab("supply")}
+          <button
+            onClick={() => setActiveTab("supply")}
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
-                activeTab === "supply"
+              activeTab === "supply"
                 ? "border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
-                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-              }`}
-            >
-              Supply
-            </button>
-            <button
-              onClick={() => setActiveTab("withdraw")}
+                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            }`}
+          >
+            Supply
+          </button>
+          <button
+            onClick={() => setActiveTab("withdraw")}
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
-                activeTab === "withdraw"
+              activeTab === "withdraw"
                 ? "border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
-                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-              }`}
-            >
-              Withdraw
-            </button>
+                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            }`}
+          >
+            Withdraw
+          </button>
         </div>
 
         {/* Content */}
@@ -140,12 +146,12 @@ export const LiquidityProvider = ({
                   className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 />
                 <div className="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">
-                    {asset.symbol}
+                  {asset.symbol}
                 </div>
               </div>
               <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Available: {maxAmount.toFixed(2)} {asset.symbol}
-            </div>
+              </div>
             </div>
 
             <button

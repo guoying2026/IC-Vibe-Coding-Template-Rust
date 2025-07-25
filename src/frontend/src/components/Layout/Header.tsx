@@ -52,21 +52,21 @@ const navItems: NavItem[] = [
 ];
 
 // 顶部导航栏主组件
-export const Header = ({ 
-  currentPage, 
-  onPageChange, 
-  walletAddress, 
+export const Header = ({
+  currentPage,
+  onPageChange,
+  walletAddress,
   userInfo,
   isAuthenticated,
-  onConnectWallet, 
+  onConnectWallet,
   onDisconnectWallet,
 }: HeaderProps) => {
   // 多语言Hook
   const { t, language, toggleLanguage } = useLanguage();
-  
+
   // 移动端菜单显示状态
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+
   // 钱包下拉菜单显示状态
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
 
@@ -76,17 +76,20 @@ export const Header = ({
   // 点击外部关闭钱包菜单
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (walletMenuRef.current && !walletMenuRef.current.contains(event.target as Node)) {
+      if (
+        walletMenuRef.current &&
+        !walletMenuRef.current.contains(event.target as Node)
+      ) {
         setIsWalletMenuOpen(false);
       }
     };
 
     if (isWalletMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isWalletMenuOpen]);
 
@@ -226,12 +229,12 @@ export const Header = ({
 
                     {/* 操作按钮 */}
                     <div className="px-2 py-1">
-                    <button
-                      onClick={handleDisconnect}
+                      <button
+                        onClick={handleDisconnect}
                         className="w-full rounded px-2 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                    >
+                      >
                         {t("disconnect")}
-                    </button>
+                      </button>
                     </div>
                   </div>
                 )}
@@ -301,4 +304,4 @@ export const Header = ({
       </div>
     </header>
   );
-}; 
+};

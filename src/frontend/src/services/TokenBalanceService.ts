@@ -101,18 +101,26 @@ export class TokenBalanceService {
   }
 
   // 生成Account ID
-  async generateAccountId(principal: Principal, subaccount?: Uint8Array): Promise<string> {
+  async generateAccountId(
+    principal: Principal,
+    subaccount?: Uint8Array,
+  ): Promise<string> {
     try {
-      const padding = new Uint8Array([10, ...new TextEncoder().encode("account-id")]);
+      const padding = new Uint8Array([
+        10,
+        ...new TextEncoder().encode("account-id"),
+      ]);
       const principalBytes = principal.toUint8Array();
       const sub = subaccount ?? new Uint8Array(32);
-      const data = new Uint8Array(padding.length + principalBytes.length + sub.length);
+      const data = new Uint8Array(
+        padding.length + principalBytes.length + sub.length,
+      );
       data.set(padding, 0);
       data.set(principalBytes, padding.length);
       data.set(sub, padding.length + principalBytes.length);
-      
+
       // 使用SHA-224哈希
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
       const hash = new Uint8Array(hashBuffer);
       return this.toHex(hash);
     } catch (error) {
@@ -256,7 +264,9 @@ export class TokenBalanceService {
 
   // 将字节数组转换为十六进制字符串
   private toHex(buffer: Uint8Array): string {
-    return Array.prototype.map.call(buffer, x => ('00' + x.toString(16)).slice(-2)).join('');
+    return Array.prototype.map
+      .call(buffer, (x) => ("00" + x.toString(16)).slice(-2))
+      .join("");
   }
 
   // 编码Account ID为CBOR格式
@@ -284,4 +294,3 @@ export function createTokenBalanceService(
 ): TokenBalanceService {
   return new TokenBalanceService(agent);
 }
- 

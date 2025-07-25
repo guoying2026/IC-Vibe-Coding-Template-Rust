@@ -240,17 +240,21 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
     setLoading(true);
     try {
       console.log(`供应 ${amount} ${asset.symbol}`);
-      
+
       // 模拟交易处理
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       // 更新资产数据
-      setAssets(prevAssets => 
-        prevAssets.map(a => 
-          a.id === asset.id 
-            ? { ...a, supplied: a.supplied + amount, balance: a.balance - amount }
-            : a
-        )
+      setAssets((prevAssets) =>
+        prevAssets.map((a) =>
+          a.id === asset.id
+            ? {
+                ...a,
+                supplied: a.supplied + amount,
+                balance: a.balance - amount,
+              }
+            : a,
+        ),
       );
 
       // 添加交易记录
@@ -261,14 +265,14 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
         amount: amount,
         timestamp: Date.now(),
         txHash: `0x${Math.random().toString(16).substr(2, 64)}`,
-        status: "success"
+        status: "success",
       };
-      
-      setTransactions(prev => [newTransaction, ...prev]);
-      
+
+      setTransactions((prev) => [newTransaction, ...prev]);
+
       // 更新总供应量
-      setTotalSupplied(prev => prev + amount);
-      
+      setTotalSupplied((prev) => prev + amount);
+
       console.log(`成功供应 ${amount} ${asset.symbol}`);
     } catch (error) {
       console.error("供应失败:", error);
@@ -288,17 +292,21 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
     setLoading(true);
     try {
       console.log(`借贷 ${amount} ${asset.symbol}`);
-      
+
       // 模拟交易处理
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       // 更新资产数据
-      setAssets(prevAssets => 
-        prevAssets.map(a => 
-          a.id === asset.id 
-            ? { ...a, borrowed: a.borrowed + amount, balance: a.balance + amount }
-            : a
-        )
+      setAssets((prevAssets) =>
+        prevAssets.map((a) =>
+          a.id === asset.id
+            ? {
+                ...a,
+                borrowed: a.borrowed + amount,
+                balance: a.balance + amount,
+              }
+            : a,
+        ),
       );
 
       // 添加交易记录
@@ -309,11 +317,11 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
         amount: amount,
         timestamp: Date.now(),
         txHash: `0x${Math.random().toString(16).substr(2, 64)}`,
-        status: "success"
+        status: "success",
       };
-      
-      setTransactions(prev => [newTransaction, ...prev]);
-      
+
+      setTransactions((prev) => [newTransaction, ...prev]);
+
       console.log(`成功借贷 ${amount} ${asset.symbol}`);
     } catch (error) {
       console.error("借贷失败:", error);
@@ -333,17 +341,21 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
     setLoading(true);
     try {
       console.log(`还款 ${amount} ${asset.symbol}`);
-      
+
       // 模拟交易处理
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       // 更新资产数据
-      setAssets(prevAssets => 
-        prevAssets.map(a => 
-          a.id === asset.id 
-            ? { ...a, borrowed: Math.max(0, a.borrowed - amount), balance: a.balance - amount }
-            : a
-        )
+      setAssets((prevAssets) =>
+        prevAssets.map((a) =>
+          a.id === asset.id
+            ? {
+                ...a,
+                borrowed: Math.max(0, a.borrowed - amount),
+                balance: a.balance - amount,
+              }
+            : a,
+        ),
       );
 
       // 添加交易记录
@@ -354,11 +366,11 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
         amount: amount,
         timestamp: Date.now(),
         txHash: `0x${Math.random().toString(16).substr(2, 64)}`,
-        status: "success"
+        status: "success",
       };
-      
-      setTransactions(prev => [newTransaction, ...prev]);
-      
+
+      setTransactions((prev) => [newTransaction, ...prev]);
+
       console.log(`成功还款 ${amount} ${asset.symbol}`);
     } catch (error) {
       console.error("还款失败:", error);
@@ -378,17 +390,21 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
     setLoading(true);
     try {
       console.log(`提取 ${amount} ${asset.symbol}`);
-      
+
       // 模拟交易处理
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       // 更新资产数据
-      setAssets(prevAssets => 
-        prevAssets.map(a => 
-          a.id === asset.id 
-            ? { ...a, supplied: Math.max(0, a.supplied - amount), balance: a.balance + amount }
-            : a
-        )
+      setAssets((prevAssets) =>
+        prevAssets.map((a) =>
+          a.id === asset.id
+            ? {
+                ...a,
+                supplied: Math.max(0, a.supplied - amount),
+                balance: a.balance + amount,
+              }
+            : a,
+        ),
       );
 
       // 添加交易记录
@@ -399,14 +415,14 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
         amount: amount,
         timestamp: Date.now(),
         txHash: `0x${Math.random().toString(16).substr(2, 64)}`,
-        status: "success"
+        status: "success",
       };
-      
-      setTransactions(prev => [newTransaction, ...prev]);
-      
+
+      setTransactions((prev) => [newTransaction, ...prev]);
+
       // 更新总供应量
-      setTotalSupplied(prev => Math.max(0, prev - amount));
-      
+      setTotalSupplied((prev) => Math.max(0, prev - amount));
+
       console.log(`成功提取 ${amount} ${asset.symbol}`);
     } catch (error) {
       console.error("提取失败:", error);

@@ -178,14 +178,17 @@ export class InternetIdentityService {
         // 如果agent未初始化，创建一个新的HttpAgent用于匿名查询
         console.log("Agent未初始化，创建匿名Agent用于余额查询...");
         const anonymousAgent = new HttpAgent({
-          host: import.meta.env.DFX_NETWORK === "ic" ? "https://ic0.app" : "http://127.0.0.1:4943",
+          host:
+            import.meta.env.DFX_NETWORK === "ic"
+              ? "https://ic0.app"
+              : "http://127.0.0.1:4943",
         });
-        
+
         // 如果是本地环境，需要设置rootKey
         if (import.meta.env.DFX_NETWORK !== "ic") {
           anonymousAgent.fetchRootKey().catch(console.error);
         }
-        
+
         this.tokenBalanceService = new TokenBalanceService(anonymousAgent);
       } else {
         console.log("使用已初始化的Agent创建TokenBalanceService...");
@@ -791,4 +794,3 @@ export async function getCkbtcDepositState(): Promise<any> {
 
 // 创建全局实例
 export const internetIdentityService = new InternetIdentityService();
- 

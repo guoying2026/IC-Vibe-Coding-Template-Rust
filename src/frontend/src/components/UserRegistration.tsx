@@ -27,15 +27,18 @@ export const UserRegistration: React.FC<UserRegistrationProps> = ({
   // 点击外部关闭模态框
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(event.target as Node)
+      ) {
         onCancel();
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [onCancel]);
 
@@ -73,7 +76,10 @@ export const UserRegistration: React.FC<UserRegistrationProps> = ({
   return (
     // 注册表单容器
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div ref={modalRef} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
+      <div
+        ref={modalRef}
+        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800"
+      >
         {/* 标题 */}
         <h2 className="mb-4 text-center text-2xl font-bold text-gray-900 dark:text-white">
           {t("register_user")}

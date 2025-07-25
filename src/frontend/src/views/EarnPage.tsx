@@ -33,16 +33,16 @@ export const EarnPage = ({
 }: EarnPageProps) => {
   // 多语言Hook
   const { t } = useLanguage();
-  
+
   // 金库列表状态
   const [vaults, setVaults] = useState<Vault[]>([]);
-  
+
   // 筛选文本状态
   const [filter, setFilter] = useState("");
-  
+
   // 存款类型筛选状态
   const [depositFilter, setDepositFilter] = useState("All");
-  
+
   // 管理者筛选状态
   const [curatorFilter, setCuratorFilter] = useState("All");
 
@@ -276,7 +276,7 @@ export const EarnPage = ({
         },
       },
     ];
-    
+
     setVaults(mockVaults);
   }, []);
 
@@ -284,14 +284,14 @@ export const EarnPage = ({
   const filteredVaults = vaults.filter((vault) => {
     const matchesSearch =
       vault.name.toLowerCase().includes(filter.toLowerCase()) ||
-                         vault.curator.toLowerCase().includes(filter.toLowerCase()) ||
-                         vault.asset?.toLowerCase().includes(filter.toLowerCase());
-    
+      vault.curator.toLowerCase().includes(filter.toLowerCase()) ||
+      vault.asset?.toLowerCase().includes(filter.toLowerCase());
+
     const matchesDeposit =
       depositFilter === "All" || vault.asset === depositFilter;
     const matchesCurator =
       curatorFilter === "All" || vault.curator === curatorFilter;
-    
+
     return matchesSearch && matchesDeposit && matchesCurator;
   });
 
@@ -300,7 +300,7 @@ export const EarnPage = ({
     "All",
     ...Array.from(new Set(vaults.map((v) => v.asset).filter(Boolean))),
   ];
-  
+
   // 获取唯一的管理者
   const curators = [
     "All",
@@ -318,7 +318,7 @@ export const EarnPage = ({
           principal={principal}
           onUserInfoUpdate={onUserInfoUpdate}
         /> */}
-        
+
         {/* 页面头部 */}
         <div className="mb-8 text-center">
           <h1 className="mb-4 text-4xl font-bold text-gray-900 sm:text-5xl dark:text-white">
@@ -334,7 +334,7 @@ export const EarnPage = ({
           {/* 筛选和操作栏 */}
           <div className="mb-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="flex items-center space-x-2">
-              <button 
+              <button
                 onClick={() => setDepositFilter("All")}
                 className={`rounded-lg px-4 py-2 text-sm font-semibold shadow transition-colors ${
                   depositFilter === "All"
@@ -344,7 +344,7 @@ export const EarnPage = ({
               >
                 {t("deposit")}: {t("all")}
               </button>
-              <button 
+              <button
                 onClick={() => setCuratorFilter("All")}
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                   curatorFilter === "All"
@@ -378,7 +378,7 @@ export const EarnPage = ({
               />
             </div>
           </div>
-          
+
           {/* 列表头部 */}
           <div className="grid grid-cols-12 gap-4 border-b border-gray-200/70 px-4 pb-3 text-xs font-medium text-gray-500 dark:border-gray-700/70 dark:text-gray-400">
             <div className="col-span-3">{t("vault")}</div>
@@ -405,7 +405,7 @@ export const EarnPage = ({
               </div>
             )}
           </div>
-          
+
           {/* 分页控制 */}
           <div className="mt-6 flex items-center justify-center">
             <div className="flex items-center space-x-2">
@@ -448,4 +448,4 @@ export const EarnPage = ({
       </div>
     </div>
   );
-}; 
+};

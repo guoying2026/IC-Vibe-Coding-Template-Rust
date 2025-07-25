@@ -47,15 +47,18 @@ export const MarketDetail = ({
   // 点击外部关闭模态框
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(event.target as Node)
+      ) {
         onClose();
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [onClose]);
 
@@ -165,7 +168,10 @@ export const MarketDetail = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       {/* 主要容器 - 使用毛玻璃效果和圆角设计 */}
-      <div ref={modalRef} className="max-h-[95vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white/95 shadow-2xl backdrop-blur-xl dark:bg-gray-900/95">
+      <div
+        ref={modalRef}
+        className="max-h-[95vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white/95 shadow-2xl backdrop-blur-xl dark:bg-gray-900/95"
+      >
         {/* 头部区域 */}
         <div className="flex items-center justify-between border-b border-gray-200/50 p-6 dark:border-gray-700/50">
           {/* 资产信息显示 */}
