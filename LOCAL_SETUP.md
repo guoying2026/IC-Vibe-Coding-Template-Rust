@@ -16,6 +16,7 @@ URLs:
     basic_bitcoin: http://127.0.0.1:4943/?canisterId=u6s2n-gx777-77774-qaaba-cai&id=uzt4z-lp777-77774-qaabq-cai
     internet_identity: http://127.0.0.1:4943/?canisterId=u6s2n-gx777-77774-qaaba-cai&id=umunu-kh777-77774-qaaca-cai
 ```
+
 ## 环境变量配置
 
 请在 `src/frontend/.env` 文件中设置以下环境变量：
@@ -28,6 +29,7 @@ VITE_II_CANISTER_ID=umunu-kh777-77774-qaaca-cai
 ```
 
 请在 根目录下的`.evn`文件中设置一下环境变量
+
 ```
 # DFX CANISTER ENVIRONMENT VARIABLES
 DFX_VERSION='0.28.0'

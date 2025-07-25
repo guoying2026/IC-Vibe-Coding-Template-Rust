@@ -2,39 +2,9 @@ import { backend } from "../../../declarations/backend";
 
 /**
  * Service for handling all backend canister API calls
+ * Note: This service is currently not used as we're using InternetIdentityService directly
  */
 export const backendService = {
-  /**
-   * Sends a greeting to the backend and returns the response
-   * @param name Name to greet
-   * @returns Promise with the greeting response
-   */
-  async greet(name: string): Promise<string> {
-    return await backend.greet(name || "World");
-  },
-
-  /**
-   * Fetches the current counter value
-   * @returns Promise with the current count
-   */
-  async getCount(): Promise<bigint> {
-    return await backend.get_count();
-  },
-
-  /**
-   * Increments the counter on the backend
-   * @returns Promise with the new count
-   */
-  async incrementCounter(): Promise<bigint> {
-    return await backend.increment();
-  },
-
-  /**
-   * Sends a prompt to the LLM backend
-   * @param prompt The user's prompt text
-   * @returns Promise with the LLM response
-   */
-  async sendLlmPrompt(prompt: string): Promise<string> {
-    return await backend.prompt(prompt);
-  },
+  // 这里可以添加实际存在的后端方法
+  // 目前所有后端调用都通过 InternetIdentityService 进行
 };

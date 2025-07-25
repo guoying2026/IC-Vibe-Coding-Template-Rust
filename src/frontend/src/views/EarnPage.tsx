@@ -5,11 +5,8 @@ import { useState, useEffect } from "react";
 import { Vault } from "../types";
 import { useLanguage } from "../hooks/useLanguage";
 import { VaultListItem } from "../components/Earn/VaultListItem";
-<<<<<<< HEAD
-=======
 import { UserInfoDisplay } from "../components/UserInfoDisplay";
 import { UserInfo } from "../services/InternetIdentityService";
->>>>>>> upstream/main
 
 // 组件属性接口
 interface EarnPageProps {
@@ -26,11 +23,6 @@ interface EarnPageProps {
 // 收益页面主组件
 export const EarnPage = ({
   walletAddress,
-<<<<<<< HEAD
-  onError,
-  setLoading,
-  onSelectVault,
-=======
   userInfo,
   isAuthenticated,
   principal,
@@ -38,7 +30,6 @@ export const EarnPage = ({
   setLoading,
   onSelectVault,
   onUserInfoUpdate,
->>>>>>> upstream/main
 }: EarnPageProps) => {
   // 多语言Hook
   const { t } = useLanguage();
@@ -320,8 +311,6 @@ export const EarnPage = ({
     // 页面主容器
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100 pt-24 pb-12 dark:from-gray-900 dark:to-slate-800">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-<<<<<<< HEAD
-=======
         {/* 用户信息显示 */}
         {/* <UserInfoDisplay
           userInfo={userInfo}
@@ -330,7 +319,6 @@ export const EarnPage = ({
           onUserInfoUpdate={onUserInfoUpdate}
         /> */}
 
->>>>>>> upstream/main
         {/* 页面头部 */}
         <div className="mb-8 text-center">
           <h1 className="mb-4 text-4xl font-bold text-gray-900 sm:text-5xl dark:text-white">
@@ -340,15 +328,6 @@ export const EarnPage = ({
             {t("page_earn_subtitle")}
           </p>
         </div>
-
-        {/* 连接钱包提示 */}
-        {!walletAddress && (
-          <div className="mb-8 text-center">
-            <button className="rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-8 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:from-blue-600 hover:to-purple-600 hover:shadow-xl active:scale-95">
-              {t("connect_wallet")}
-            </button>
-          </div>
-        )}
 
         {/* 金库列表容器 */}
         <div className="rounded-3xl border border-gray-200/50 bg-white/50 p-4 shadow-xl backdrop-blur-2xl sm:p-6 dark:border-gray-700/50 dark:bg-gray-800/50">

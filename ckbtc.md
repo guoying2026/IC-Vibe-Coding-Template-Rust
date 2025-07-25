@@ -18,6 +18,7 @@
 ```
 dfx extension install nns
 ```
+
 ### 配置网路
 
 ```
@@ -26,7 +27,9 @@ dfx start --clean --background
 dfx info networks-json-path
 touch ~/.config/dfx/networks.json
 ```
+
 内容如下
+
 ```
 {
   "local": {
@@ -42,41 +45,45 @@ touch ~/.config/dfx/networks.json
   }
 }
 ```
+
 文件保存完了。再执行 dfx start --clean --enable-bitcoin
+
 ### 部署本地nns canister
+
 ```
 dfx nns install
 ```
 
 成功之后会给出
 ######################################
-# NNS CANISTER INSTALLATION COMPLETE #
+
+# NNS CANISTER INSTALLATION COMPLETE
+
 ######################################
 
 Backend canisters:
-nns-registry          rwlgt-iiaaa-aaaaa-aaaaa-cai
-nns-governance        rrkah-fqaaa-aaaaa-aaaaq-cai
-nns-ledger            ryjl3-tyaaa-aaaaa-aaaba-cai
-nns-root              r7inp-6aaaa-aaaaa-aaabq-cai
-nns-cycles-minting    rkp4c-7iaaa-aaaaa-aaaca-cai
-nns-lifeline          rno2w-sqaaa-aaaaa-aaacq-cai
-nns-genesis-token     renrk-eyaaa-aaaaa-aaada-cai
-nns-identity          rdmx6-jaaaa-aaaaa-aaadq-cai
-nns-ui                qoctq-giaaa-aaaaa-aaaea-cai
-nns-ic-ckbtc-minter   qjdve-lqaaa-aaaaa-aaaeq-cai
-nns-sns-wasm          qaa6y-5yaaa-aaaaa-aaafa-cai
-
+nns-registry rwlgt-iiaaa-aaaaa-aaaaa-cai
+nns-governance rrkah-fqaaa-aaaaa-aaaaq-cai
+nns-ledger ryjl3-tyaaa-aaaaa-aaaba-cai
+nns-root r7inp-6aaaa-aaaaa-aaabq-cai
+nns-cycles-minting rkp4c-7iaaa-aaaaa-aaaca-cai
+nns-lifeline rno2w-sqaaa-aaaaa-aaacq-cai
+nns-genesis-token renrk-eyaaa-aaaaa-aaada-cai
+nns-identity rdmx6-jaaaa-aaaaa-aaadq-cai
+nns-ui qoctq-giaaa-aaaaa-aaaea-cai
+nns-ic-ckbtc-minter qjdve-lqaaa-aaaaa-aaaeq-cai
+nns-sns-wasm qaa6y-5yaaa-aaaaa-aaafa-cai
 
 Frontend canisters:
-internet_identity     http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:8080/
-nns-dapp              http://qsgjb-riaaa-aaaaa-aaaga-cai.localhost:8080/
-sns-aggregator        http://sgymv-uiaaa-aaaaa-aaaia-cai.localhost:8080/
+internet_identity http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:8080/
+nns-dapp http://qsgjb-riaaa-aaaaa-aaaga-cai.localhost:8080/
+sns-aggregator http://sgymv-uiaaa-aaaaa-aaaia-cai.localhost:8080/
 
 # 2、通过 DEX 兑换（如果你已有 ICP）
+
 如果你有 ICP，可以在 ICP 上的 DEX（如 ICDex 或 ICPSwap）直接用 ICP 兑换 ckBTC，无需先充值 BTC。
 
 # 3、ckBTC 是 1:1 由真实 BTC 锁定和铸造的，你可以随时将 ckBTC 按 1:1 兑换回 BTC。
-
 
 # 部署本地 ICRC-1 ledger 作为“Local ckBTC”
 
@@ -121,7 +128,6 @@ dfx deploy icrc1_index --argument '
 
 # 前端通过调用本地 ledger canister 的接口（如 icrc1_transfer, icrc1_balance_of 等）即可模拟充值、转账和余额查询。你可以在前端直接展示充值成功的结果。
 
-
 文档说的最佳实践
 
 # 1、可以存入比特币以获得 ckBTC 或销毁 ckBTC 以提取比特币
@@ -129,6 +135,7 @@ dfx deploy icrc1_index --argument '
 # 2、为了铸造 ckBTC，用户必须首先将比特币存入由 get_btc_address 端点返回的比特币地址，该地址与用户的主体 ID 和可能的子账户绑定。
 
 # 3、用户应向比特币罐（canister）的 bitcoin_get_utxos_query 端点发出查询调用，以检索在第一步获得的比特币地址的未使用输出。
+
 如果用户不知道已为哪些未使用输出铸造了 ckBTC，可以在 ckBTC 铸造程序上调用 get_known_utxos 查询端点，返回从用户主体 ID（可能包括子账户）派生的比特币地址的已知未使用输出。
 
 # 4、如果存在一个 ckBTC 铸造程序尚未发现的未使用输出，用户可以向 ckBTC 铸造程序的 update_balance 端点发出更新调用。然后，ckBTC 铸造程序将为每个新发现的未使用输出铸造 ckBTC。
@@ -137,49 +144,40 @@ dfx deploy icrc1_index --argument '
 
 首先通过在 ckBTC 账本上调用 icrc2_approve 端点，创建一个 ICRC-2 授权，授权 ckBTC 铸造者（罐头 ID： mqygn-kiaaa-aaaar-qaadq-cai ）至少检索要提现的金额。之后，用户可以在 ckBTC 铸造者上调用 retrieve_btc_with_approval 端点，这将创建一笔交易来销毁 ckBTC 中指定的金额。当此操作成功时，ckBTC 铸造者将创建一笔比特币交易，将相应数量的比特币提现到用户指定的比特币地址。
 
- ┌────┐                    ┌──────┐┌──────────────┐
- │User│                    │Minter││BitcoinNetwork│
- └─┬──┘                    └──┬───┘└──────┬───────┘
-   │                          │           │
-   │ get_btc_address(account) │           │
-   │─────────────────────────>│           │
-   │                          │           │
-   │       address            │           │
-   │<─────────────────────────│           │
-   │                          │           │
-   │    Send BTC to address   │           │
-   │─────────────────────────────────────>│
-   │                          │           │
-   │ update_balance(account)  │           │
-   │─────────────────────────>│           │
- ┌─┴──┐                    ┌──┴───┐┌──────┴───────┐
- │User│                    │Minter││BitcoinNetwork│
- └────┘                    └──────┘└──────────────┘
+┌────┐ ┌──────┐┌──────────────┐
+│User│ │Minter││BitcoinNetwork│
+└─┬──┘ └──┬───┘└──────┬───────┘
+│ │ │
+│ get_btc_address(account) │ │
+│─────────────────────────>│ │
+│ │ │
+│ address │ │
+│<─────────────────────────│ │
+│ │ │
+│ Send BTC to address │ │
+│─────────────────────────────────────>│
+│ │ │
+│ update_balance(account) │ │
+│─────────────────────────>│ │
+┌─┴──┐ ┌──┴───┐┌──────┴───────┐
+│User│ │Minter││BitcoinNetwork│
+└────┘ └──────┘└──────────────┘
 
-
-
-
-
-
-
-
-
-
- ┌────┐                   ┌────────────┐                             ┌──────┐                  ┌───────────────┐
- │User│                   │ckBTC Ledger│                             │Minter│                  │Bitcoin Network│
- └─┬──┘                   └─────┬──────┘                             └──┬───┘                  └───────┬───────┘
-   │                            │                                       │                              │
-   │icrc2_approve(minter,amount)│                                       │                              │
-   │───────────────────────────>│                                       │                              │
-   │                            │                                       │                              │
-   │        retrieve_btc_with_approval(address,amount)                  │                              │
-   │───────────────────────────────────────────────────────────────────>│                              │
-   │                            │                                       │                              │
-   │                            │icrc2_transfer_from(user,minter,amount)│                              │
-   │                            │<──────────────────────────────────────│                              │
-   │                            │                                       │                              │
-   │                            │                                       │Send BTC to withdrawal address│
-   │                            │                                       │─────────────────────────────>│
- ┌─┴──┐                   ┌─────┴──────┐                             ┌──┴───┐                  ┌───────┴───────┐
- │User│                   │ckBTC Ledger│                             │Minter│                  │Bitcoin Network│
- └────┘                   └────────────┘                             └──────┘                  └───────────────┘
+┌────┐ ┌────────────┐ ┌──────┐ ┌───────────────┐
+│User│ │ckBTC Ledger│ │Minter│ │Bitcoin Network│
+└─┬──┘ └─────┬──────┘ └──┬───┘ └───────┬───────┘
+│ │ │ │
+│icrc2_approve(minter,amount)│ │ │
+│───────────────────────────>│ │ │
+│ │ │ │
+│ retrieve_btc_with_approval(address,amount) │ │
+│───────────────────────────────────────────────────────────────────>│ │
+│ │ │ │
+│ │icrc2_transfer_from(user,minter,amount)│ │
+│ │<──────────────────────────────────────│ │
+│ │ │ │
+│ │ │Send BTC to withdrawal address│
+│ │ │─────────────────────────────>│
+┌─┴──┐ ┌─────┴──────┐ ┌──┴───┐ ┌───────┴───────┐
+│User│ │ckBTC Ledger│ │Minter│ │Bitcoin Network│
+└────┘ └────────────┘ └──────┘ └───────────────┘

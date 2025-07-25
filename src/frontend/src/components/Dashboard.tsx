@@ -69,7 +69,7 @@ export const Dashboard = ({
 
         {/* 欢迎标题 */}
         <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
-          Welcome to ICP Earn
+          Welcome to BLend
         </h2>
 
         {/* 欢迎描述 */}
@@ -86,7 +86,7 @@ export const Dashboard = ({
               Secure
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Built on Internet Computer Protocol for maximum security
+              Built on BLend Protocol for maximum security
             </p>
           </div>
 

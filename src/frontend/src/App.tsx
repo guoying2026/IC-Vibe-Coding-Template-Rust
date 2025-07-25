@@ -1,88 +1,94 @@
 // 主应用组件
 // Main application component with multi-page navigation
 
-import { useState, useEffect } from "react";
-import { PageRoute, MarketPair, Vault } from "./types";
+import React, { useState, useEffect } from "react";
 import { Header } from "./components/Layout/Header";
+import DashboardPage from "./views/DashboardPage";
 import { EarnPage } from "./views/EarnPage";
-import { VaultDetailPage } from "./views/VaultDetailPage";
 import { BorrowPage } from "./views/BorrowPage";
-import { MarketDetailPage } from "./views/MarketDetailPage";
-import { Loader, ErrorDisplay } from "./components";
-import { LanguageProvider } from "./hooks/useLanguage";
 import { ExplorePage } from "./views/ExplorePage";
 import MigratePage from "./views/MigratePage";
-import DashboardPage from "./views/DashboardPage";
-import {
-  internetIdentityService,
-  AuthState,
-} from "./services/InternetIdentityService"; // 导入II服务
+import { VaultDetailPage } from "./views/VaultDetailPage";
+import { MarketDetailPage } from "./views/MarketDetailPage";
+import { internetIdentityService } from "./services/InternetIdentityService";
+import { UserInfo } from "./services/InternetIdentityService";
+import { Principal } from "@dfinity/principal";
+import { MarketPair } from "./types";
+import { Vault } from "./types";
+import { PageRoute } from "./types";
+import { useLanguage } from "./hooks/useLanguage";
+import { LanguageProvider } from "./hooks/useLanguage";
 
-// 主应用组件
+// 错误提示组件
+const ErrorBanner = ({
+  message,
+  onClose,
+}: {
+  message: string;
+  onClose: () => void;
+}) => (
+  <div className="mb-4 rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center">
+        <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fillRule="evenodd"
+            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+            clipRule="evenodd"
+          />
+        </svg>
+        {message}
+      </div>
+      <button
+        onClick={onClose}
+        className="ml-2 text-red-400 hover:text-red-600 dark:hover:text-red-300"
+      >
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+);
+
 function App() {
-  // 当前页面路由状态
-  const [currentPage, setCurrentPage] = useState<PageRoute>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("currentPage");
-      if (
-        stored === "earn" ||
-        stored === "borrow" ||
-        stored === "explore" ||
-        stored === "migrate" ||
-        stored === "dashboard"
-      ) {
-        return stored as PageRoute;
-      }
-    }
-<<<<<<< HEAD
-    return "earn";
-=======
-    return "dashboard";
->>>>>>> upstream/main
-  });
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("currentPage", currentPage);
-    }
-  }, [currentPage]);
-
-  // 当前选中的市场，用于显示详情页
+  const { t } = useLanguage();
+  const [currentPage, setCurrentPage] = useState<PageRoute>("dashboard");
   const [selectedMarket, setSelectedMarket] = useState<MarketPair | null>(null);
-
-  // 当前选中的金库，用于显示详情页
   const [selectedVault, setSelectedVault] = useState<Vault | null>(null);
-
-<<<<<<< HEAD
-  // 钱包连接状态
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
-=======
-  // Internet Identity认证状态
-  const [authState, setAuthState] = useState<AuthState>({
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [authState, setAuthState] = useState<{
+    isAuthenticated: boolean;
+    principal: Principal | null;
+    userInfo: UserInfo | null;
+  }>({
     isAuthenticated: false,
     principal: null,
     userInfo: null,
   });
->>>>>>> upstream/main
-
-  // 加载状态
-  const [loading, setLoading] = useState(false);
-
-  // 错误状态
-  const [error, setError] = useState<string | undefined>();
 
   // 初始化Internet Identity服务
   useEffect(() => {
     const initializeII = async () => {
       try {
-        setLoading(true);
         await internetIdentityService.initialize();
         const state = internetIdentityService.getAuthState();
         setAuthState(state);
+        console.log("Internet Identity服务初始化完成");
       } catch (error) {
-        console.error("初始化Internet Identity失败:", error);
-        setError("初始化认证服务失败");
-      } finally {
-        setLoading(false);
+        console.error("Internet Identity服务初始化失败:", error);
+        // setError("请先登录Internet Identity");
       }
     };
 
@@ -92,40 +98,56 @@ function App() {
     const handleIILogin = async () => {
       const state = internetIdentityService.getAuthState();
       setAuthState(state);
+      console.log("Internet Identity连接成功");
     };
-    window.addEventListener('ii-login-success', handleIILogin);
+
+    window.addEventListener("ii-login-success", handleIILogin);
+
     return () => {
-      window.removeEventListener('ii-login-success', handleIILogin);
+      window.removeEventListener("ii-login-success", handleIILogin);
     };
   }, []);
 
-  // 处理错误显示
+  // 处理错误
   const handleError = (errorMessage: string) => {
     setError(errorMessage);
   };
 
   // 清除错误
   const clearError = () => {
-    setError(undefined);
+    setError(null);
   };
 
   // 处理Internet Identity登录
   const handleConnectWallet = async () => {
     setLoading(true);
+    clearError();
+
     try {
-<<<<<<< HEAD
-      // 模拟钱包连接过程
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      // 生成模拟钱包地址
-      const mockAddress = `0x${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}`;
-      setWalletAddress(mockAddress);
-=======
+      // 调用登录方法
       await internetIdentityService.login();
       const state = internetIdentityService.getAuthState();
       setAuthState(state);
->>>>>>> upstream/main
+      console.log("登录成功，认证状态:", state);
     } catch (error) {
-      handleError("Internet Identity登录失败");
+      console.error("Internet Identity连接失败:", error);
+
+      // 根据错误类型显示不同的错误信息
+      let errorMessage = t("internet_identity_failed");
+      if (error instanceof Error) {
+        if (error.message.includes("无法连接到后端服务")) {
+          errorMessage =
+            t("backend_connection_error") ||
+            "无法连接到后端服务，请确保dfx正在运行";
+        } else if (error.message.includes("用户取消")) {
+          errorMessage =
+            t("authentication_cancelled") || "用户取消了身份验证操作";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      handleError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -141,13 +163,13 @@ function App() {
         userInfo: null,
       });
     } catch (error) {
-      handleError("登出失败");
+      handleError(t("logout_failed") || "登出失败");
     }
   };
 
   // 处理用户信息更新
   const handleUserInfoUpdate = (updatedUserInfo: any) => {
-    setAuthState(prevState => ({
+    setAuthState((prevState) => ({
       ...prevState,
       userInfo: updatedUserInfo,
     }));
@@ -194,18 +216,19 @@ function App() {
       case "earn":
         // 如果有选中的金库，则显示详情页，否则显示金库列表页
         return selectedVault ? (
-          <VaultDetailPage vault={selectedVault} onBack={handleBackToVaults} />
+          <VaultDetailPage
+            vault={selectedVault}
+            onBack={handleBackToVaults}
+            isAuthenticated={authState.isAuthenticated}
+          />
         ) : (
-<<<<<<< HEAD
           <EarnPage
-            walletAddress={walletAddress}
-=======
-          <EarnPage 
-            walletAddress={authState.principal ? formatPrincipal(authState.principal) : null}
+            walletAddress={
+              authState.principal ? formatPrincipal(authState.principal) : null
+            }
             userInfo={authState.userInfo}
             isAuthenticated={authState.isAuthenticated}
             principal={authState.principal}
->>>>>>> upstream/main
             onError={handleError}
             setLoading={setLoading}
             onSelectVault={handleSelectVault}
@@ -218,88 +241,38 @@ function App() {
           <MarketDetailPage
             market={selectedMarket}
             onBack={handleBackToMarkets}
+            isAuthenticated={authState.isAuthenticated}
           />
         ) : (
           <BorrowPage
-<<<<<<< HEAD
-            walletAddress={walletAddress}
-=======
             walletAddress={
               authState.principal ? formatPrincipal(authState.principal) : null
             }
->>>>>>> upstream/main
             onSelectMarket={handleSelectMarket}
           />
         );
       case "explore":
         return <ExplorePage />;
       case "migrate":
-<<<<<<< HEAD
-        return (
-          // 迁移页面占位符
-          <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 pt-20 dark:from-gray-900 dark:to-gray-800">
-            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-              <div className="text-center">
-                <h1 className="mb-4 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-4xl font-bold text-transparent">
-                  Migrate Positions
-                </h1>
-                <p className="mb-8 text-xl text-gray-600 dark:text-gray-400">
-                  Coming Soon - Move your positions to better protocols
-                </p>
-                <div className="mb-4 text-6xl">🔄</div>
-                <p className="text-gray-500 dark:text-gray-400">
-                  This page is under development
-                </p>
-              </div>
-            </div>
-          </div>
-        );
-      case "dashboard":
-        return (
-          // 仪表板页面占位符
-          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-50 pt-20 dark:from-gray-900 dark:to-gray-800">
-            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-              <div className="text-center">
-                <h1 className="mb-4 bg-gradient-to-r from-gray-600 to-slate-600 bg-clip-text text-4xl font-bold text-transparent">
-                  Your Portfolio Dashboard
-                </h1>
-                <p className="mb-8 text-xl text-gray-600 dark:text-gray-400">
-                  Coming Soon - Manage your Bitcoin DeFi positions
-                </p>
-                <div className="mb-4 text-6xl">📊</div>
-                <p className="text-gray-500 dark:text-gray-400">
-                  This page is under development
-                </p>
-              </div>
-            </div>
-          </div>
-        );
-      default:
-        return (
-          <EarnPage
-            walletAddress={walletAddress}
-            onError={handleError}
-            setLoading={setLoading}
-            onSelectVault={handleSelectVault}
-          />
-        );
-=======
         return <MigratePage />;
       case "dashboard":
-        return <DashboardPage 
-          userInfo={authState.userInfo}
-          isAuthenticated={authState.isAuthenticated}
-          principal={authState.principal}
-          onUserInfoUpdate={handleUserInfoUpdate}
-        />;
+        return (
+          <DashboardPage
+            userInfo={authState.userInfo}
+            isAuthenticated={authState.isAuthenticated}
+            principal={authState.principal}
+            onUserInfoUpdate={handleUserInfoUpdate}
+          />
+        );
       default:
-        return <DashboardPage 
-          userInfo={authState.userInfo}
-          isAuthenticated={authState.isAuthenticated}
-          principal={authState.principal}
-          onUserInfoUpdate={handleUserInfoUpdate}
-        />;
->>>>>>> upstream/main
+        return (
+          <DashboardPage
+            userInfo={authState.userInfo}
+            isAuthenticated={authState.isAuthenticated}
+            principal={authState.principal}
+            onUserInfoUpdate={handleUserInfoUpdate}
+          />
+        );
     }
   };
 
@@ -325,33 +298,12 @@ function App() {
       {/* 全局加载遮罩 */}
       {loading && !error && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-<<<<<<< HEAD
-          <div className="rounded-2xl bg-white p-8 shadow-2xl dark:bg-gray-800">
-            <Loader />
-            <p className="mt-4 text-center text-gray-600 dark:text-gray-400">
-              Processing...
-            </p>
-          </div>
-=======
-          <Loader />
->>>>>>> upstream/main
+          {/* <Loader /> */}
         </div>
       )}
 
       {/* 全局错误显示 */}
-      {error && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
-            <ErrorDisplay message={error} />
-            <button
-              onClick={clearError}
-              className="mt-4 w-full rounded-lg bg-gray-100 px-4 py-2 text-gray-900 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      {error && <ErrorBanner message={error} onClose={clearError} />}
     </div>
   );
 }

@@ -163,13 +163,13 @@ export const BorrowPage = ({
         </div>
 
         {/* 连接钱包提示 */}
-        {!walletAddress && (
+        {/* {!walletAddress && (
           <div className="mb-8 text-center">
             <button className="rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-8 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:from-blue-600 hover:to-purple-600 hover:shadow-xl active:scale-95">
               {t("connect_wallet")}
             </button>
           </div>
-        )}
+        )} */}
 
         {/* 市场列表容器 */}
         <div className="rounded-3xl border border-gray-200/50 bg-white/50 p-4 shadow-xl backdrop-blur-2xl sm:p-6 dark:border-gray-700/50 dark:bg-gray-800/50">

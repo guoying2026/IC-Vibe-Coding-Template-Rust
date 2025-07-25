@@ -4,6 +4,24 @@
 // 语言类型定义
 export type Language = "en" | "zh";
 
+// 通用资产接口定义
+export interface Asset {
+  id: string; // 资产唯一标识符
+  symbol: string; // 资产符号
+  name: string; // 资产全名
+  icon: string; // 资产图标
+  price: number; // 当前价格 (USD)
+  balance: number; // 钱包中的可用余额
+  apy: number; // 供应年化收益率
+  tvl: number; // 总锁仓价值
+  supplied: number; // 用户已供应的金额
+  borrowed: number; // 用户已借贷的金额
+  collateralFactor: number; // 抵押因子 (决定借贷能力)
+  liquidationThreshold: number; // 清算阈值
+  borrowRate: number; // 借贷年化利率
+  utilization: number; // 市场利用率
+}
+
 // BTC资产接口定义
 export interface BTCAsset {
   id: string; // 资产唯一标识符
@@ -126,22 +144,6 @@ export interface UserPortfolio {
   avgBorrowApy: number; // 平均借贷APY
 }
 
-<<<<<<< HEAD
-// 迁移数据接口
-export interface MigrationData {
-  id: string; // 迁移ID
-  fromProtocol: string; // 源协议
-  toProtocol: string; // 目标协议
-  asset: string; // 资产类型
-  amount: number; // 迁移金额
-  estimatedGas: number; // 预估gas费用
-  estimatedTime: number; // 预估完成时间(分钟)
-  benefits: string[]; // 迁移收益列表
-  status: "pending" | "in_progress" | "completed" | "failed"; // 迁移状态
-}
-
-=======
->>>>>>> upstream/main
 // 钱包连接状态接口
 export interface WalletState {
   address: string | null; // 钱包地址

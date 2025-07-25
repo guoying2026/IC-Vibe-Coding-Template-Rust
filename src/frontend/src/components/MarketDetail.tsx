@@ -1,21 +1,5 @@
-import { useState, useEffect } from "react";
-
-// 资产接口定义
-interface Asset {
-  id: string;
-  symbol: string;
-  name: string;
-  balance: number;
-  apy: number;
-  tvl: number;
-  supplied: number;
-  borrowed: number;
-  icon: string;
-  collateralFactor: number;
-  liquidationThreshold: number;
-  borrowRate: number;
-  utilization: number;
-}
+import { useState, useEffect, useRef } from "react";
+import { Asset } from "../types";
 
 // 市场统计数据接口
 interface MarketStats {
@@ -31,10 +15,10 @@ interface MarketStats {
 interface MarketDetailProps {
   asset: Asset;
   onClose: () => void;
-  onSupply: (asset: Asset, amount: number) => void;
-  onBorrow: (asset: Asset, amount: number) => void;
-  onRepay: (asset: Asset, amount: number) => void;
-  onWithdraw: (asset: Asset, amount: number) => void;
+  onSupply: (asset: Asset, amount: number) => Promise<void>;
+  onBorrow: (asset: Asset, amount: number) => Promise<void>;
+  onRepay: (asset: Asset, amount: number) => Promise<void>;
+  onWithdraw: (asset: Asset, amount: number) => Promise<void>;
 }
 
 // 市场详情组件
@@ -56,6 +40,27 @@ export const MarketDetail = ({
   const [marketStats, setMarketStats] = useState<MarketStats | null>(null);
   // 是否正在处理交易
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // 模态框的ref，用于检测点击外部
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // 点击外部关闭模态框
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(event.target as Node)
+      ) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onClose]);
 
   // 组件初始化时加载市场数据
   useEffect(() => {
@@ -163,7 +168,10 @@ export const MarketDetail = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       {/* 主要容器 - 使用毛玻璃效果和圆角设计 */}
-      <div className="max-h-[95vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white/95 shadow-2xl backdrop-blur-xl dark:bg-gray-900/95">
+      <div
+        ref={modalRef}
+        className="max-h-[95vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white/95 shadow-2xl backdrop-blur-xl dark:bg-gray-900/95"
+      >
         {/* 头部区域 */}
         <div className="flex items-center justify-between border-b border-gray-200/50 p-6 dark:border-gray-700/50">
           {/* 资产信息显示 */}

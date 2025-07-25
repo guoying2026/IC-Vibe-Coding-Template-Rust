@@ -1,3 +1,5 @@
+import { useLanguage } from "../hooks/useLanguage";
+
 // 资产接口定义 - 定义单个资产的数据结构
 interface Asset {
   id: string; // 资产唯一标识符
@@ -17,10 +19,11 @@ interface Asset {
 
 // 资产池组件的属性接口定义
 interface AssetPoolProps {
-  asset: Asset; // 要展示的资产数据
-  onSupply: () => void; // 点击供应按钮的回调函数
-  onViewDetails: () => void; // 点击查看详情的回调函数
-  disabled?: boolean; // 是否禁用操作按钮 (当钱包未连接时)
+  asset: any;
+  onSupply: () => void;
+  onViewDetails: () => void;
+  disabled: boolean;
+  isAuthenticated: boolean;
 }
 
 // 资产池卡片组件 - 显示单个资产的概览信息和操作按钮
@@ -29,7 +32,10 @@ export const AssetPool = ({
   onSupply,
   onViewDetails,
   disabled,
+  isAuthenticated,
 }: AssetPoolProps) => {
+  const { t } = useLanguage();
+
   // 格式化数字为易读的货币格式 (K表示千，M表示百万)
   const formatNumber = (num: number) => {
     if (num >= 1000000) {
@@ -79,7 +85,7 @@ export const AssetPool = ({
         {/* 钱包余额行 */}
         <div className="flex justify-between">
           <span className="text-sm text-gray-600 dark:text-gray-400">
-            Wallet Balance {/* 钱包余额标签 */}
+            {t("wallet_balance")}
           </span>
           <span className="text-sm font-medium text-gray-900 dark:text-white">
             {asset.balance.toFixed(2)} {asset.symbol} {/* 显示余额和币种 */}
@@ -147,7 +153,11 @@ export const AssetPool = ({
               : "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg hover:from-blue-600 hover:to-purple-600 hover:shadow-xl active:scale-95" // 正常状态样式
           }`}
         >
-          {disabled ? "Connect Wallet" : "Supply"} {/* 根据状态显示不同文本 */}
+          {disabled
+            ? isAuthenticated
+              ? t("confirm")
+              : t("authenticate")
+            : t("supply")}
         </button>
 
         {/* 查看详情按钮 */}
