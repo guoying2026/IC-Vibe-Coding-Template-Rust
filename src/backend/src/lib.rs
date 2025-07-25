@@ -16,7 +16,7 @@ use sha2::Digest;
 use std::collections::HashSet;
 use std::ops::{AddAssign, Sub, SubAssign};
 
-use crate::types::{AssetConfig, AssetTypes, Pool, STATE, UserAccounts};
+use crate::types::{AssetConfig, AssetTypes, Pool, UserAccounts, STATE};
 
 pub trait EditFunction {
     fn edit_pool_config(&self, liquidation: f64);
@@ -50,10 +50,7 @@ fn create_pool(pool_config: PoolConfig) -> Result<(), String> {
             state.assets.contains_key(&token),
             "No information about this asset"
         );
-        assert!(
-            !state.pool.contains_key(&token),
-            "Already exists this pool"
-        );
+        assert!(!state.pool.contains_key(&token), "Already exists this pool");
 
         let mut collaterals = Vec::<AssetConfig>::new();
         for c in &pool_config.collateral {
@@ -502,9 +499,7 @@ async fn get_price(token: Principal) -> f64 {
             .price_id
             .clone()
     });
-    let url = format!(
-        "https://hermes.pyth.network/api/latest_price_feeds?ids[]={price_id}"
-    );
+    let url = format!("https://hermes.pyth.network/api/latest_price_feeds?ids[]={price_id}");
     let request_headers = vec![HttpHeader {
         name: "User-Agent".to_string(),
         value: "pyth_canister".to_string(),
@@ -607,10 +602,7 @@ fn edit_contract_assets(
     STATE.with(|s| {
         let mut state = s.borrow_mut();
         assert_eq!(state.admin, msg_caller(), "Only admin can edit");
-        assert!(
-            state.assets.contains_key(&token),
-            "Not exists this assets"
-        );
+        assert!(state.assets.contains_key(&token), "Not exists this assets");
         let asset_config = state.assets.entry(token).or_default();
         asset_config.name = name.unwrap_or(asset_config.name.clone());
         asset_config.collateral_factor =
@@ -626,14 +618,8 @@ fn update_pool_collateral(token_id: String, collateral_id: String) {
     STATE.with(|s| {
         let mut state = s.borrow_mut();
         assert_eq!(state.admin, msg_caller(), "Only admin can edit");
-        assert!(
-            state.assets.contains_key(&token),
-            "Not exists this assets"
-        );
-        assert!(
-            state.pool.contains_key(&token),
-            "Not exists this pool"
-        );
+        assert!(state.assets.contains_key(&token), "Not exists this assets");
+        assert!(state.pool.contains_key(&token), "Not exists this pool");
 
         // 先获取资产配置
         let asset_config = state.assets.get(&collateral).unwrap().clone();
@@ -657,24 +643,15 @@ fn remove_pool_collateral(token_id: String, collateral_id: String) {
     STATE.with(|s| {
         let mut state = s.borrow_mut();
         assert_eq!(state.admin, msg_caller(), "Only admin can edit");
-        assert!(
-            state.assets.contains_key(&token),
-            "Not exists this assets"
-        );
-        assert!(
-            state.pool.contains_key(&token),
-            "Not exists this pool"
-        );
+        assert!(state.assets.contains_key(&token), "Not exists this assets");
+        assert!(state.pool.contains_key(&token), "Not exists this pool");
 
         let pool_collateral = state.pool.entry(token).or_default();
         let exist_collateral = pool_collateral
             .collateral
             .iter()
             .any(|a| a.token_id == collateral);
-        assert!(
-            exist_collateral,
-            "This collateral does not in the pool"
-        );
+        assert!(exist_collateral, "This collateral does not in the pool");
         pool_collateral
             .collateral
             .retain(|a| a.token_id != collateral)
@@ -687,16 +664,10 @@ fn increase_maximum_token(token_id: String, maximum_token: NumTokens) {
     STATE.with(|s| {
         let mut state = s.borrow_mut();
         assert_eq!(state.admin, msg_caller(), "Only admin can edit");
-        assert!(
-            state.pool.contains_key(&token),
-            "Not exists this pool"
-        );
+        assert!(state.pool.contains_key(&token), "Not exists this pool");
         let pool = state.pool.entry(token).or_default();
         let result = PartialOrd::lt(&pool.amount, &maximum_token);
-        assert!(
-            result,
-            "Must be greater than the current maximum token"
-        );
+        assert!(result, "Must be greater than the current maximum token");
         pool.maximum_token = maximum_token;
     })
 }
@@ -707,10 +678,7 @@ fn decrease_maximum_token(token_id: String, maximum_token: NumTokens) {
     STATE.with(|s| {
         let mut state = s.borrow_mut();
         assert_eq!(state.admin, msg_caller(), "Only admin can edit");
-        assert!(
-            state.pool.contains_key(&token),
-            "Not exists this pool"
-        );
+        assert!(state.pool.contains_key(&token), "Not exists this pool");
         let pool = state.pool.entry(token).or_default();
         let result = PartialOrd::lt(&pool.amount, &maximum_token);
         assert!(result, "Must be less than the current token's amount");
@@ -824,23 +792,23 @@ struct Activity {
 fn get_user_info(principal: Principal) -> Result<UserInfo, String> {
     STATE.with(|s| {
         let state = s.borrow();
-        
+
         // 检查用户是否存在
         if !state.users.contains_key(&principal) {
             return Err("用户不存在".to_string());
         }
-        
+
         let _user_account = state.users.get(&principal).unwrap();
-        
+
         // 计算用户数据
         let collateral_value = cal_collateral_value(principal);
         let borrow_value = cal_borrow_value(principal);
         let health_factor = cal_health_factor(principal);
-        
+
         // 创建用户信息
         let user_info = UserInfo {
             principal,
-            username: format!("User_{}", principal.to_text()[0..8].to_string()),
+            username: format!("User_{}", &principal.to_text()[0..8]),
             ckbtc_balance: collateral_value, // 使用抵押品价值作为 ckBTC 余额
             total_earned: collateral_value,
             total_borrowed: borrow_value,
@@ -857,7 +825,7 @@ fn get_user_info(principal: Principal) -> Result<UserInfo, String> {
                 },
             ],
         };
-        
+
         Ok(user_info)
     })
 }
@@ -866,16 +834,16 @@ fn get_user_info(principal: Principal) -> Result<UserInfo, String> {
 fn register_user(principal: Principal, username: String) -> Result<UserInfo, String> {
     STATE.with(|s| {
         let mut state = s.borrow_mut();
-        
+
         // 检查用户是否已存在
         if state.users.contains_key(&principal) {
             return Err("用户已存在".to_string());
         }
-        
+
         // 创建新用户账户
         let user_account = UserAccounts::default();
         state.users.insert(principal, user_account);
-        
+
         // 创建用户信息
         let user_info = UserInfo {
             principal,
@@ -885,14 +853,12 @@ fn register_user(principal: Principal, username: String) -> Result<UserInfo, Str
             total_borrowed: 0.0,
             health_factor: 0.0,
             created_at: time(),
-            recent_activities: vec![
-                Activity {
-                    description: "用户注册成功".to_string(),
-                    timestamp: time(),
-                },
-            ],
+            recent_activities: vec![Activity {
+                description: "用户注册成功".to_string(),
+                timestamp: time(),
+            }],
         };
-        
+
         Ok(user_info)
     })
 }
@@ -919,7 +885,11 @@ fn get_user_supplies(user: Principal) -> Vec<(Principal, NumTokens)> {
     STATE.with(|s| {
         let state = s.borrow();
         if let Some(user_account) = state.users.get(&user) {
-            user_account.supplies.iter().map(|(k, v)| (*k, v.clone())).collect()
+            user_account
+                .supplies
+                .iter()
+                .map(|(k, v)| (*k, v.clone()))
+                .collect()
         } else {
             Vec::new()
         }
@@ -931,7 +901,11 @@ fn get_user_borrows(user: Principal) -> Vec<(Principal, NumTokens)> {
     STATE.with(|s| {
         let state = s.borrow();
         if let Some(user_account) = state.users.get(&user) {
-            user_account.borrows.iter().map(|(k, v)| (*k, v.clone())).collect()
+            user_account
+                .borrows
+                .iter()
+                .map(|(k, v)| (*k, v.clone()))
+                .collect()
         } else {
             Vec::new()
         }
@@ -943,7 +917,11 @@ fn get_pool_info(token_id: String) -> Result<Pool, String> {
     let token = Principal::from_text(token_id).map_err(|_| "Invalid token ID")?;
     STATE.with(|s| {
         let state = s.borrow();
-        state.pool.get(&token).cloned().ok_or("Pool not found".to_string())
+        state
+            .pool
+            .get(&token)
+            .cloned()
+            .ok_or("Pool not found".to_string())
     })
 }
 
@@ -952,7 +930,11 @@ fn get_asset_info(token_id: String) -> Result<AssetConfig, String> {
     let token = Principal::from_text(token_id).map_err(|_| "Invalid token ID")?;
     STATE.with(|s| {
         let state = s.borrow();
-        state.assets.get(&token).cloned().ok_or("Asset not found".to_string())
+        state
+            .assets
+            .get(&token)
+            .cloned()
+            .ok_or("Asset not found".to_string())
     })
 }
 

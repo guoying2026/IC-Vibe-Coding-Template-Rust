@@ -1,7 +1,7 @@
 // 顶部导航栏组件
 // Top navigation header component
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PageRoute, NavItem, Language } from "../../types";
 import { useLanguage } from "../../hooks/useLanguage";
 import { UserInfo } from "../../services/InternetIdentityService";
@@ -70,9 +70,29 @@ export const Header = ({
   // 钱包下拉菜单显示状态
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
 
+  // 钱包菜单的ref，用于检测点击外部
+  const walletMenuRef = useRef<HTMLDivElement>(null);
+
+  // 点击外部关闭钱包菜单
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (walletMenuRef.current && !walletMenuRef.current.contains(event.target as Node)) {
+        setIsWalletMenuOpen(false);
+      }
+    };
+
+    if (isWalletMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isWalletMenuOpen]);
+
   // 格式化钱包地址显示
   const formatWalletAddress = (address: string | null) => {
-    if (!address) return '';
+    if (!address) return "";
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
@@ -129,12 +149,12 @@ export const Header = ({
               onClick={toggleLanguage}
               className="rounded-lg border border-white/70 bg-white/20 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-white/30 hover:text-white active:scale-95"
             >
-              {language === 'en' ? '中文' : 'EN'}
+              {language === "en" ? "中文" : "EN"}
             </button>
 
             {/* 用户认证状态 */}
             {isAuthenticated ? (
-              <div className="relative">
+              <div className="relative" ref={walletMenuRef}>
                 <button
                   onClick={() => setIsWalletMenuOpen(!isWalletMenuOpen)}
                   className="flex items-center space-x-2 rounded-lg border border-white/40 bg-white/20 px-4 py-2 text-white shadow transition-colors hover:bg-white/30"
@@ -221,7 +241,7 @@ export const Header = ({
                 onClick={onConnectWallet}
                 className="rounded-lg border border-white/70 bg-white/20 px-4 py-2 font-semibold text-white shadow-sm transition-all duration-200 hover:bg-white/30 hover:text-white active:scale-95"
               >
-                {t("connect_internet_identity")}
+                {t("authenticate")}
               </button>
             )}
 

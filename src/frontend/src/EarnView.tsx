@@ -1,45 +1,16 @@
 // 从React导入必要的钩子函数
 import React, { useState, useEffect } from "react";
-import { BTCAsset } from "./types";
+import { Asset, Transaction } from "./types";
 import { useLanguage } from "./hooks/useLanguage";
 import {
-  AssetPool,
   Dashboard,
+  AssetPool,
   LiquidityProvider,
   TransactionHistory,
-  WalletConnector,
   MarketDetail,
 } from "./components";
 
-// 资产接口定义 - 包含借贷平台所需的所有资产属性
-interface Asset {
-  id: string; // 资产唯一标识符
-  symbol: string; // 资产符号 (如 USDC, USDT)
-  name: string; // 资产全名
-  balance: number; // 钱包中的可用余额
-  apy: number; // 供应年化收益率
-  tvl: number; // 总锁仓价值
-  supplied: number; // 用户已供应的金额
-  borrowed: number; // 用户已借贷的金额
-  icon: string; // 资产图标 emoji
-  collateralFactor: number; // 抵押因子 (决定借贷能力)
-  liquidationThreshold: number; // 清算阈值
-  borrowRate: number; // 借贷年化利率
-  utilization: number; // 市场利用率
-}
-
-// 交易记录接口定义
-interface Transaction {
-  id: string; // 交易唯一标识符
-  type: "supply" | "withdraw" | "borrow" | "repay"; // 交易类型：供应、提取、借贷、还款
-  asset: string; // 涉及的资产符号
-  amount: number; // 交易金额
-  timestamp: number; // 交易时间戳
-  txHash: string; // 交易哈希
-  status: "pending" | "success" | "failed"; // 交易状态
-}
-
-// 组件属性接口定义
+// 组件属性接口
 interface EarnViewProps {
   onError: (error: string) => void; // 错误处理回调函数
   setLoading: (loading: boolean) => void; // 加载状态设置回调函数
@@ -50,7 +21,72 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
   // 钱包连接状态 - 存储连接的钱包地址
   const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
   // 资产列表状态
-  const [assets, setAssets] = useState<Asset[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([
+    {
+      id: "1",
+      symbol: "USDC",
+      name: "USD Coin",
+      balance: 1000,
+      apy: 2.5,
+      tvl: 5000000,
+      supplied: 500,
+      borrowed: 0,
+      icon: "💵",
+      collateralFactor: 0.8,
+      liquidationThreshold: 0.85,
+      borrowRate: 3.2,
+      utilization: 0.65,
+      price: 1.0,
+    },
+    {
+      id: "2",
+      symbol: "USDT",
+      name: "Tether",
+      balance: 2000,
+      apy: 2.8,
+      tvl: 3000000,
+      supplied: 800,
+      borrowed: 200,
+      icon: "💵",
+      collateralFactor: 0.75,
+      liquidationThreshold: 0.8,
+      borrowRate: 3.5,
+      utilization: 0.72,
+      price: 1.0,
+    },
+    {
+      id: "3",
+      symbol: "DAI",
+      name: "Dai",
+      balance: 1500,
+      apy: 3.1,
+      tvl: 2000000,
+      supplied: 300,
+      borrowed: 100,
+      icon: "💵",
+      collateralFactor: 0.7,
+      liquidationThreshold: 0.75,
+      borrowRate: 3.8,
+      utilization: 0.58,
+      price: 1.0,
+    },
+    {
+      id: "4",
+      symbol: "FRAX",
+      name: "Frax",
+      balance: 800,
+      apy: 2.2,
+      tvl: 1500000,
+      supplied: 200,
+      borrowed: 50,
+      icon: "💵",
+      collateralFactor: 0.65,
+      liquidationThreshold: 0.7,
+      borrowRate: 4.1,
+      utilization: 0.45,
+      price: 1.0,
+    },
+  ]);
   // 交易历史状态
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   // 总供应金额统计
@@ -84,6 +120,7 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
         liquidationThreshold: 85, // 85%清算阈值
         borrowRate: 7.5, // 借贷利率
         utilization: 75, // 利用率
+        price: 1.0, // 添加价格属性
       },
       {
         id: "2",
@@ -99,6 +136,7 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
         liquidationThreshold: 80,
         borrowRate: 8.2,
         utilization: 68,
+        price: 1.0, // 添加价格属性
       },
       {
         id: "3",
@@ -114,6 +152,7 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
         liquidationThreshold: 82,
         borrowRate: 7.8,
         utilization: 72,
+        price: 1.0, // 添加价格属性
       },
       {
         id: "4",
@@ -129,6 +168,7 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
         liquidationThreshold: 87,
         borrowRate: 6.5,
         utilization: 85,
+        price: 1.0, // 添加价格属性
       },
     ];
 
@@ -191,186 +231,188 @@ export const EarnView = ({ onError, setLoading }: EarnViewProps) => {
   };
 
   // 处理资产供应操作
-  const handleSupplyAsset = (asset: Asset, amount: number) => {
-    setLoading(true); // 开始处理
+  const handleSupplyAsset = async (asset: Asset, amount: number) => {
+    if (!connectedWallet) {
+      onError("请先连接钱包");
+      return;
+    }
+
+    setLoading(true);
     try {
-      // 创建新的供应交易记录
-      const newTransaction: Transaction = {
-        id: Date.now().toString(),
-        type: "supply",
-        asset: asset.symbol,
-        amount,
-        timestamp: Date.now(),
-        txHash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 5)}`,
-        status: "pending", // 初始状态为待处理
-      };
-
-      // 添加交易到历史记录 (在前面插入新交易)
-      setTransactions((prev) => [newTransaction, ...prev]);
-
-      // 更新资产余额和供应金额
-      setAssets((prev) =>
-        prev.map((a) =>
-          a.id === asset.id
-            ? {
-                ...a,
-                supplied: a.supplied + amount,
-                balance: a.balance - amount,
-              }
-            : a,
-        ),
+      console.log(`供应 ${amount} ${asset.symbol}`);
+      
+      // 模拟交易处理
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // 更新资产数据
+      setAssets(prevAssets => 
+        prevAssets.map(a => 
+          a.id === asset.id 
+            ? { ...a, supplied: a.supplied + amount, balance: a.balance - amount }
+            : a
+        )
       );
 
-      // 模拟交易完成 - 3秒后更新状态为成功
-      setTimeout(() => {
-        setTransactions((prev) =>
-          prev.map((tx) =>
-            tx.id === newTransaction.id ? { ...tx, status: "success" } : tx,
-          ),
-        );
-      }, 3000);
+      // 添加交易记录
+      const newTransaction: Transaction = {
+        id: `tx_${Date.now()}`,
+        type: "supply",
+        asset: asset.symbol,
+        amount: amount,
+        timestamp: Date.now(),
+        txHash: `0x${Math.random().toString(16).substr(2, 64)}`,
+        status: "success"
+      };
+      
+      setTransactions(prev => [newTransaction, ...prev]);
+      
+      // 更新总供应量
+      setTotalSupplied(prev => prev + amount);
+      
+      console.log(`成功供应 ${amount} ${asset.symbol}`);
     } catch (error) {
-      onError("Failed to supply asset"); // 供应失败错误处理
+      console.error("供应失败:", error);
+      onError("供应操作失败，请重试");
     } finally {
-      setLoading(false); // 结束处理
-      setShowLiquidityModal(false); // 关闭模态框
-      setShowMarketDetail(false); // 关闭详情模态框
+      setLoading(false);
     }
   };
 
   // 处理资产借贷操作
-  const handleBorrowAsset = (asset: Asset, amount: number) => {
+  const handleBorrowAsset = async (asset: Asset, amount: number) => {
+    if (!connectedWallet) {
+      onError("请先连接钱包");
+      return;
+    }
+
     setLoading(true);
     try {
-      // 创建借贷交易记录
-      const newTransaction: Transaction = {
-        id: Date.now().toString(),
-        type: "borrow",
-        asset: asset.symbol,
-        amount,
-        timestamp: Date.now(),
-        txHash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 5)}`,
-        status: "pending",
-      };
-
-      setTransactions((prev) => [newTransaction, ...prev]);
-
-      // 更新资产借贷金额和钱包余额
-      setAssets((prev) =>
-        prev.map((a) =>
-          a.id === asset.id
-            ? {
-                ...a,
-                borrowed: a.borrowed + amount,
-                balance: a.balance + amount,
-              }
-            : a,
-        ),
+      console.log(`借贷 ${amount} ${asset.symbol}`);
+      
+      // 模拟交易处理
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // 更新资产数据
+      setAssets(prevAssets => 
+        prevAssets.map(a => 
+          a.id === asset.id 
+            ? { ...a, borrowed: a.borrowed + amount, balance: a.balance + amount }
+            : a
+        )
       );
 
-      setTimeout(() => {
-        setTransactions((prev) =>
-          prev.map((tx) =>
-            tx.id === newTransaction.id ? { ...tx, status: "success" } : tx,
-          ),
-        );
-      }, 3000);
+      // 添加交易记录
+      const newTransaction: Transaction = {
+        id: `tx_${Date.now()}`,
+        type: "borrow",
+        asset: asset.symbol,
+        amount: amount,
+        timestamp: Date.now(),
+        txHash: `0x${Math.random().toString(16).substr(2, 64)}`,
+        status: "success"
+      };
+      
+      setTransactions(prev => [newTransaction, ...prev]);
+      
+      console.log(`成功借贷 ${amount} ${asset.symbol}`);
     } catch (error) {
-      onError("Failed to borrow asset");
+      console.error("借贷失败:", error);
+      onError("借贷操作失败，请重试");
     } finally {
       setLoading(false);
-      setShowMarketDetail(false);
     }
   };
 
   // 处理资产还款操作
-  const handleRepayAsset = (asset: Asset, amount: number) => {
+  const handleRepayAsset = async (asset: Asset, amount: number) => {
+    if (!connectedWallet) {
+      onError("请先连接钱包");
+      return;
+    }
+
     setLoading(true);
     try {
-      // 创建还款交易记录
-      const newTransaction: Transaction = {
-        id: Date.now().toString(),
-        type: "repay",
-        asset: asset.symbol,
-        amount,
-        timestamp: Date.now(),
-        txHash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 5)}`,
-        status: "pending",
-      };
-
-      setTransactions((prev) => [newTransaction, ...prev]);
-
-      // 更新资产借贷金额和钱包余额
-      setAssets((prev) =>
-        prev.map((a) =>
-          a.id === asset.id
-            ? {
-                ...a,
-                borrowed: a.borrowed - amount,
-                balance: a.balance - amount,
-              }
-            : a,
-        ),
+      console.log(`还款 ${amount} ${asset.symbol}`);
+      
+      // 模拟交易处理
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // 更新资产数据
+      setAssets(prevAssets => 
+        prevAssets.map(a => 
+          a.id === asset.id 
+            ? { ...a, borrowed: Math.max(0, a.borrowed - amount), balance: a.balance - amount }
+            : a
+        )
       );
 
-      setTimeout(() => {
-        setTransactions((prev) =>
-          prev.map((tx) =>
-            tx.id === newTransaction.id ? { ...tx, status: "success" } : tx,
-          ),
-        );
-      }, 3000);
+      // 添加交易记录
+      const newTransaction: Transaction = {
+        id: `tx_${Date.now()}`,
+        type: "repay",
+        asset: asset.symbol,
+        amount: amount,
+        timestamp: Date.now(),
+        txHash: `0x${Math.random().toString(16).substr(2, 64)}`,
+        status: "success"
+      };
+      
+      setTransactions(prev => [newTransaction, ...prev]);
+      
+      console.log(`成功还款 ${amount} ${asset.symbol}`);
     } catch (error) {
-      onError("Failed to repay asset");
+      console.error("还款失败:", error);
+      onError("还款操作失败，请重试");
     } finally {
       setLoading(false);
-      setShowMarketDetail(false);
     }
   };
 
   // 处理资产提取操作
-  const handleWithdrawAsset = (asset: Asset, amount: number) => {
+  const handleWithdrawAsset = async (asset: Asset, amount: number) => {
+    if (!connectedWallet) {
+      onError("请先连接钱包");
+      return;
+    }
+
     setLoading(true);
     try {
-      // 创建提取交易记录
-      const newTransaction: Transaction = {
-        id: Date.now().toString(),
-        type: "withdraw",
-        asset: asset.symbol,
-        amount,
-        timestamp: Date.now(),
-        txHash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 5)}`,
-        status: "pending",
-      };
-
-      setTransactions((prev) => [newTransaction, ...prev]);
-
-      // 更新资产供应金额和钱包余额
-      setAssets((prev) =>
-        prev.map((a) =>
-          a.id === asset.id
-            ? {
-                ...a,
-                supplied: a.supplied - amount,
-                balance: a.balance + amount,
-              }
-            : a,
-        ),
+      console.log(`提取 ${amount} ${asset.symbol}`);
+      
+      // 模拟交易处理
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // 更新资产数据
+      setAssets(prevAssets => 
+        prevAssets.map(a => 
+          a.id === asset.id 
+            ? { ...a, supplied: Math.max(0, a.supplied - amount), balance: a.balance + amount }
+            : a
+        )
       );
 
-      setTimeout(() => {
-        setTransactions((prev) =>
-          prev.map((tx) =>
-            tx.id === newTransaction.id ? { ...tx, status: "success" } : tx,
-          ),
-        );
-      }, 3000);
+      // 添加交易记录
+      const newTransaction: Transaction = {
+        id: `tx_${Date.now()}`,
+        type: "withdraw",
+        asset: asset.symbol,
+        amount: amount,
+        timestamp: Date.now(),
+        txHash: `0x${Math.random().toString(16).substr(2, 64)}`,
+        status: "success"
+      };
+      
+      setTransactions(prev => [newTransaction, ...prev]);
+      
+      // 更新总供应量
+      setTotalSupplied(prev => Math.max(0, prev - amount));
+      
+      console.log(`成功提取 ${amount} ${asset.symbol}`);
     } catch (error) {
-      onError("Failed to withdraw asset");
+      console.error("提取失败:", error);
+      onError("提取操作失败，请重试");
     } finally {
       setLoading(false);
-      setShowLiquidityModal(false);
-      setShowMarketDetail(false);
     }
   };
 

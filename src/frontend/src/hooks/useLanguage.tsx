@@ -76,6 +76,36 @@ const translations: Translations = {
   internet_identity_connected: { en: "Connected", zh: "已连接" },
   internet_identity_failed: { en: "Connection failed", zh: "连接失败" },
   internet_identity_principal: { en: "Principal ID", zh: "主体ID" },
+
+  // 身份验证相关
+  authenticate: { en: "Connect Internet Identity", zh: "连接互联网身份" },
+  internet_identity: { en: "Internet Identity", zh: "互联网身份" },
+  authentication_required: { en: "Authentication Required", zh: "需要身份验证" },
+  please_authenticate_to_view_balances: { 
+    en: "Please authenticate to view token balances", 
+    zh: "请先进行身份验证以查看代币余额" 
+  },
+  not_authenticated: { en: "Not Authenticated", zh: "未认证" },
+  backend_connection_error: { 
+    en: "Unable to connect to backend service, please ensure dfx is running", 
+    zh: "无法连接到后端服务，请确保dfx正在运行" 
+  },
+  authentication_cancelled: { 
+    en: "User cancelled the authentication operation", 
+    zh: "用户取消了身份验证操作" 
+  },
+  logout_failed: { en: "Logout failed", zh: "登出失败" },
+
+  // Principal ID 和 Account ID 相关
+  principal_id: { en: "Principal ID", zh: "Principal ID" },
+  principal_id_subtitle: { en: "(Identity Identifier)", zh: "(身份标识)" },
+  principal_id_description: { en: "User's unique identity identifier", zh: "用户的唯一身份标识" },
+  principal_id_purpose: { en: "Used for identity verification and permission management", zh: "用于身份验证和权限管理" },
+  
+  account_id: { en: "Account ID", zh: "Account ID" },
+  account_id_subtitle: { en: "(Account Address)", zh: "(账户地址)" },
+  account_id_description: { en: "Account address generated based on Principal", zh: "基于Principal生成的账户地址" },
+  account_id_purpose: { en: "Used for receiving tokens and conducting transactions", zh: "用于接收代币和进行交易" },
   
   // 资产相关
   total_supply: { en: "Total Supply", zh: "总供应量" },
@@ -301,7 +331,7 @@ const translations: Translations = {
   // MigratePage 教程页面翻译
   earn_description: {
     en: "When you deposit BTC into the BLend protocol, your assets are borrowed by borrowers who pay interest. The protocol distributes this interest, after deducting platform fees, proportionally to all liquidity providers. You become a 'crypto world lender'.",
-    zh: "当你把 BTC 存入 BLend 协议时，你的资产会被借款人借走，并支付利息。协议会把这些利息，扣除平台费用后，按比例分配给所有流动性提供者。你等于成为了\"加密世界的放贷人\"。",
+    zh: '当你把 BTC 存入 BLend 协议时，你的资产会被借款人借走，并支付利息。协议会把这些利息，扣除平台费用后，按比例分配给所有流动性提供者。你等于成为了"加密世界的放贷人"。',
   },
   step1_title: { en: "Identity Verification", zh: "身份验证" },
   step1_description: {
@@ -386,17 +416,24 @@ const translations: Translations = {
   markets_tab: { en: "Markets", zh: "市场" },
   vaults_tab: { en: "Vaults", zh: "金库" },
   more_tab: { en: "More", zh: "更多" },
-  
+
   // 代币余额相关
   token_balances: { en: "Token Balances", zh: "代币余额" },
   supported_tokens: { en: "Supported Tokens", zh: "支持的代币类型" },
   add_custom_token: { en: "Add Custom Token", zh: "添加自定义代币" },
-  custom_token_note: { en: "Support any ICRC-1 standard token", zh: "支持任意ICRC-1标准代币" },
+  custom_token_note: {
+    en: "Support any ICRC-1 standard token",
+    zh: "支持任意ICRC-1标准代币",
+  },
   coming_soon: { en: "Coming Soon", zh: "即将推出" },
-  balance_update_note: { en: "Balances update in real-time, click refresh to get latest data", zh: "余额实时更新，点击刷新按钮获取最新数据" },
+  balance_update_note: {
+    en: "Balances update in real-time, click refresh to get latest data",
+    zh: "余额实时更新，点击刷新按钮获取最新数据",
+  },
   refresh: { en: "Refresh", zh: "刷新" },
   refresh_token_balance: { en: "Refresh Token Balance", zh: "刷新代币余额" },
-  
+  recharge_instructions_title: { en: "Recharge Instructions", zh: "充值说明" },
+
   // 代币信息
   token_name: { en: "Token Name", zh: "代币名称" },
   token_symbol: { en: "Token Symbol", zh: "代币符号" },
@@ -404,37 +441,77 @@ const translations: Translations = {
   get_token_info: { en: "Get Token Info", zh: "获取代币信息" },
   add_token: { en: "Add Token", zh: "添加代币" },
   adding_token: { en: "Adding Token...", zh: "添加代币中..." },
-  token_added_success: { en: "Token added successfully!", zh: "代币添加成功！" },
-  token_info_fetched: { en: "Token info fetched successfully!", zh: "代币信息获取成功！" },
-  please_fill_all_fields: { en: "Please fill all required fields", zh: "请填写所有必填字段" },
-  please_enter_canister_id: { en: "Please enter Canister ID", zh: "请输入Canister ID" },
-  failed_to_add_token: { en: "Failed to add token, please check if Canister ID is correct", zh: "添加失败，请检查Canister ID是否正确" },
-  failed_to_fetch_token_info: { en: "Failed to fetch token info, please check if Canister ID is correct", zh: "无法获取代币信息，请检查Canister ID是否正确" },
+  token_added_success: {
+    en: "Token added successfully!",
+    zh: "代币添加成功！",
+  },
+  token_info_fetched: {
+    en: "Token info fetched successfully!",
+    zh: "代币信息获取成功！",
+  },
+  please_fill_all_fields: {
+    en: "Please fill all required fields",
+    zh: "请填写所有必填字段",
+  },
+  please_enter_canister_id: {
+    en: "Please enter Canister ID",
+    zh: "请输入Canister ID",
+  },
+  failed_to_add_token: {
+    en: "Failed to add token, please check if Canister ID is correct",
+    zh: "添加失败，请检查Canister ID是否正确",
+  },
+  failed_to_fetch_token_info: {
+    en: "Failed to fetch token info, please check if Canister ID is correct",
+    zh: "无法获取代币信息，请检查Canister ID是否正确",
+  },
   custom_token: { en: "Custom Token", zh: "自定义代币" },
-  
+
   // 代币类型描述
   icp_description: { en: "Internet Computer Protocol", zh: "互联网计算机协议" },
   ckbtc_description: { en: "Chain-key Bitcoin", zh: "链密钥比特币" },
   sns1_description: { en: "SNS Governance Token", zh: "SNS治理代币" },
-  
+
   // 自定义代币添加说明
   custom_token_instructions: { en: "Instructions:", zh: "说明:" },
-  custom_token_support: { en: "• Support any ICRC-1 standard token", zh: "• 支持任意ICRC-1标准代币" },
-  custom_token_auto_fetch: { en: "• Enter Canister ID to automatically fetch token info", zh: "• 输入Canister ID后可以自动获取代币信息" },
-  custom_token_display: { en: "• Added tokens will appear in balance list", zh: "• 添加的代币会显示在余额列表中" },
-  custom_token_refresh: { en: "• Can refresh balance data anytime", zh: "• 可以随时刷新余额数据" },
-  
+  custom_token_support: {
+    en: "• Support any ICRC-1 standard token",
+    zh: "• 支持任意ICRC-1标准代币",
+  },
+  custom_token_auto_fetch: {
+    en: "• Enter Canister ID to automatically fetch token info",
+    zh: "• 输入Canister ID后可以自动获取代币信息",
+  },
+  custom_token_display: {
+    en: "• Added tokens will appear in balance list",
+    zh: "• 添加的代币会显示在余额列表中",
+  },
+  custom_token_refresh: {
+    en: "• Can refresh balance data anytime",
+    zh: "• 可以随时刷新余额数据",
+  },
+
   // 余额查询
   query_balance: { en: "Query Balance", zh: "查询余额" },
   querying_balance: { en: "Querying Balance...", zh: "查询余额中..." },
   balance_query_failed: { en: "Balance query failed", zh: "余额查询失败" },
-  user_not_authenticated: { en: "User not authenticated", zh: "用户未认证" },
-  
+  user_not_authenticated: { en: "Please connect Internet Identity first", zh: "请先连接互联网身份" },
+
   // 示例文本
-  example_canister_id: { en: "e.g.: ryjl3-tyaaa-aaaaa-aaaba-cai", zh: "例如: ryjl3-tyaaa-aaaaa-aaaba-cai" },
-  example_token_name: { en: "e.g.: My Custom Token", zh: "例如: My Custom Token" },
+  example_canister_id: {
+    en: "e.g.: ryjl3-tyaaa-aaaaa-aaaba-cai",
+    zh: "例如: ryjl3-tyaaa-aaaaa-aaaba-cai",
+  },
+  example_token_name: {
+    en: "e.g.: My Custom Token",
+    zh: "例如: My Custom Token",
+  },
   example_token_symbol: { en: "e.g.: MCT", zh: "例如: MCT" },
   disclosures: { en: "Disclosures", zh: "披露" },
+  recharge_instructions: {
+    zh: `充值说明：\n1. 通过交易所转账：登录支持 ICP 的交易所（如 Coinbase、Binance、Kraken），购买 ICP 后，在“提币”页面粘贴您的 Account ID 作为接收地址，输入金额并确认（通常需支付 0.0001 ICP 手续费）。\n2. 通过钱包转账：打开支持 ICP 的钱包（如 Plug、Stoic、NNS），在“发送”或“转账”页面粘贴 Account ID，输入金额并确认（可能需支付 0.0001 ICP 网络费）。\n提示：到账时间一般为几分钟，具体取决于交易所或钱包处理速度。`,
+    en: `How to Recharge ICP to Your Account ID:\n1. From Exchange: Log in to an exchange that supports ICP (e.g. Coinbase, Binance, Kraken). Buy ICP, go to the "Withdraw" page, paste your Account ID as the recipient address, enter the amount, and confirm (a small withdrawal fee, usually 0.0001 ICP, applies).\n2. From Wallet: Open a wallet that supports ICP (e.g. Plug, Stoic, or NNS). On the "Send" or "Transfer" page, paste your Account ID, enter the amount, and confirm (a network fee of about 0.0001 ICP may apply).\nTip: Transfers usually arrive within a few minutes, depending on the exchange or wallet processing speed.`
+  },
 };
 
 // 创建上下文

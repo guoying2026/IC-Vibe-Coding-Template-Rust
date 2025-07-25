@@ -39,9 +39,13 @@ export default defineConfig({
   ],
   define: {
     // 直接定义环境变量
-    'import.meta.env.CANISTER_ID_INTERNET_IDENTITY': JSON.stringify(process.env.CANISTER_ID_INTERNET_IDENTITY),
-    'import.meta.env.CANISTER_ID_BACKEND': JSON.stringify(process.env.CANISTER_ID_BACKEND),
-    'import.meta.env.DFX_NETWORK': JSON.stringify(process.env.DFX_NETWORK),
+    "import.meta.env.CANISTER_ID_INTERNET_IDENTITY": JSON.stringify(
+      process.env.CANISTER_ID_INTERNET_IDENTITY,
+    ),
+    "import.meta.env.CANISTER_ID_BACKEND": JSON.stringify(
+      process.env.CANISTER_ID_BACKEND,
+    ),
+    "import.meta.env.DFX_NETWORK": JSON.stringify(process.env.DFX_NETWORK),
   },
   resolve: {
     alias: [

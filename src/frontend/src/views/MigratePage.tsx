@@ -43,7 +43,7 @@ export default function MigratePage() {
         <div className="mt-4 rounded border-l-4 border-blue-400 bg-blue-50 p-4 text-blue-800">
           {t("earn_description")}
         </div>
-        <ol className="space-y-6 mt-4">
+        <ol className="mt-4 space-y-6">
           <li className="flex items-start gap-4">
             <div className="flex-shrink-0">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-400/60 text-lg font-bold text-white">
@@ -54,9 +54,7 @@ export default function MigratePage() {
               <div className="mb-1 text-base font-semibold">
                 {t("step1_title")}
               </div>
-              <div className="text-gray-700">
-                {t("step1_description")}
-              </div>
+              <div className="text-gray-700">{t("step1_description")}</div>
             </div>
           </li>
           <li className="flex items-start gap-4">
@@ -69,9 +67,7 @@ export default function MigratePage() {
               <div className="mb-1 text-base font-semibold">
                 {t("step2_title")}
               </div>
-              <div className="text-gray-700">
-                {t("step2_description")}
-              </div>
+              <div className="text-gray-700">{t("step2_description")}</div>
             </div>
           </li>
           <li className="flex items-start gap-4">
@@ -84,9 +80,7 @@ export default function MigratePage() {
               <div className="mb-1 text-base font-semibold">
                 {t("step3_title")}
               </div>
-              <div className="text-gray-700">
-                {t("step3_description")}
-              </div>
+              <div className="text-gray-700">{t("step3_description")}</div>
             </div>
           </li>
           <li className="flex items-start gap-4">
@@ -99,9 +93,7 @@ export default function MigratePage() {
               <div className="mb-1 text-base font-semibold">
                 {t("step4_title")}
               </div>
-              <div className="text-gray-700">
-                {t("step4_description")}
-              </div>
+              <div className="text-gray-700">{t("step4_description")}</div>
             </div>
           </li>
           <li className="flex items-start gap-4">
@@ -114,9 +106,7 @@ export default function MigratePage() {
               <div className="mb-1 text-base font-semibold">
                 {t("step5_title")}
               </div>
-              <div className="text-gray-700">
-                {t("step5_description")}
-              </div>
+              <div className="text-gray-700">{t("step5_description")}</div>
             </div>
           </li>
         </ol>
@@ -138,7 +128,7 @@ export default function MigratePage() {
         <div className="mt-4 rounded border-l-4 border-purple-400 bg-purple-50 p-4 text-purple-800">
           {t("borrow_description")}
         </div>
-        <ol className="space-y-6 mt-4">
+        <ol className="mt-4 space-y-6">
           <li className="flex items-start gap-4">
             <div className="flex-shrink-0">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-400/60 text-lg font-bold text-white">

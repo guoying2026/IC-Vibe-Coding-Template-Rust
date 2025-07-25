@@ -26,7 +26,10 @@ export class TokenBalanceService {
   }
 
   // 从Principal生成Account identifier
-  generateAccountFromPrincipal(principal: Principal, subaccount?: Uint8Array): Account {
+  generateAccountFromPrincipal(
+    principal: Principal,
+    subaccount?: Uint8Array,
+  ): Account {
     return {
       owner: principal,
       subaccount: subaccount,
@@ -38,22 +41,30 @@ export class TokenBalanceService {
     return this.generateAccountFromPrincipal(principal);
   }
 
-  // 查询代币余额 - 使用真实ICRC-1接口
-  async queryTokenBalance(tokenCanisterId: string, account: Account): Promise<bigint> {
+  // 查询代币余额 - 使用Account ID
+  async queryTokenBalance(
+    tokenCanisterId: string,
+    accountId: string,
+  ): Promise<bigint> {
     try {
       console.log(`查询代币余额: ${tokenCanisterId}`);
-      console.log(`Account: ${account.owner.toText()}`);
-      
+      console.log(`Account ID: ${accountId}`);
+
       // 使用HTTP请求直接调用ICRC-1接口
-      const host = this.agent.rootKey ? "http://localhost:4943" : "https://ic0.app";
+      const host = this.agent.rootKey
+        ? "http://localhost:4943"
+        : "https://ic0.app";
       const url = `${host}/api/v2/canister/${tokenCanisterId}/query`;
-      
+
+      // 将Account ID转换为字节数组
+      const accountIdBytes = this.hexToBytes(accountId);
+
       const requestBody = {
         request_type: "query",
-        sender: account.owner.toText(),
+        sender: "2vxsx-fae", // 匿名principal
         canister_id: tokenCanisterId,
         method_name: "icrc1_balance_of",
-        arg: this.encodeAccount(account),
+        arg: this.encodeAccountId(accountIdBytes),
         ingress_expiry: Math.floor(Date.now() / 1000) + 300, // 5分钟后过期
       };
 
@@ -81,9 +92,33 @@ export class TokenBalanceService {
   }
 
   // 查询用户当前代币余额
-  async queryCurrentUserBalance(tokenCanisterId: string, principal: Principal): Promise<bigint> {
-    const account = this.generateDefaultAccount(principal);
-    return await this.queryTokenBalance(tokenCanisterId, account);
+  async queryCurrentUserBalance(
+    tokenCanisterId: string,
+    principal: Principal,
+  ): Promise<bigint> {
+    const accountId = await this.generateAccountId(principal);
+    return await this.queryTokenBalance(tokenCanisterId, accountId);
+  }
+
+  // 生成Account ID
+  async generateAccountId(principal: Principal, subaccount?: Uint8Array): Promise<string> {
+    try {
+      const padding = new Uint8Array([10, ...new TextEncoder().encode("account-id")]);
+      const principalBytes = principal.toUint8Array();
+      const sub = subaccount ?? new Uint8Array(32);
+      const data = new Uint8Array(padding.length + principalBytes.length + sub.length);
+      data.set(padding, 0);
+      data.set(principalBytes, padding.length);
+      data.set(sub, padding.length + principalBytes.length);
+      
+      // 使用SHA-224哈希
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hash = new Uint8Array(hashBuffer);
+      return this.toHex(hash);
+    } catch (error) {
+      console.error("生成Account ID失败:", error);
+      throw error;
+    }
   }
 
   // 获取代币信息 - 使用真实接口
@@ -94,15 +129,17 @@ export class TokenBalanceService {
   }> {
     try {
       console.log(`获取代币信息: ${tokenCanisterId}`);
-      
+
       // 默认代币信息
-      const defaultInfo = { name: "Unknown Token", symbol: "UNK", decimals: 8 };
-      
+      const defaultInfo = { name: "Unknown Token", symbol: "", decimals: 8 };
+
       // 尝试获取真实代币信息，如果失败则使用默认值
       try {
-        const host = this.agent.rootKey ? "http://localhost:4943" : "https://ic0.app";
+        const host = this.agent.rootKey
+          ? "http://localhost:4943"
+          : "https://ic0.app";
         const url = `${host}/api/v2/canister/${tokenCanisterId}/query`;
-        
+
         const requestBody = {
           request_type: "query",
           sender: "2vxsx-fae", // 匿名principal
@@ -123,7 +160,7 @@ export class TokenBalanceService {
         if (response.ok) {
           const nameResult = await response.arrayBuffer();
           const name = this.decodeCBOR(nameResult);
-          
+
           // 获取symbol
           requestBody.method_name = "icrc1_symbol";
           const symbolResponse = await fetch(url, {
@@ -133,13 +170,13 @@ export class TokenBalanceService {
             },
             body: this.encodeCBOR(requestBody),
           });
-          
-          let symbol = "UNK";
+
+          let symbol = "";
           if (symbolResponse.ok) {
             const symbolResult = await symbolResponse.arrayBuffer();
             symbol = this.decodeCBOR(symbolResult);
           }
-          
+
           // 获取decimals
           requestBody.method_name = "icrc1_decimals";
           const decimalsResponse = await fetch(url, {
@@ -149,23 +186,23 @@ export class TokenBalanceService {
             },
             body: this.encodeCBOR(requestBody),
           });
-          
+
           let decimals = 8;
           if (decimalsResponse.ok) {
             const decimalsResult = await decimalsResponse.arrayBuffer();
             decimals = this.decodeCBOR(decimalsResult);
           }
-          
+
           return { name, symbol, decimals };
         }
       } catch (error) {
         console.warn(`获取${tokenCanisterId}代币信息失败，使用默认值:`, error);
       }
-      
+
       return defaultInfo;
     } catch (error) {
       console.error("获取代币信息失败:", error);
-      return { name: "Unknown Token", symbol: "UNK", decimals: 8 };
+      return { name: "Unknown Token", symbol: "", decimals: 8 };
     }
   }
 
@@ -174,12 +211,12 @@ export class TokenBalanceService {
     const divisor = BigInt(10 ** decimals);
     const whole = balance / divisor;
     const fraction = balance % divisor;
-    
+
     if (fraction === BigInt(0)) {
       return whole.toString();
     }
-    
-    const fractionStr = fraction.toString().padStart(decimals, '0');
+
+    const fractionStr = fraction.toString().padStart(decimals, "0");
     return `${whole}.${fractionStr}`;
   }
 
@@ -188,7 +225,7 @@ export class TokenBalanceService {
     // 简化的CBOR编码，实际项目中应该使用完整的CBOR库
     const accountData = {
       owner: account.owner.toText(),
-      subaccount: account.subaccount ? Array.from(account.subaccount) : null
+      subaccount: account.subaccount ? Array.from(account.subaccount) : null,
     };
     return new TextEncoder().encode(JSON.stringify(accountData));
   }
@@ -207,6 +244,26 @@ export class TokenBalanceService {
     const text = new TextDecoder().decode(data);
     return JSON.parse(text);
   }
+
+  // 将十六进制字符串转换为字节数组
+  private hexToBytes(hex: string): Uint8Array {
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < hex.length; i += 2) {
+      bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+    }
+    return bytes;
+  }
+
+  // 将字节数组转换为十六进制字符串
+  private toHex(buffer: Uint8Array): string {
+    return Array.prototype.map.call(buffer, x => ('00' + x.toString(16)).slice(-2)).join('');
+  }
+
+  // 编码Account ID为CBOR格式
+  private encodeAccountId(accountIdBytes: Uint8Array): Uint8Array {
+    // 简化的CBOR编码，实际项目中应该使用完整的CBOR库
+    return new TextEncoder().encode(JSON.stringify(Array.from(accountIdBytes)));
+  }
 }
 
 // 常用的代币Canister ID
@@ -215,13 +272,16 @@ export const TOKEN_CANISTER_IDS = {
   ICP: "ryjl3-tyaaa-aaaaa-aaaba-cai", // ICP Ledger
   CKBTC: "mxzaz-hqaaa-aaaar-qaada-cai", // ckBTC Ledger
   SNS1: "zfcdd-tqaaa-aaaaq-aaaga-cai", // SNS-1 Token
-  
+
   // 本地测试代币ID（开发环境）
   LOCAL_ICP: "ryjl3-tyaaa-aaaaa-aaaba-cai",
   LOCAL_CKBTC: "mxzaz-hqaaa-aaaar-qaada-cai",
 };
 
 // 创建全局实例
-export function createTokenBalanceService(agent: HttpAgent): TokenBalanceService {
+export function createTokenBalanceService(
+  agent: HttpAgent,
+): TokenBalanceService {
   return new TokenBalanceService(agent);
-} 
+}
+ 

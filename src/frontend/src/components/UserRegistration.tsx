@@ -1,13 +1,13 @@
 // 用户注册组件
 // 处理新用户的注册流程
 
-import React, { useState } from "react"; // 导入React和useState
-import { useLanguage } from "../hooks/useLanguage"; // 导入多语言Hook
+import { useState, useEffect, useRef } from "react";
+import { useLanguage } from "../hooks/useLanguage";
 
-// 组件属性接口
+// 用户注册组件属性接口
 interface UserRegistrationProps {
-  onRegister: (username: string) => Promise<void>; // 注册回调函数
-  onCancel: () => void; // 取消回调函数
+  onRegister: (username: string) => Promise<void>; // 注册回调
+  onCancel: () => void; // 取消回调
   isLoading?: boolean; // 加载状态
 }
 
@@ -20,6 +20,24 @@ export const UserRegistration: React.FC<UserRegistrationProps> = ({
   const { t } = useLanguage(); // 多语言Hook
   const [username, setUsername] = useState(""); // 用户名状态
   const [error, setError] = useState(""); // 错误信息状态
+
+  // 模态框的ref，用于检测点击外部
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // 点击外部关闭模态框
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onCancel();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onCancel]);
 
   // 处理表单提交
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,7 +73,7 @@ export const UserRegistration: React.FC<UserRegistrationProps> = ({
   return (
     // 注册表单容器
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
+      <div ref={modalRef} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
         {/* 标题 */}
         <h2 className="mb-4 text-center text-2xl font-bold text-gray-900 dark:text-white">
           {t("register_user")}

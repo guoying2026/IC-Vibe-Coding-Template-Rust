@@ -73,10 +73,11 @@ export class InternetIdentityService {
       console.log("=== 初始化Internet Identity服务 ===");
       console.log("环境变量检查:", {
         DFX_NETWORK: import.meta.env.DFX_NETWORK,
-        CANISTER_ID_INTERNET_IDENTITY: import.meta.env.CANISTER_ID_INTERNET_IDENTITY,
+        CANISTER_ID_INTERNET_IDENTITY: import.meta.env
+          .CANISTER_ID_INTERNET_IDENTITY,
         CANISTER_ID_BACKEND: import.meta.env.CANISTER_ID_BACKEND,
       });
-      
+
       // 创建认证客户端
       this.authClient = await AuthClient.create();
       console.log("AuthClient创建成功");
@@ -90,7 +91,7 @@ export class InternetIdentityService {
         // 如果已认证，获取身份并初始化
         this.identity = this.authClient.getIdentity();
         console.log("获取到身份:", this.identity.getPrincipal().toText());
-        
+
         await this.initializeAgent();
         await this.checkAuthenticationStatus();
         console.log("已认证用户初始化完成");
@@ -161,11 +162,11 @@ export class InternetIdentityService {
   // 使用匿名身份初始化HTTP代理和Actor
   private async initializeAgentWithAnonymousIdentity(): Promise<void> {
     console.log("使用匿名身份初始化HTTP代理和Actor...");
-    
+
     // 创建匿名身份
     const { AnonymousIdentity } = await import("@dfinity/agent");
     this.identity = new AnonymousIdentity();
-    
+
     await this.initializeAgent();
     console.log("匿名用户初始化完成");
   }
@@ -174,20 +175,22 @@ export class InternetIdentityService {
   private ensureTokenBalanceService(): TokenBalanceService {
     if (!this.tokenBalanceService) {
       if (!this.agent) {
-        // 如果agent未初始化，尝试使用匿名身份初始化
-        console.log("Agent未初始化，尝试使用匿名身份初始化...");
-        this.initializeAgentWithAnonymousIdentity().catch(error => {
-          console.error("匿名身份初始化失败:", error);
-          throw new Error("无法初始化Agent，请先登录");
+        // 如果agent未初始化，创建一个新的HttpAgent用于匿名查询
+        console.log("Agent未初始化，创建匿名Agent用于余额查询...");
+        const anonymousAgent = new HttpAgent({
+          host: import.meta.env.DFX_NETWORK === "ic" ? "https://ic0.app" : "http://127.0.0.1:4943",
         });
         
-        // 如果还是失败，抛出错误
-        if (!this.agent) {
-          throw new Error("Agent初始化失败，请先登录");
+        // 如果是本地环境，需要设置rootKey
+        if (import.meta.env.DFX_NETWORK !== "ic") {
+          anonymousAgent.fetchRootKey().catch(console.error);
         }
+        
+        this.tokenBalanceService = new TokenBalanceService(anonymousAgent);
+      } else {
+        console.log("使用已初始化的Agent创建TokenBalanceService...");
+        this.tokenBalanceService = new TokenBalanceService(this.agent);
       }
-      console.log("延迟初始化TokenBalanceService...");
-      this.tokenBalanceService = new TokenBalanceService(this.agent);
     }
     return this.tokenBalanceService;
   }
@@ -278,18 +281,21 @@ export class InternetIdentityService {
           try {
             // 登录成功，获取身份并初始化
             this.identity = this.authClient!.getIdentity();
-            console.log("获取到用户身份:", this.identity.getPrincipal().toText());
-            
+            console.log(
+              "获取到用户身份:",
+              this.identity.getPrincipal().toText(),
+            );
+
             // 初始化agent和actor
             await this.initializeAgent();
             console.log("Agent和Actor初始化成功");
-            
+
             // 检查认证状态并获取用户信息
             await this.checkAuthenticationStatus();
             console.log("认证状态检查完成");
-            
+
             // 派发登录成功事件，通知主窗口
-            window.dispatchEvent(new Event('ii-login-success'));
+            window.dispatchEvent(new Event("ii-login-success"));
             resolve();
           } catch (error) {
             console.error("登录后初始化失败:", error);
@@ -301,7 +307,8 @@ export class InternetIdentityService {
           reject(error);
         },
         // 添加窗口配置
-        windowOpenerFeatures: "toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=500,height=600",
+        windowOpenerFeatures:
+          "toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=500,height=600",
       });
     });
   }
@@ -620,7 +627,10 @@ export class InternetIdentityService {
   }
 
   // 从Principal生成Account identifier
-  generateAccountFromPrincipal(principal: Principal, subaccount?: Uint8Array): Account {
+  generateAccountFromPrincipal(
+    principal: Principal,
+    subaccount?: Uint8Array,
+  ): Account {
     return {
       owner: principal,
       subaccount: subaccount,
@@ -633,7 +643,10 @@ export class InternetIdentityService {
   }
 
   // 查询代币余额
-  async queryTokenBalance(tokenCanisterId: string, account: Account): Promise<bigint> {
+  async queryTokenBalance(
+    tokenCanisterId: string,
+    account: Account,
+  ): Promise<bigint> {
     if (!this.agent) {
       throw new Error("Agent未初始化");
     }
@@ -643,7 +656,7 @@ export class InternetIdentityService {
       // 这里使用简化的方法，实际项目中可能需要更完整的IDL定义
       console.log(`查询代币余额: ${tokenCanisterId}`);
       console.log(`Account: ${account.owner.toText()}`);
-      
+
       // 返回模拟余额，实际实现需要完整的ledger IDL
       return BigInt(0);
     } catch (error) {
@@ -655,56 +668,77 @@ export class InternetIdentityService {
   // 查询用户当前代币余额
   async queryCurrentUserBalance(tokenCanisterId: string): Promise<bigint> {
     const tokenBalanceService = this.ensureTokenBalanceService();
-    
+
     const principal = this.getCurrentPrincipal();
     if (!principal) {
-      throw new Error("用户未认证");
+      // 如果用户未登录，使用匿名principal进行查询
+      console.log("用户未登录，使用匿名principal查询余额...");
+      const anonymousPrincipal = Principal.anonymous();
+      return await tokenBalanceService.queryCurrentUserBalance(
+        tokenCanisterId,
+        anonymousPrincipal,
+      );
     }
 
-    return await tokenBalanceService.queryCurrentUserBalance(tokenCanisterId, principal);
+    return await tokenBalanceService.queryCurrentUserBalance(
+      tokenCanisterId,
+      principal,
+    );
   }
 
   // 查询ICP余额
   async queryICPBalance(): Promise<bigint> {
     const tokenBalanceService = this.ensureTokenBalanceService();
-    
+
     const principal = this.getCurrentPrincipal();
     if (!principal) {
-      throw new Error("用户未认证");
+      // 如果用户未登录，使用匿名principal进行查询
+      console.log("用户未登录，使用匿名principal查询ICP余额...");
+      const anonymousPrincipal = Principal.anonymous();
+      return await tokenBalanceService.queryCurrentUserBalance(
+        TOKEN_CANISTER_IDS.ICP,
+        anonymousPrincipal,
+      );
     }
 
     return await tokenBalanceService.queryCurrentUserBalance(
-      TOKEN_CANISTER_IDS.ICP, 
-      principal
+      TOKEN_CANISTER_IDS.ICP,
+      principal,
     );
   }
 
   // 查询ckBTC余额
   async queryCkbtcBalance(): Promise<bigint> {
     const tokenBalanceService = this.ensureTokenBalanceService();
-    
+
     const principal = this.getCurrentPrincipal();
     if (!principal) {
-      throw new Error("用户未认证");
+      // 如果用户未登录，使用匿名principal进行查询
+      console.log("用户未登录，使用匿名principal查询ckBTC余额...");
+      const anonymousPrincipal = Principal.anonymous();
+      return await tokenBalanceService.queryCurrentUserBalance(
+        TOKEN_CANISTER_IDS.CKBTC,
+        anonymousPrincipal,
+      );
     }
 
     return await tokenBalanceService.queryCurrentUserBalance(
-      TOKEN_CANISTER_IDS.CKBTC, 
-      principal
+      TOKEN_CANISTER_IDS.CKBTC,
+      principal,
     );
   }
 
   // 获取代币信息
   async getTokenInfo(tokenCanisterId: string) {
     const tokenBalanceService = this.ensureTokenBalanceService();
-    
+
     return await tokenBalanceService.getTokenInfo(tokenCanisterId);
   }
 
   // 格式化余额显示
   formatBalance(balance: bigint, decimals: number): string {
     const tokenBalanceService = this.ensureTokenBalanceService();
-    
+
     return tokenBalanceService.formatBalance(balance, decimals);
   }
 
@@ -722,16 +756,23 @@ export class InternetIdentityService {
 
 // ckBTC minter canister 配置
 const CKBTC_MINTER_CANISTER_ID = "qjdve-lqaaa-aaaaa-aaaeq-cai"; // 主网 minter canister
-const CKBTC_MINTER_IDL = (IDL: any) => IDL.Service({
-  get_btc_deposit_state: IDL.Func([], [IDL.Record({
-    status: IDL.Text,
-    btcAddress: IDL.Text,
-    received: IDL.Float64,
-    required: IDL.Float64,
-    confirmations: IDL.Nat,
-    requiredConfirmations: IDL.Nat,
-  })], ["query"]),
-});
+const CKBTC_MINTER_IDL = (IDL: any) =>
+  IDL.Service({
+    get_btc_deposit_state: IDL.Func(
+      [],
+      [
+        IDL.Record({
+          status: IDL.Text,
+          btcAddress: IDL.Text,
+          received: IDL.Float64,
+          required: IDL.Float64,
+          confirmations: IDL.Nat,
+          requiredConfirmations: IDL.Nat,
+        }),
+      ],
+      ["query"],
+    ),
+  });
 
 // 查询充值进度
 export async function getCkbtcDepositState(): Promise<any> {

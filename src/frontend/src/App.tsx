@@ -1,79 +1,78 @@
 // 主应用组件
 // Main application component with multi-page navigation
 
-import { useState, useEffect } from "react";
-import { PageRoute, MarketPair, Vault } from "./types";
+import React, { useState, useEffect } from "react";
 import { Header } from "./components/Layout/Header";
+import DashboardPage from "./views/DashboardPage";
 import { EarnPage } from "./views/EarnPage";
-import { VaultDetailPage } from "./views/VaultDetailPage";
 import { BorrowPage } from "./views/BorrowPage";
-import { MarketDetailPage } from "./views/MarketDetailPage";
-import { Loader, ErrorDisplay } from "./components";
-import { LanguageProvider } from "./hooks/useLanguage";
 import { ExplorePage } from "./views/ExplorePage";
 import MigratePage from "./views/MigratePage";
-import DashboardPage from "./views/DashboardPage";
-import {
-  internetIdentityService,
-  AuthState,
-} from "./services/InternetIdentityService"; // 导入II服务
+import { VaultDetailPage } from "./views/VaultDetailPage";
+import { MarketDetailPage } from "./views/MarketDetailPage";
+import { internetIdentityService } from "./services/InternetIdentityService";
+import { UserInfo } from "./services/InternetIdentityService";
+import { Principal } from "@dfinity/principal";
+import { MarketPair } from "./types";
+import { Vault } from "./types";
+import { PageRoute } from "./types";
+import { useLanguage } from "./hooks/useLanguage";
+import { LanguageProvider } from "./hooks/useLanguage";
 
-// 主应用组件
+// 错误提示组件
+const ErrorBanner = ({ message, onClose }: { message: string; onClose: () => void }) => (
+  <div className="mb-4 rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center">
+        <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fillRule="evenodd"
+            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+            clipRule="evenodd"
+          />
+        </svg>
+        {message}
+      </div>
+      <button
+        onClick={onClose}
+        className="ml-2 text-red-400 hover:text-red-600 dark:hover:text-red-300"
+      >
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  </div>
+);
+
 function App() {
-  // 当前页面路由状态
-  const [currentPage, setCurrentPage] = useState<PageRoute>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("currentPage");
-      if (
-        stored === "earn" ||
-        stored === "borrow" ||
-        stored === "explore" ||
-        stored === "migrate" ||
-        stored === "dashboard"
-      ) {
-        return stored as PageRoute;
-      }
-    }
-    return "dashboard";
-  });
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("currentPage", currentPage);
-    }
-  }, [currentPage]);
-
-  // 当前选中的市场，用于显示详情页
+  const { t } = useLanguage();
+  const [currentPage, setCurrentPage] = useState<PageRoute>("dashboard");
   const [selectedMarket, setSelectedMarket] = useState<MarketPair | null>(null);
-
-  // 当前选中的金库，用于显示详情页
   const [selectedVault, setSelectedVault] = useState<Vault | null>(null);
-
-  // Internet Identity认证状态
-  const [authState, setAuthState] = useState<AuthState>({
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [authState, setAuthState] = useState<{
+    isAuthenticated: boolean;
+    principal: Principal | null;
+    userInfo: UserInfo | null;
+  }>({
     isAuthenticated: false,
     principal: null,
     userInfo: null,
   });
 
-  // 加载状态
-  const [loading, setLoading] = useState(false);
-
-  // 错误状态
-  const [error, setError] = useState<string | undefined>();
-
   // 初始化Internet Identity服务
   useEffect(() => {
     const initializeII = async () => {
       try {
-        setLoading(true);
         await internetIdentityService.initialize();
         const state = internetIdentityService.getAuthState();
         setAuthState(state);
+        console.log("Internet Identity服务初始化完成");
       } catch (error) {
-        console.error("初始化Internet Identity失败:", error);
-        setError("初始化认证服务失败");
-      } finally {
-        setLoading(false);
+        console.error("Internet Identity服务初始化失败:", error);
+        // setError("请先登录Internet Identity");
       }
     };
 
@@ -83,57 +82,52 @@ function App() {
     const handleIILogin = async () => {
       const state = internetIdentityService.getAuthState();
       setAuthState(state);
+      console.log("Internet Identity连接成功");
     };
-    window.addEventListener('ii-login-success', handleIILogin);
+
+    window.addEventListener("ii-login-success", handleIILogin);
+
     return () => {
-      window.removeEventListener('ii-login-success', handleIILogin);
+      window.removeEventListener("ii-login-success", handleIILogin);
     };
   }, []);
 
-  // 处理错误显示
+  // 处理错误
   const handleError = (errorMessage: string) => {
     setError(errorMessage);
   };
 
   // 清除错误
   const clearError = () => {
-    setError(undefined);
+    setError(null);
   };
 
   // 处理Internet Identity登录
   const handleConnectWallet = async () => {
     setLoading(true);
-    setError(undefined); // 清除之前的错误
-    
+    clearError();
+
     try {
-      console.log("开始连接Internet Identity...");
-      
       // 调用登录方法
       await internetIdentityService.login();
-      
-      // 获取认证状态
       const state = internetIdentityService.getAuthState();
-      console.log("登录成功，认证状态:", state);
-      
-      // 更新前端状态
       setAuthState(state);
-      
-      console.log("Internet Identity连接成功");
+      console.log("登录成功，认证状态:", state);
     } catch (error) {
       console.error("Internet Identity连接失败:", error);
-      
+
       // 根据错误类型显示不同的错误信息
-      let errorMessage = "Internet Identity登录失败";
+      let errorMessage = t("internet_identity_failed");
       if (error instanceof Error) {
         if (error.message.includes("无法连接到后端服务")) {
-          errorMessage = "无法连接到后端服务，请确保dfx正在运行";
+          errorMessage = t("backend_connection_error") || "无法连接到后端服务，请确保dfx正在运行";
         } else if (error.message.includes("用户取消")) {
-          errorMessage = "用户取消了登录操作";
+          errorMessage = t("authentication_cancelled") || "用户取消了身份验证操作";
         } else {
           errorMessage = error.message;
         }
       }
-      
+
       handleError(errorMessage);
     } finally {
       setLoading(false);
@@ -150,13 +144,13 @@ function App() {
         userInfo: null,
       });
     } catch (error) {
-      handleError("登出失败");
+      handleError(t("logout_failed") || "登出失败");
     }
   };
 
   // 处理用户信息更新
   const handleUserInfoUpdate = (updatedUserInfo: any) => {
-    setAuthState(prevState => ({
+    setAuthState((prevState) => ({
       ...prevState,
       userInfo: updatedUserInfo,
     }));
@@ -203,10 +197,16 @@ function App() {
       case "earn":
         // 如果有选中的金库，则显示详情页，否则显示金库列表页
         return selectedVault ? (
-          <VaultDetailPage vault={selectedVault} onBack={handleBackToVaults} isAuthenticated={authState.isAuthenticated} />
+          <VaultDetailPage
+            vault={selectedVault}
+            onBack={handleBackToVaults}
+            isAuthenticated={authState.isAuthenticated}
+          />
         ) : (
-          <EarnPage 
-            walletAddress={authState.principal ? formatPrincipal(authState.principal) : null}
+          <EarnPage
+            walletAddress={
+              authState.principal ? formatPrincipal(authState.principal) : null
+            }
             userInfo={authState.userInfo}
             isAuthenticated={authState.isAuthenticated}
             principal={authState.principal}
@@ -237,19 +237,23 @@ function App() {
       case "migrate":
         return <MigratePage />;
       case "dashboard":
-        return <DashboardPage 
-          userInfo={authState.userInfo}
-          isAuthenticated={authState.isAuthenticated}
-          principal={authState.principal}
-          onUserInfoUpdate={handleUserInfoUpdate}
-        />;
+        return (
+          <DashboardPage
+            userInfo={authState.userInfo}
+            isAuthenticated={authState.isAuthenticated}
+            principal={authState.principal}
+            onUserInfoUpdate={handleUserInfoUpdate}
+          />
+        );
       default:
-        return <DashboardPage 
-          userInfo={authState.userInfo}
-          isAuthenticated={authState.isAuthenticated}
-          principal={authState.principal}
-          onUserInfoUpdate={handleUserInfoUpdate}
-        />;
+        return (
+          <DashboardPage
+            userInfo={authState.userInfo}
+            isAuthenticated={authState.isAuthenticated}
+            principal={authState.principal}
+            onUserInfoUpdate={handleUserInfoUpdate}
+          />
+        );
     }
   };
 
@@ -275,24 +279,14 @@ function App() {
       {/* 全局加载遮罩 */}
       {loading && !error && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <Loader />
+          {/* <Loader /> */}
         </div>
       )}
 
       {/* 全局错误显示 */}
-      {/* {error && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
-            <ErrorDisplay message={error} />
-            <button
-              onClick={clearError}
-              className="mt-4 w-full rounded-lg bg-gray-100 px-4 py-2 text-gray-900 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )} */}
+      {error && (
+        <ErrorBanner message={error} onClose={clearError} />
+      )}
     </div>
   );
 }

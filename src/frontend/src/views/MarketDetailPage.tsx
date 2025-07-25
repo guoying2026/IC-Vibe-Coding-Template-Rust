@@ -23,7 +23,11 @@ const formatCurrency = (amount: number, compact = false) => {
 };
 
 // 市场详情页主组件
-export const MarketDetailPage = ({ market, onBack, isAuthenticated }: MarketDetailPageProps) => {
+export const MarketDetailPage = ({
+  market,
+  onBack,
+  isAuthenticated,
+}: MarketDetailPageProps) => {
   // 多语言Hook
   const { t } = useLanguage();
 
@@ -158,7 +162,9 @@ export const MarketDetailPage = ({ market, onBack, isAuthenticated }: MarketDeta
                 </div>
 
                 <button className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:from-blue-600 hover:to-purple-600 hover:shadow-xl active:scale-95">
-                  {isAuthenticated ? t("confirm") : t("connect_internet_identity")}
+                  {isAuthenticated
+                    ? t("confirm")
+                    : t("authenticate")}
                 </button>
               </div>
             </div>

@@ -27,9 +27,15 @@ interface AssetPoolProps {
 }
 
 // 资产池卡片组件 - 显示单个资产的概览信息和操作按钮
-export const AssetPool = ({ asset, onSupply, onViewDetails, disabled, isAuthenticated }: AssetPoolProps) => {
+export const AssetPool = ({
+  asset,
+  onSupply,
+  onViewDetails,
+  disabled,
+  isAuthenticated,
+}: AssetPoolProps) => {
   const { t } = useLanguage();
-  
+
   // 格式化数字为易读的货币格式 (K表示千，M表示百万)
   const formatNumber = (num: number) => {
     if (num >= 1000000) {
@@ -147,7 +153,11 @@ export const AssetPool = ({ asset, onSupply, onViewDetails, disabled, isAuthenti
               : "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg hover:from-blue-600 hover:to-purple-600 hover:shadow-xl active:scale-95" // 正常状态样式
           }`}
         >
-          {disabled ? (isAuthenticated ? t("confirm") : t("connect_internet_identity")) : t("supply")}
+          {disabled
+            ? isAuthenticated
+              ? t("confirm")
+              : t("authenticate")
+            : t("supply")}
         </button>
 
         {/* 查看详情按钮 */}
