@@ -26,7 +26,7 @@ const translations: Translations = {
   nav_explore: { en: "Explore", zh: "探索" },
   nav_migrate: { en: "Migrate", zh: "教程" },
   nav_dashboard: { en: "Dashboard", zh: "个人中心" },
-
+  
   // 通用文本
   confirm: { en: "Confirm", zh: "确认" },
   connect_wallet: { en: "Connect Wallet", zh: "连接钱包" },
@@ -121,7 +121,7 @@ const translations: Translations = {
     en: "Used for receiving tokens and conducting transactions",
     zh: "用于接收代币和进行交易",
   },
-
+  
   // 资产相关
   total_supply: { en: "Total Supply", zh: "总供应量" },
   total_borrow: { en: "Total Borrow", zh: "总借贷量" },
@@ -130,7 +130,7 @@ const translations: Translations = {
   apy: { en: "APY", zh: "年化收益率" },
   supply_apy: { en: "Supply APY", zh: "供应年化收益率" },
   borrow_apy: { en: "Borrow APY", zh: "借贷年化收益率" },
-
+  
   // 操作相关
   supply: { en: "Supply", zh: "供应" },
   withdraw: { en: "Withdraw", zh: "提取" },
@@ -138,7 +138,7 @@ const translations: Translations = {
   repay: { en: "Repay", zh: "还款" },
   amount: { en: "Amount", zh: "金额" },
   balance: { en: "Balance", zh: "余额" },
-
+  
   // Earn页面相关
   vault: { en: "Vault", zh: "金库" },
   deposits: { en: "Deposits", zh: "存款" },
@@ -176,7 +176,7 @@ const translations: Translations = {
     en: "Try adjusting your filters.",
     zh: "请尝试调整筛选条件。",
   },
-
+  
   // 页面标题
   page_earn_title: { en: "Earn Bitcoin Yield", zh: "赚取比特币收益" },
   page_earn_subtitle: {
@@ -198,26 +198,26 @@ const translations: Translations = {
     en: "Manage your Bitcoin DeFi positions",
     zh: "管理您的比特币DeFi头寸",
   },
-
+  
   // 统计数据
   total_supplied: { en: "Total Supplied", zh: "总供应金额" },
   total_borrowed: { en: "Total Borrowed", zh: "总借贷金额" },
   total_earned: { en: "Total Earned", zh: "总收益" },
   net_worth: { en: "Net Worth", zh: "净资产" },
   health_factor: { en: "Health Factor", zh: "健康因子" },
-
+  
   // 交易历史
   transaction_history: { en: "Transaction History", zh: "交易历史" },
   recent_transactions: { en: "Recent Transactions", zh: "最近交易" },
   view_all: { en: "View All", zh: "查看全部" },
-
+  
   // 市场信息
   market_info: { en: "Market Information", zh: "市场信息" },
   collateral_factor: { en: "Collateral Factor", zh: "抵押因子" },
   liquidation_threshold: { en: "Liquidation Threshold", zh: "清算阈值" },
   price: { en: "Price", zh: "价格" },
   price_change_24h: { en: "24h Change", zh: "24小时变化" },
-
+  
   // 教程相关
   "Go to Earn": { en: "Go to Earn", zh: "前往收益" },
   "Go to Borrow": { en: "Go to Borrow", zh: "前往借贷" },
@@ -235,7 +235,7 @@ const translations: Translations = {
     en: "Earn: How You Earn Yield",
     zh: "收益：如何赚取收益",
   },
-  "Deposit Assets": { en: "Deposit Assets", zh: "存入资产" },
+"Deposit Assets": { en: "Deposit Assets", zh: "存入资产" },
   "You supply supported assets (e.g., BTC, ETH) into the platform's vaults.": {
     en: "You supply supported assets (e.g., BTC, ETH) into the platform's vaults.",
     zh: "您将支持的资产（如BTC、ETH）存入平台金库。",
@@ -249,7 +249,7 @@ const translations: Translations = {
       en: "Your supplied assets are algorithmically matched to borrowers, maximizing utilization and yield.",
       zh: "您的资产通过算法与借款人撮合，提升利用率和收益。",
     },
-  "Earn Interest": { en: "Earn Interest", zh: "赚取利息" },
+"Earn Interest": { en: "Earn Interest", zh: "赚取利息" },
   "You earn interest paid by borrowers, with rates determined by market supply and demand.":
     {
       en: "You earn interest paid by borrowers, with rates determined by market supply and demand.",
@@ -272,7 +272,7 @@ const translations: Translations = {
     en: "Borrow: How to Borrow with Collateral",
     zh: "借贷：如何以抵押品借贷",
   },
-  "Provide Collateral": { en: "Provide Collateral", zh: "提供抵押品" },
+"Provide Collateral": { en: "Provide Collateral", zh: "提供抵押品" },
   "Deposit your assets as collateral to secure your loan": {
     en: "Deposit your assets as collateral to secure your loan",
     zh: "存入您的资产作为抵押品，为贷款提供担保",
@@ -285,7 +285,7 @@ const translations: Translations = {
     en: "Borrow other tokens within safe collateralization limits",
     zh: "在安全的抵押率范围内借贷其他代币",
   },
-  "Repay and Withdraw": { en: "Repay and Withdraw", zh: "还款与提取" },
+"Repay and Withdraw": { en: "Repay and Withdraw", zh: "还款与提取" },
   "Repay your loan to unlock and withdraw your collateral anytime": {
     en: "Repay your loan to unlock and withdraw your collateral anytime",
     zh: "随时还款以解锁并提取您的抵押品",
@@ -303,7 +303,7 @@ const translations: Translations = {
     zh: "透明利率，即时到账",
   },
   FAQ: { en: "FAQ", zh: "常见问题" },
-  "Is my asset safe?": { en: "Is my asset safe?", zh: "我的资产安全吗？" },
+"Is my asset safe?": { en: "Is my asset safe?", zh: "我的资产安全吗？" },
   "All operations are non-custodial and on-chain. You always control your assets.":
     {
       en: "All operations are non-custodial and on-chain. You always control your assets.",
@@ -328,18 +328,18 @@ const translations: Translations = {
       zh: "如果抵押品价值低于清算阈值，您的仓位可能会被清算以保护协议安全。",
     },
 
-  //个人中心
+//个人中心
   Dashboard: { en: "Dashboard", zh: "个人中心" },
-  "Total Earned": { en: "Total Earned", zh: "总收益" },
-  "Total Borrowed": { en: "Total Borrowed", zh: "总借贷" },
-  "My Earn Positions": { en: "My Earn Positions", zh: "我的收益仓位" },
-  "My Borrow Positions": { en: "My Borrow Positions", zh: "我的借贷仓位" },
+"Total Earned": { en: "Total Earned", zh: "总收益" },
+"Total Borrowed": { en: "Total Borrowed", zh: "总借贷" },
+"My Earn Positions": { en: "My Earn Positions", zh: "我的收益仓位" },
+"My Borrow Positions": { en: "My Borrow Positions", zh: "我的借贷仓位" },
   Asset: { en: "Asset", zh: "资产" },
   Amount: { en: "Amount", zh: "数量" },
   APY: { en: "APY", zh: "年化收益率" },
   Earned: { en: "Earned", zh: "已赚取" },
   Rate: { en: "Rate", zh: "利率" },
-  "Health Factor": { en: "Health Factor", zh: "健康因子" },
+"Health Factor": { en: "Health Factor", zh: "健康因子" },
   no_earn_positions: { en: "No earn positions yet", zh: "暂无收益仓位" },
   no_borrow_positions: { en: "No borrow positions yet", zh: "暂无借贷仓位" },
 
@@ -403,7 +403,7 @@ const translations: Translations = {
     zh: "随时可以部分或全部还款。还清后，抵押的资产将自动解锁并可提取。",
   },
 
-  // 品牌相关
+// 品牌相关
   app_name: { en: "BLend", zh: "BLend" },
   app_subtitle: {
     en: "Decentralized Bitcoin Finance on BLend",
@@ -557,12 +557,12 @@ export const LanguageProvider = ({ children }: React.PropsWithChildren<{}>) => {
   }, []);
   const t = useCallback(
     (key: string): string => {
-      const translation = translations[key];
-      if (!translation) {
-        console.warn(`Translation key "${key}" not found`);
-        return key;
-      }
-      return translation[language];
+    const translation = translations[key];
+    if (!translation) {
+      console.warn(`Translation key "${key}" not found`);
+      return key;
+    }
+    return translation[language];
     },
     [language],
   );
@@ -585,4 +585,4 @@ export const LanguageProvider = ({ children }: React.PropsWithChildren<{}>) => {
 };
 
 // useLanguage钩子
-export const useLanguage = () => useContext(LanguageContext);
+export const useLanguage = () => useContext(LanguageContext); 

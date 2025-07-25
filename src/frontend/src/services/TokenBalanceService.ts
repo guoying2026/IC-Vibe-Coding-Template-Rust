@@ -12,7 +12,9 @@ export interface Account {
 
 // ICRC Ledger interface
 export interface ICRCLedger {
-  icrc1_balance_of: (args: { account: { owner: Principal; subaccount: Uint8Array[] | [] } }) => Promise<bigint>;
+  icrc1_balance_of: (args: {
+    account: { owner: Principal; subaccount: Uint8Array[] | [] };
+  }) => Promise<bigint>;
   icrc1_name: () => Promise<string>;
   icrc1_symbol: () => Promise<string>;
   icrc1_decimals: () => Promise<number>;
@@ -50,9 +52,9 @@ export class TokenBalanceService {
     this.tokenInfoCache = new Map();
     const network = import.meta.env.DFX_NETWORK || "ic";
     if (network === "local") {
-      this.agent.fetchRootKey().catch((error) =>
-        console.error("获取本地 Root Key 失败:", error),
-      );
+      this.agent
+        .fetchRootKey()
+        .catch((error) => console.error("获取本地 Root Key 失败:", error));
     }
   }
 
@@ -60,7 +62,9 @@ export class TokenBalanceService {
   private getNetworkConfig() {
     const network = import.meta.env.DFX_NETWORK || "ic";
     if (!["local", "ic"].includes(network)) {
-      throw new Error(`无效的 DFX_NETWORK 值: ${network}，应为 "local" 或 "ic"`);
+      throw new Error(
+        `无效的 DFX_NETWORK 值: ${network}，应为 "local" 或 "ic"`,
+      );
     }
     const isLocal = network === "local";
     const host = isLocal ? "http://localhost:4943" : "https://icp-api.io";
@@ -106,14 +110,17 @@ export class TokenBalanceService {
         owner: principal,
         subaccount: subaccount ? [subaccount] : [], // 转换为opt vec nat8格式
       };
-      
+
       const balance = await actor.icrc1_balance_of({ account });
       console.log(`Balance retrieved: ${balance}`);
       return { balance };
     } catch (error) {
       console.error("Failed to query token balance:", error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return { error: `Failed to query ${tokenCanisterId} balance: ${errorMessage}` };
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      return {
+        error: `Failed to query ${tokenCanisterId} balance: ${errorMessage}`,
+      };
     }
   }
 
@@ -180,7 +187,10 @@ export class TokenBalanceService {
       this.tokenInfoCache.set(tokenCanisterId, tokenInfo);
       return tokenInfo;
     } catch (error) {
-      console.warn(`Failed to fetch ${tokenCanisterId} token info, using default:`, error);
+      console.warn(
+        `Failed to fetch ${tokenCanisterId} token info, using default:`,
+        error,
+      );
       return { name: "Unknown Token", symbol: "", decimals: 8 };
     }
   }
@@ -211,7 +221,7 @@ export class TokenBalanceService {
         crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
       }
     }
-    crc = (~crc) >>> 0;
+    crc = ~crc >>> 0;
     const buffer = new Uint8Array(4);
     buffer[0] = (crc >> 24) & 0xff;
     buffer[1] = (crc >> 16) & 0xff;
@@ -238,6 +248,8 @@ export const TOKEN_CANISTER_IDS = {
 };
 
 // Create global instance
-export function createTokenBalanceService(agent: HttpAgent): TokenBalanceService {
+export function createTokenBalanceService(
+  agent: HttpAgent,
+): TokenBalanceService {
   return new TokenBalanceService(agent);
 }

@@ -91,29 +91,3 @@ service : () -> {
   update_pool_collateral : (text, text) -> ();
   withdraw : (text, nat) -> (Result);
 }
-<<<<<<< HEAD
-
-type DepositAndSwapArgs = record {
-  amountIn : text;
-  zeroForOne : bool;
-  amountOutMinimum : text;
-  tokenInFee : nat;
-  tokenOutFee : nat;
-};
-
-type Error = variant {
-   CommonError;
-   InsufficientFunds;
-   InternalError: text;
-   UnsupportedToken: text;
- };
-
-type Result = variant { ok : nat; err : Error };
-
-type SwapPool = service {
-    depositFromAndSwap : (DepositAndSwapArgs) -> (Result);
-}
-
-service : SwapPool
-=======
->>>>>>> upstream/main

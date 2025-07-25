@@ -2,10 +2,20 @@
 // Handles user authentication and backend interaction
 
 import { AuthClient } from "@dfinity/auth-client";
-import { Identity, HttpAgent, Actor, ActorSubclass, HttpAgentOptions } from "@dfinity/agent";
+import {
+  Identity,
+  HttpAgent,
+  Actor,
+  ActorSubclass,
+  HttpAgentOptions,
+} from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { IDL } from "@dfinity/candid";
-import { TokenBalanceService, TOKEN_CANISTER_IDS, Account } from "./TokenBalanceService";
+import {
+  TokenBalanceService,
+  TOKEN_CANISTER_IDS,
+  Account,
+} from "./TokenBalanceService";
 
 // User information interface
 export interface UserInfo {
@@ -50,13 +60,19 @@ export interface AuthState {
 // Backend Actor interface
 interface BackendService {
   is_authenticated: () => Promise<boolean>;
-  get_user_info: (principal: Principal) => Promise<{ Ok: UserInfo } | { Err: string }>;
+  get_user_info: (
+    principal: Principal,
+  ) => Promise<{ Ok: UserInfo } | { Err: string }>;
   register_user: (
     principal: Principal,
     username: string,
   ) => Promise<{ Ok: UserInfo } | { Err: string }>;
-  update_ckbtc_balance: (amount: number) => Promise<{ Ok: number } | { Err: string }>;
-  get_borrow_positions: () => Promise<{ Ok: BorrowPosition[] } | { Err: string }>;
+  update_ckbtc_balance: (
+    amount: number,
+  ) => Promise<{ Ok: number } | { Err: string }>;
+  get_borrow_positions: () => Promise<
+    { Ok: BorrowPosition[] } | { Err: string }
+  >;
   get_earn_positions: () => Promise<{ Ok: EarnPosition[] } | { Err: string }>;
   add_borrow_position: (
     asset: string,
@@ -95,12 +111,12 @@ const idlFactory: IDL.InterfaceFactory = ({ IDL }) =>
             total_earned: IDL.Float64,
             total_borrowed: IDL.Float64,
             health_factor: IDL.Float64,
-            created_at: IDL.Int,
+            created_at: IDL.Nat64,
             recent_activities: IDL.Opt(
               IDL.Vec(
                 IDL.Record({
                   description: IDL.Text,
-                  timestamp: IDL.Int,
+                  timestamp: IDL.Nat64,
                 }),
               ),
             ),
@@ -121,12 +137,12 @@ const idlFactory: IDL.InterfaceFactory = ({ IDL }) =>
             total_earned: IDL.Float64,
             total_borrowed: IDL.Float64,
             health_factor: IDL.Float64,
-            created_at: IDL.Int,
+            created_at: IDL.Nat64,
             recent_activities: IDL.Opt(
               IDL.Vec(
                 IDL.Record({
                   description: IDL.Text,
-                  timestamp: IDL.Int,
+                  timestamp: IDL.Nat64,
                 }),
               ),
             ),
@@ -227,22 +243,30 @@ export class InternetIdentityService {
   public getNetworkConfig() {
     console.log("=== 环境变量调试信息 ===");
     console.log("import.meta.env.DFX_NETWORK:", import.meta.env.DFX_NETWORK);
-    console.log("import.meta.env.CANISTER_ID_INTERNET_IDENTITY:", import.meta.env.CANISTER_ID_INTERNET_IDENTITY);
-    console.log("import.meta.env.CANISTER_ID_BACKEND:", import.meta.env.CANISTER_ID_BACKEND);
+    console.log(
+      "import.meta.env.CANISTER_ID_INTERNET_IDENTITY:",
+      import.meta.env.CANISTER_ID_INTERNET_IDENTITY,
+    );
+    console.log(
+      "import.meta.env.CANISTER_ID_BACKEND:",
+      import.meta.env.CANISTER_ID_BACKEND,
+    );
     console.log("所有import.meta.env:", import.meta.env);
-    
+
     const network = import.meta.env.DFX_NETWORK || "ic";
     if (!["local", "ic"].includes(network)) {
-      throw new Error(`Invalid DFX_NETWORK value: ${network}, must be "local" or "ic"`);
+      throw new Error(
+        `Invalid DFX_NETWORK value: ${network}, must be "local" or "ic"`,
+      );
     }
     const isLocal = network === "local";
     const host = isLocal ? "http://localhost:4943" : "https://icp-api.io";
-    
+
     // 使用新的推荐URL格式
     const identityProvider = isLocal
       ? `http://${import.meta.env.CANISTER_ID_INTERNET_IDENTITY}.localhost:4943/`
       : "https://identity.icp0.io";
-    
+
     const config = { network, isLocal, host, identityProvider };
     console.log("最终网络配置:", config);
     return config;
@@ -252,12 +276,14 @@ export class InternetIdentityService {
   async initialize(): Promise<void> {
     try {
       console.log("=== 开始初始化 Internet Identity Service ===");
-      
-      const { network, isLocal, host, identityProvider } = this.getNetworkConfig();
+
+      const { network, isLocal, host, identityProvider } =
+        this.getNetworkConfig();
       console.log("网络配置:", { network, isLocal, host, identityProvider });
       console.log("环境变量:", {
         DFX_NETWORK: import.meta.env.DFX_NETWORK,
-        CANISTER_ID_INTERNET_IDENTITY: import.meta.env.CANISTER_ID_INTERNET_IDENTITY,
+        CANISTER_ID_INTERNET_IDENTITY: import.meta.env
+          .CANISTER_ID_INTERNET_IDENTITY,
         CANISTER_ID_BACKEND: import.meta.env.CANISTER_ID_BACKEND,
       });
 
@@ -280,7 +306,10 @@ export class InternetIdentityService {
         console.log("匿名用户初始化完成");
       }
     } catch (error: unknown) {
-      console.error("Internet Identity 初始化失败:", error instanceof Error ? error.message : String(error));
+      console.error(
+        "Internet Identity 初始化失败:",
+        error instanceof Error ? error.message : String(error),
+      );
       throw error;
     }
   }
@@ -306,7 +335,9 @@ export class InternetIdentityService {
         console.log("Root Key fetched successfully");
       } catch (error) {
         console.error("Failed to fetch Root Key:", error);
-        throw new Error("Cannot connect to local environment, ensure dfx is running");
+        throw new Error(
+          "Cannot connect to local environment, ensure dfx is running",
+        );
       }
     }
 
@@ -323,21 +354,33 @@ export class InternetIdentityService {
       });
       console.log("Actor created successfully");
     } catch (error: unknown) {
-      console.error("Failed to create Actor:", error instanceof Error ? error.message : String(error));
-      throw new Error(`Cannot create Actor for canister ${canisterId}: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(
+        "Failed to create Actor:",
+        error instanceof Error ? error.message : String(error),
+      );
+      throw new Error(
+        `Cannot create Actor for canister ${canisterId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
 
     this.tokenBalanceService = new TokenBalanceService(this.agent);
   }
 
   // Retry fetching Root Key
-  private async retryFetchRootKey(agent: HttpAgent, retries: number, delayMs: number = 1000): Promise<void> {
+  private async retryFetchRootKey(
+    agent: HttpAgent,
+    retries: number,
+    delayMs: number = 1000,
+  ): Promise<void> {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         await agent.fetchRootKey();
         return;
       } catch (error) {
-        console.warn(`Attempt ${attempt}/${retries} to fetch Root Key failed:`, error);
+        console.warn(
+          `Attempt ${attempt}/${retries} to fetch Root Key failed:`,
+          error,
+        );
         if (attempt === retries) {
           throw error;
         }
@@ -359,14 +402,21 @@ export class InternetIdentityService {
   public ensureTokenBalanceService(): TokenBalanceService {
     if (!this.tokenBalanceService) {
       const { network, isLocal, host } = this.getNetworkConfig();
-      console.log("Agent not initialized, creating anonymous Agent for balance queries...");
+      console.log(
+        "Agent not initialized, creating anonymous Agent for balance queries...",
+      );
       const options: HttpAgentOptions = { host };
       const agent = HttpAgent.createSync(options);
       this.tokenBalanceService = new TokenBalanceService(agent);
       if (isLocal) {
-        agent.fetchRootKey().catch((error: unknown) =>
-          console.error("Anonymous Agent Root Key fetch failed:", error instanceof Error ? error.message : String(error)),
-        );
+        agent
+          .fetchRootKey()
+          .catch((error: unknown) =>
+            console.error(
+              "Anonymous Agent Root Key fetch failed:",
+              error instanceof Error ? error.message : String(error),
+            ),
+          );
       }
     }
     return this.tokenBalanceService;
@@ -403,8 +453,13 @@ export class InternetIdentityService {
   // Login with Internet Identity
   private async loginWithInternetIdentity(): Promise<void> {
     const { identityProvider } = this.getNetworkConfig();
-    if (!import.meta.env.CANISTER_ID_INTERNET_IDENTITY && identityProvider.includes("canisterId=")) {
-      console.warn("Warning: CANISTER_ID_INTERNET_IDENTITY not configured, local Internet Identity login may fail");
+    if (
+      !import.meta.env.CANISTER_ID_INTERNET_IDENTITY &&
+      identityProvider.includes("canisterId=")
+    ) {
+      console.warn(
+        "Warning: CANISTER_ID_INTERNET_IDENTITY not configured, local Internet Identity login may fail",
+      );
     }
 
     console.log("Using Internet Identity URL:", identityProvider);
@@ -416,7 +471,10 @@ export class InternetIdentityService {
           console.log("Internet Identity login successful");
           try {
             this.identity = this.authClient!.getIdentity();
-            console.log("User identity retrieved:", this.identity.getPrincipal().toText());
+            console.log(
+              "User identity retrieved:",
+              this.identity.getPrincipal().toText(),
+            );
             await this.initializeAgent();
             await this.checkAuthenticationStatus();
             window.dispatchEvent(new Event("ii-login-success"));
@@ -462,7 +520,7 @@ export class InternetIdentityService {
       const principal = this.identity.getPrincipal();
       console.log("当前 Principal:", principal.toText());
       console.log("Actor 是否可用:", !!this.actor);
-      
+
       console.log("正在调用后端 is_authenticated...");
       const isAuthenticated = await this.actor.is_authenticated();
       console.log("后端认证状态:", isAuthenticated);
@@ -488,14 +546,20 @@ export class InternetIdentityService {
           stack: error.stack,
         });
         if (error.message.includes("400")) {
-          console.error("HTTP 400 Bad Request，可能的原因：无效的签名或 Canister ID 错误");
+          console.error(
+            "HTTP 400 Bad Request，可能的原因：无效的签名或 Canister ID 错误",
+          );
           console.error("建议检查：");
           console.error("1. 后端 canister 是否正在运行");
           console.error("2. Canister ID 是否正确");
           console.error("3. 本地 dfx 是否正常运行");
         }
       }
-      this.authState = { isAuthenticated: false, principal: null, userInfo: null };
+      this.authState = {
+        isAuthenticated: false,
+        principal: null,
+        userInfo: null,
+      };
       throw error;
     }
   }
@@ -702,23 +766,32 @@ export class InternetIdentityService {
     const tokenBalanceService = this.ensureTokenBalanceService();
     const principal = this.getCurrentPrincipal();
     if (!principal) {
-      console.log("User not logged in, querying balance with anonymous Principal...");
+      console.log(
+        "User not logged in, querying balance with anonymous Principal...",
+      );
       const result = await tokenBalanceService.queryTokenBalance(
         tokenCanisterId,
         Principal.anonymous(),
       );
       return result.balance || BigInt(0);
     }
-    const result = await tokenBalanceService.queryTokenBalance(tokenCanisterId, principal);
+    const result = await tokenBalanceService.queryTokenBalance(
+      tokenCanisterId,
+      principal,
+    );
     return result.balance || BigInt(0);
   }
 
   // Query ICP balance
   async queryICPBalance(): Promise<bigint> {
     const { isLocal } = this.getNetworkConfig();
-    const canisterId = isLocal ? TOKEN_CANISTER_IDS.LOCAL_ICP : TOKEN_CANISTER_IDS.ICP;
+    const canisterId = isLocal
+      ? TOKEN_CANISTER_IDS.LOCAL_ICP
+      : TOKEN_CANISTER_IDS.ICP;
     if (!canisterId) {
-      throw new Error(`ICP canister ID not configured (${isLocal ? "LOCAL_ICP" : "ICP"})`);
+      throw new Error(
+        `ICP canister ID not configured (${isLocal ? "LOCAL_ICP" : "ICP"})`,
+      );
     }
     return await this.queryCurrentUserBalance(canisterId);
   }
@@ -726,9 +799,13 @@ export class InternetIdentityService {
   // Query ckBTC balance
   async queryCkbtcBalance(): Promise<bigint> {
     const { isLocal } = this.getNetworkConfig();
-    const canisterId = isLocal ? TOKEN_CANISTER_IDS.LOCAL_CKBTC : TOKEN_CANISTER_IDS.CKBTC;
+    const canisterId = isLocal
+      ? TOKEN_CANISTER_IDS.LOCAL_CKBTC
+      : TOKEN_CANISTER_IDS.CKBTC;
     if (!canisterId) {
-      throw new Error(`ckBTC canister ID not configured (${isLocal ? "LOCAL_CKBTC" : "CKBTC"})`);
+      throw new Error(
+        `ckBTC canister ID not configured (${isLocal ? "LOCAL_CKBTC" : "CKBTC"})`,
+      );
     }
     return await this.queryCurrentUserBalance(canisterId);
   }
@@ -833,12 +910,16 @@ export async function verifyIds(expectedAccountId?: string) {
 
     const principal = internetIdentityService.getCurrentPrincipal();
     if (!principal) {
-      throw new Error("No Principal available, login failed or user not authenticated");
+      throw new Error(
+        "No Principal available, login failed or user not authenticated",
+      );
     }
     console.log("Current Principal ID:", principal.toText());
 
-    const tokenBalanceService = internetIdentityService.ensureTokenBalanceService();
-    const generatedAccountId = await tokenBalanceService.generateAccountId(principal);
+    const tokenBalanceService =
+      internetIdentityService.ensureTokenBalanceService();
+    const generatedAccountId =
+      await tokenBalanceService.generateAccountId(principal);
     console.log("Generated Account ID:", generatedAccountId);
 
     // Optional: Compare with expected Account ID if provided
@@ -855,7 +936,9 @@ export async function verifyIds(expectedAccountId?: string) {
 
     // Query balance to demonstrate functionality
     const { isLocal } = internetIdentityService.getNetworkConfig();
-    const canisterId = isLocal ? TOKEN_CANISTER_IDS.LOCAL_ICP : TOKEN_CANISTER_IDS.ICP;
+    const canisterId = isLocal
+      ? TOKEN_CANISTER_IDS.LOCAL_ICP
+      : TOKEN_CANISTER_IDS.ICP;
     if (!canisterId) {
       throw new Error("ICP canister ID not configured");
     }
@@ -871,7 +954,10 @@ export async function verifyIds(expectedAccountId?: string) {
       )} ${tokenInfo.symbol}`,
     );
   } catch (error) {
-    console.error("Verification failed:", error instanceof Error ? error.message : String(error));
+    console.error(
+      "Verification failed:",
+      error instanceof Error ? error.message : String(error),
+    );
   }
 }
 
