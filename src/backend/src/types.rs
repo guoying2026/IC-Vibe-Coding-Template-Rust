@@ -6,12 +6,6 @@ use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::NumTokens;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash,
-    PartialOrd, Ord, CandidType, Deserialize, Serialize)]
-pub enum AssetTypes{
-    ICP,
-    ICRC2,
-}
 
 #[derive(Debug, Clone, PartialEq,
     PartialOrd, CandidType, Deserialize, Serialize)]
@@ -20,7 +14,6 @@ pub struct AssetConfig{
     pub token_id: Principal,
     pub account : Account,
     pub price_id: String, // from Pyth Network
-    pub asset_type: AssetTypes,
     pub decimals: u32,
     pub collateral_factor: f64,
     pub interest_rate: f64,

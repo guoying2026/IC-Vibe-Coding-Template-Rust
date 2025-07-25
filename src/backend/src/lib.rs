@@ -17,7 +17,7 @@ use rand::{random, Rng};
 use serde_json::Value;
 use sha2::Digest;
 use sha2::digest::Update;
-use crate::types::{AssetConfig, AssetTypes, Pool, PoolDirection, TokenPair, ICPSWAP, STATE};
+use crate::types::{AssetConfig, Pool, PoolDirection, TokenPair, ICPSWAP, STATE};
 
 pub trait EditFunction{
     fn edit_pool_config(&self,liquidation:f64);
@@ -58,7 +58,7 @@ struct PoolConfig{
     name: String,
     token_id: String,
     collateral: Vec<String>,
-    maximum_token: Option<NumTokens>,
+    maximum_token: u128,
 }
 #[update] // 创建新的池子
 fn create_pool(pool_config: PoolConfig) -> Result<(),String>{
@@ -86,7 +86,7 @@ fn create_pool(pool_config: PoolConfig) -> Result<(),String>{
             collateral: collaterals,
             amount: NumTokens::default(),
             used_amount: NumTokens::default(),
-            maximum_token: pool_config.maximum_token.unwrap_or(NumTokens::default()),
+            maximum_token: NumTokens::from(pool_config.maximum_token),
         };
 
         state.pool.insert(token.clone(), pool);
@@ -255,7 +255,7 @@ async fn withdraw(token_id: String, amount: NumTokens)-> Result<u64, String>{
         "Some was getting borrow");
 
     // 7. 取出
-    // 执行交易， 用户转至pool
+    // 执行交易， 从pool转至用户
     let from = STATE.with(|s| s.borrow().pool.get(&token).unwrap().clone());
     let to = Account{owner: msg_caller(), subaccount:None};
     let block_index = transfer_token(from.pool_account.account, to, amount.clone())
@@ -670,7 +670,6 @@ struct AssetParameter{
     name: String,
     token_id: String,
     price_id: String,
-    asset_type: AssetTypes,
     decimals: u32,
     collaterals: Option<f64>,
     interest_rate: Option<f64>,
@@ -692,7 +691,6 @@ fn update_contract_assets(config: AssetParameter){
                 subaccount: Some(generate_random_subaccount()),
             },
             price_id: config.price_id.clone(),
-            asset_type: config.asset_type.clone(),
             decimals: config.decimals,
             collateral_factor: config.collaterals.unwrap_or(0.0), // 抵押系数
             interest_rate: config.interest_rate.unwrap_or(0.0), // 利息
@@ -925,29 +923,108 @@ fn cal_token_amount(token: Principal) -> f64 {
 
 
 /*-----------------------Query Function---------------------------*/
-#[query] // 查询清算阈值
+#[query] // 查询清算最大区间
 fn get_liquidation_threshold() -> f64{
     STATE.with(|s| s.borrow().liquidation_threshold)
 }
 
-#[query] // 查询指定token所有用户存入的总代币金额
-fn get_all_user(token: String) -> f64{
+#[query] // 池子的真实deposit值
+fn get_real_pool_amount(token: String) -> f64{
     let token_id = Principal::from_text(token).unwrap();
     cal_token_amount(token_id)
 }
 
-#[query] // 查询指定用户的代币数量
-fn get_user_info(user: String, token: String) -> (f64, f64){
-    let user_id = Principal::from_text(user).unwrap();
+#[query] // 池子存款的APY
+fn get_pool_supply_apy(token: String) -> f64{
     let token_id = Principal::from_text(token).unwrap();
+    let apy = cal_earning(token_id);
+    apy * 100.0  // 转换成 %
+}
+
+#[query] // 池子借款的APY
+fn get_pool_borrow_apy(token: String) -> f64{
+    let token_id = Principal::from_text(token).unwrap();
+    let apy = cal_interest(token_id);
+    apy * 100.0  // 转换成 %
+}
+
+struct PoolInfo{
+    name: String, // 池子名
+    collateral_factor: f64,  // 抵押系数
+    collateral: Vec<AssetConfig>, // 池子接受的抵押品
+    amount: f64,  // 当前池子的代币
+    used_amount: f64, // 当前池子被借出的代币
+    maximum_amount: f64, // 池子的最大容量
+    supply_apy : f64,  // 当前池子的supply apy
+    borrow_apy : f64,  // 当前池子的borrow apy
+}
+#[query] // 查询池子情况
+fn get_pool_info(token: String) -> PoolInfo{
+    let token_id = Principal::from_text(token.clone()).unwrap();
+    let pool = STATE.with(|s| s.borrow().pool.get(&token_id).unwrap().clone());
+    let asset = STATE.with(|s| s.borrow().assets.get(&token_id).unwrap().clone());
+    let decimals = get_token_decimals(token_id);
+    PoolInfo{
+        name: pool.name,
+        collateral_factor: asset.collateral_factor,
+        collateral: pool.collateral,
+        amount: numtokens_to_f64(&pool.amount, decimals),
+        used_amount: numtokens_to_f64(&pool.used_amount, decimals),
+        maximum_amount: numtokens_to_f64(&pool.maximum_token, decimals),
+        supply_apy: get_pool_supply_apy(token.clone()),
+        borrow_apy: get_pool_borrow_apy(token.clone()),
+    }
+}
+
+#[query] // 查询指定token的decimals
+fn get_token_decimals(token: Principal) -> u32{
     STATE.with(|s| {
         let state = s.borrow();
-        let decimals = state.assets.get(&token_id).unwrap().clone().decimals;
-        let user_account = state.users.get(&user_id).unwrap_or_default().clone();
-        let supply_token = user_account.supplies.get(&token_id).unwrap_or_default();
-        let borrow_token = user_account.borrows.get(&token_id).unwrap_or_default();
-        (numtokens_to_f64(supply_token, decimals), numtokens_to_f64(borrow_token, decimals))
+        state.assets.get(&token).unwrap().decimals
     })
+}
+
+#[query] // 查询指定用户的supply token
+fn get_user_supply_token(user: String, token: String) -> f64{
+    let user_id = Principal::from_text(user).unwrap();
+    let token_id = Principal::from_text(token).unwrap();
+    let supply_token = STATE.with(|s|
+        s.borrow().users.get(&user_id).unwrap_or_default()
+            .supplies.get(&token_id).cloned().unwrap_or_default());
+    numtokens_to_f64(&supply_token, get_token_decimals(token_id))
+}
+
+#[query] // 查询指定用户的borrow token
+fn get_user_borrow_token(user: String, token: String) -> f64{
+    let user_id = Principal::from_text(user).unwrap();
+    let token_id = Principal::from_text(token).unwrap();
+    let supply_token = STATE.with(|s|
+        s.borrow().users.get(&user_id).unwrap_or_default()
+            .borrows.get(&token_id).cloned().unwrap_or_default());
+    numtokens_to_f64(&supply_token, get_token_decimals(token_id))
+}
+
+#[query] // 查询指定用户的interest token
+fn get_user_interest_token(user: String, token: String) -> f64{
+    let user_id = Principal::from_text(user).unwrap();
+    let token_id = Principal::from_text(token).unwrap();
+    let supply_token = STATE.with(|s|
+        s.borrow().users.get(&user_id).unwrap_or_default()
+            .interest.get(&token_id).cloned().unwrap_or_default());
+    numtokens_to_f64(&supply_token, get_token_decimals(token_id))
+}
+
+struct UserInfo{
+    supply: f64,
+    borrow: f64,
+    interest: f64,
+}
+#[query] // 查询指定用户的代币数量
+fn get_user_info(user: String, token: String) -> UserInfo{
+    let supply = get_user_supply_token(user.clone(), token.clone());
+    let borrow = get_user_borrow_token(user.clone(), token.clone());
+    let interest = get_user_interest_token(user.clone(), token.clone());
+    UserInfo{supply, borrow, interest }
 }
 
 /*-------------------Unit Conversion Function--------------------*/
