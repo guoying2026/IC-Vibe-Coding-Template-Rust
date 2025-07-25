@@ -68,10 +68,9 @@ service : () -> {
   get_asset_info : (text) -> (Result_2) query;
   get_pool_info : (text) -> (Result_3) query;
   get_price : (principal) -> (float64);
-  get_principal : () -> (principal) query;
   get_user_borrows : (principal) -> (vec record { principal; nat }) query;
   get_user_health_factor : (principal) -> (float64) query;
-  get_user_info : () -> (Result_4) query;
+  get_user_info : (principal) -> (Result_4) query;
   get_user_supplies : (principal) -> (vec record { principal; nat }) query;
   get_user_total_borrow_value : (principal) -> (float64) query;
   get_user_total_supply_value : (principal) -> (float64) query;
@@ -82,7 +81,7 @@ service : () -> {
   pool_state_repay : (principal, nat) -> ();
   pool_state_supply : (principal, nat) -> ();
   pool_state_withdraw : (principal, nat) -> ();
-  register_user : (text) -> (Result_4);
+  register_user : (principal, text) -> (Result_4);
   remove_pool_collateral : (text, text) -> ();
   repay : (text, nat) -> (Result);
   spec_user_collateral : (principal) -> (vec AssetConfig);

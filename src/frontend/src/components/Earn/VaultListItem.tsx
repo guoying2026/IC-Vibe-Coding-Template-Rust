@@ -1,5 +1,5 @@
 // 金库列表项组件
-// Vault list item component
+// Vault list item component for the earn page
 
 import { Vault } from "../../types";
 import { useLanguage } from "../../hooks/useLanguage";
@@ -7,112 +7,106 @@ import { useLanguage } from "../../hooks/useLanguage";
 // 组件属性接口
 interface VaultListItemProps {
   vault: Vault;
-  onSelect: () => void;
+  onSelect: (vault: Vault) => void;
 }
 
-// 金库列表项组件
+// 格式化数字为易读的货币格式
+const formatCurrency = (amount: number, compact = false) => {
+  if (compact) {
+    if (amount >= 1_000_000_000)
+      return `$${(amount / 1_000_000_000).toFixed(2)}B`;
+    if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(2)}M`;
+    if (amount >= 1_000) return `$${(amount / 1_000).toFixed(1)}K`;
+  }
+  return `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+// 格式化存款数量
+const formatDeposits = (amount: number, asset: string) => {
+  if (amount >= 1_000_000)
+    return `${(amount / 1_000_000).toFixed(2)}M ${asset}`;
+  if (amount >= 1_000) return `${(amount / 1_000).toFixed(2)}K ${asset}`;
+  return `${amount.toFixed(2)} ${asset}`;
+};
+
+// 金库列表项主组件
 export const VaultListItem = ({ vault, onSelect }: VaultListItemProps) => {
   const { t } = useLanguage();
 
-  // 格式化数字
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(num);
-  };
-
-  // 格式化百分比
-  const formatPercentage = (num: number) => {
-    return `${num.toFixed(2)}%`;
-  };
-
   return (
     <div
-      onClick={onSelect}
-      className="cursor-pointer rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 hover:border-blue-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-600"
+      className="grid cursor-pointer grid-cols-12 items-center gap-4 rounded-lg border border-gray-200/50 bg-white/70 px-4 py-4 shadow-sm backdrop-blur-md transition-colors hover:bg-white/90 dark:border-gray-700/50 dark:bg-gray-800/70 dark:hover:bg-gray-700/90"
+      onClick={() => onSelect(vault)}
     >
-      <div className="flex items-center justify-between">
-        {/* 左侧：金库信息 */}
-        <div className="flex-1">
-          <div className="flex items-center space-x-3">
-            {/* 金库图标 */}
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
-              <span className="text-xl">🏦</span>
-            </div>
-            
-            {/* 金库名称和资产 */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {vault.name}
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {vault.asset}
-              </p>
-            </div>
-          </div>
+      {/* 金库名称 */}
+      <div className="col-span-3 flex items-center space-x-3">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-2xl dark:bg-blue-900/30">
+          {vault.curatorIcon}
         </div>
+        <div>
+          <p className="font-semibold text-gray-900 dark:text-white">
+            {vault.name}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {vault.description?.substring(0, 40)}...
+          </p>
+        </div>
+      </div>
 
-        {/* 右侧：金库数据 */}
-        <div className="flex items-center space-x-8">
-          {/* TVL */}
-          <div className="text-right">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {formatNumber(vault.tvl)}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              TVL
-            </p>
-          </div>
+      {/* 存款金额 */}
+      <div className="col-span-2">
+        <p className="font-medium text-gray-800 dark:text-gray-200">
+          {formatDeposits(vault.deposits || 0, vault.asset || "")}
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {formatCurrency(vault.allocation, true)}
+        </p>
+      </div>
 
-          {/* 用户存款 */}
-          <div className="text-right">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {formatNumber(vault.userDeposit)}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Your Deposit
-            </p>
-          </div>
+      {/* 管理者 */}
+      <div className="col-span-2 flex items-center space-x-2">
+        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-sm dark:bg-gray-600">
+          {vault.curatorIcon}
+        </div>
+        <div>
+          <p className="font-medium text-gray-800 dark:text-gray-200">
+            {vault.curator}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Block Analitica
+          </p>
+        </div>
+      </div>
 
-          {/* 已赚取 */}
-          <div className="text-right">
-            <p className="text-sm font-medium text-green-600 dark:text-green-400">
-              {formatNumber(vault.earned)}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Earned
-            </p>
-          </div>
+      {/* 抵押品 */}
+      <div className="col-span-2">
+        <div className="flex items-center space-x-1">
+          {vault.collateral?.slice(0, 4).map((collateral, index) => (
+            <div
+              key={index}
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-sm dark:bg-gray-700"
+            >
+              {collateral}
+            </div>
+          ))}
+          {vault.collateral && vault.collateral.length > 4 && (
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              +{vault.collateral.length - 4}
+            </span>
+          )}
+        </div>
+      </div>
 
-          {/* APY */}
-          <div className="text-right">
-            <p className="text-sm font-medium text-green-600 dark:text-green-400">
-              {formatPercentage(vault.apy)}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              APY
-            </p>
-          </div>
-
-          {/* 抵押系数 */}
-          <div className="text-right">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {formatPercentage(vault.collateral_factor)}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Collateral Factor
-            </p>
-          </div>
-
-          {/* 箭头 */}
-          <div className="text-gray-400">
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
+      {/* APY */}
+      <div className="col-span-3 text-right">
+        <p className="text-xl font-bold text-green-600 dark:text-green-400">
+          {vault.apy?.toFixed(2)}%
+        </p>
+        <div className="mt-1 flex items-center justify-end space-x-1">
+          <span className="text-xs text-gray-500 dark:text-gray-400">↗</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {vault.performanceData?.wellBonus || 0}%
+          </span>
         </div>
       </div>
     </div>

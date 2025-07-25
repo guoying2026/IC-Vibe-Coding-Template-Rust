@@ -64,7 +64,7 @@ export class LocalTokenService {
 
   constructor() {
     // 使用本地环境
-    this.agent = new HttpAgent({ host: "http://localhost:8080" });
+    this.agent = new HttpAgent({ host: "http://localhost:4943" });
   }
 
   // 初始化服务

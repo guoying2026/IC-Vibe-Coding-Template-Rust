@@ -9,6 +9,7 @@ import { useLanguage } from "../hooks/useLanguage";
 interface VaultDetailPageProps {
   vault: Vault; // 当前金库数据
   onBack: () => void; // 返回列表页的回调
+  isAuthenticated: boolean; // 新增
 }
 
 // 格式化数字为易读的货币格式
@@ -31,7 +32,7 @@ const formatDeposits = (amount: number, asset: string) => {
 };
 
 // 金库详情页主组件
-export const VaultDetailPage = ({ vault, onBack }: VaultDetailPageProps) => {
+export const VaultDetailPage = ({ vault, onBack, isAuthenticated }: VaultDetailPageProps) => {
   // 多语言Hook
   const { t } = useLanguage();
 
@@ -109,13 +110,14 @@ export const VaultDetailPage = ({ vault, onBack }: VaultDetailPageProps) => {
           {/* 金库标题 */}
           <div className="mb-4 flex items-center space-x-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-4xl shadow-md dark:bg-blue-900/30">
-              🏦
+              {vault.curatorIcon}
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl dark:text-white">
                 {vault.name}
               </h1>
               <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                <span>{vault.curator}</span>
                 <span>{vault.asset}</span>
               </div>
             </div>
@@ -123,7 +125,7 @@ export const VaultDetailPage = ({ vault, onBack }: VaultDetailPageProps) => {
 
           {/* 金库描述 */}
           <p className="max-w-3xl text-gray-600 dark:text-gray-400">
-            Vault for {vault.asset} with {vault.apy.toFixed(2)}% APY
+            {vault.description}
           </p>
         </div>
 
@@ -135,21 +137,18 @@ export const VaultDetailPage = ({ vault, onBack }: VaultDetailPageProps) => {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
               <StatCard
                 title={t("total_deposits")}
-                value={formatCurrency(vault.tvl, true)}
+                value={formatCurrency(vault.totalDeposits || 0, true)}
               />
               <StatCard
                 title={t("liquidity")}
-                value={formatCurrency(vault.tvl - vault.userDeposit, true)}
+                value={formatCurrency(vault.liquidity || 0, true)}
               />
               <StatCard
                 title={t("apy")}
-                value={`${vault.apy.toFixed(2)}%`}
+                value={`${vault.apy?.toFixed(2)}%`}
                 color="text-green-500"
               />
-              <StatCard 
-                title={t("collateral_factor")} 
-                value={`${vault.collateral_factor.toFixed(2)}%`} 
-              />
+              <StatCard title={t("disclosures")} value="" />
             </div>
 
             {/* 标签页导航 */}
@@ -192,7 +191,7 @@ export const VaultDetailPage = ({ vault, onBack }: VaultDetailPageProps) => {
                       <div className="flex h-64 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700/50">
                         <div className="text-center">
                           <div className="mb-2 text-4xl font-bold text-gray-900 dark:text-white">
-                            {vault.apy.toFixed(2)}%
+                            {vault.apy?.toFixed(2)}%
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
                             📈 Chart placeholder
@@ -259,7 +258,7 @@ export const VaultDetailPage = ({ vault, onBack }: VaultDetailPageProps) => {
                             {t("native_apy")}
                           </span>
                           <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {vault.apy.toFixed(2)}%
+                            {vault.performanceData?.nativeApy.toFixed(2)}%
                           </span>
                         </div>
                       </div>
@@ -269,7 +268,7 @@ export const VaultDetailPage = ({ vault, onBack }: VaultDetailPageProps) => {
                             {t("well_bonus")}
                           </span>
                           <span className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-                            +0.00%
+                            +{vault.performanceData?.wellBonus.toFixed(2)}%
                           </span>
                         </div>
                       </div>
@@ -279,7 +278,7 @@ export const VaultDetailPage = ({ vault, onBack }: VaultDetailPageProps) => {
                             {t("performance_fee")}
                           </span>
                           <span className="text-lg font-semibold text-red-600 dark:text-red-400">
-                            -0.00%
+                            -{vault.performanceData?.performanceFee.toFixed(2)}%
                           </span>
                         </div>
                       </div>
@@ -289,7 +288,7 @@ export const VaultDetailPage = ({ vault, onBack }: VaultDetailPageProps) => {
                             {t("net_apy")}
                           </span>
                           <span className="text-lg font-semibold text-green-600 dark:text-green-400">
-                            {vault.apy.toFixed(2)}%
+                            {vault.performanceData?.netApy.toFixed(2)}%
                           </span>
                         </div>
                       </div>
@@ -380,7 +379,7 @@ export const VaultDetailPage = ({ vault, onBack }: VaultDetailPageProps) => {
                 </div>
 
                 <button className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:from-blue-600 hover:to-purple-600 hover:shadow-xl active:scale-95">
-                  {t("connect_wallet")}
+                  {isAuthenticated ? t("confirm") : t("connect_internet_identity")}
                 </button>
               </div>
             </div>

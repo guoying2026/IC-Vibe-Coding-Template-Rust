@@ -1,10 +1,11 @@
-# 🏦 ICP Lending Protocol
+# 🏦 SatoshiPool
 
 A decentralized lending protocol built on the Internet Computer (ICP) platform, featuring supply, borrow, repay, and withdraw functionalities with real-time data integration between frontend and backend.
 
 ## 🚀 Features
 
 ### Core Lending Protocol
+
 - **Supply**: Users can deposit assets into lending pools as collateral
 - **Borrow**: Users can borrow assets against their collateral
 - **Repay**: Users can repay their borrowed amounts
@@ -12,6 +13,7 @@ A decentralized lending protocol built on the Internet Computer (ICP) platform, 
 - **Liquidation**: Automatic liquidation for undercollateralized positions
 
 ### Technical Features
+
 - **Real-time Data**: All frontend lists fetch data directly from backend canisters
 - **Type Safety**: Full TypeScript integration with backend Candid interfaces
 - **Authentication**: Internet Identity integration for secure user authentication
@@ -19,6 +21,7 @@ A decentralized lending protocol built on the Internet Computer (ICP) platform, 
 - **Responsive UI**: Modern React + Tailwind CSS interface
 
 ### Architecture
+
 - **Backend**: Rust canister with comprehensive lending logic
 - **Frontend**: React + TypeScript with real-time backend integration
 - **Authentication**: Internet Identity for secure user management
@@ -149,24 +152,28 @@ dfx deploy --network ic
 ### Core Lending Functions
 
 #### Supply Assets
+
 ```rust
 #[update]
 async fn supply(token_id: String, amount: NumTokens) -> Result<u64, String>
 ```
 
 #### Borrow Assets
+
 ```rust
 #[update]
 async fn borrow(token_id: String, amount: NumTokens) -> Result<u64, String>
 ```
 
 #### Repay Borrowed Assets
+
 ```rust
 #[update]
 async fn repay(token_id: String, amount: NumTokens) -> Result<u64, String>
 ```
 
 #### Withdraw Supplied Assets
+
 ```rust
 #[update]
 async fn withdraw(token_id: String, amount: NumTokens) -> Result<u64, String>
@@ -175,24 +182,28 @@ async fn withdraw(token_id: String, amount: NumTokens) -> Result<u64, String>
 ### Query Functions
 
 #### Get All Pools
+
 ```rust
 #[query]
 fn get_all_pools() -> Vec<Pool>
 ```
 
 #### Get User Supplies
+
 ```rust
 #[query]
 fn get_user_supplies(user: Principal) -> Vec<(Principal, NumTokens)>
 ```
 
 #### Get User Borrows
+
 ```rust
 #[query]
 fn get_user_borrows(user: Principal) -> Vec<(Principal, NumTokens)>
 ```
 
 #### Get User Health Factor
+
 ```rust
 #[query]
 fn get_user_health_factor(user: Principal) -> f64
@@ -201,18 +212,21 @@ fn get_user_health_factor(user: Principal) -> f64
 ### Authentication Functions
 
 #### Check Authentication
+
 ```rust
 #[query]
 fn is_authenticated() -> bool
 ```
 
 #### Get User Info
+
 ```rust
 #[query]
 fn get_user_info() -> Result<UserInfo, String>
 ```
 
 #### Register User
+
 ```rust
 #[update]
 fn register_user(username: String) -> Result<UserInfo, String>
@@ -223,30 +237,35 @@ fn register_user(username: String) -> Result<UserInfo, String>
 ### Pages
 
 #### Dashboard
+
 - User portfolio overview
 - Total supplied and borrowed amounts
 - Health factor monitoring
 - Recent activity feed
 
 #### Earn Page
+
 - List of available vaults
 - APY rates and TVL information
 - User deposit tracking
 - Filter and search functionality
 
 #### Borrow Page
+
 - Available lending markets
 - Collateral requirements
 - Interest rates and fees
 - Market statistics
 
 #### Market Detail Page
+
 - Detailed market information
 - Supply and borrow actions
 - Market statistics and charts
 - Risk metrics
 
 #### Vault Detail Page
+
 - Vault-specific information
 - Performance metrics
 - Deposit and withdrawal actions
@@ -255,18 +274,21 @@ fn register_user(username: String) -> Result<UserInfo, String>
 ### Components
 
 #### UserInfoDisplay
+
 - User authentication status
 - Balance information
 - Health factor display
 - Recent activities
 
 #### MarketListItem
+
 - Market overview cards
 - Key metrics display
 - Interactive selection
 - Real-time data updates
 
 #### VaultListItem
+
 - Vault information cards
 - APY and TVL display
 - User position tracking
@@ -314,7 +336,8 @@ const supplies = await internetIdentityService.getUserSupplies(principal);
 const borrows = await internetIdentityService.getUserBorrows(principal);
 
 // Fetch user health factor
-const healthFactor = await internetIdentityService.getUserHealthFactor(principal);
+const healthFactor =
+  await internetIdentityService.getUserHealthFactor(principal);
 ```
 
 ### Type Safety
@@ -373,6 +396,7 @@ npm test
 ### Adding New Features
 
 1. **Backend Changes**:
+
    - Add new functions to `src/backend/src/lib.rs`
    - Update Candid interface
    - Add tests
@@ -394,16 +418,19 @@ npm test
 ### Mainnet Deployment Steps
 
 1. **Prepare Environment**:
+
    ```bash
    dfx config --network ic
    ```
 
 2. **Deploy Canisters**:
+
    ```bash
    dfx deploy --network ic
    ```
 
 3. **Update Environment Variables**:
+
    - Set production canister IDs
    - Configure Internet Identity
    - Update price feed endpoints
@@ -433,12 +460,12 @@ service : () -> {
   borrow : (text, nat) -> (Result);
   repay : (text, nat) -> (Result);
   withdraw : (text, nat) -> (Result);
-  
+
   // Query functions
   get_all_pools : () -> (vec Pool) query;
   get_user_supplies : (principal) -> (vec record { principal; nat }) query;
   get_user_borrows : (principal) -> (vec record { principal; nat }) query;
-  
+
   // Authentication functions
   is_authenticated : () -> (bool) query;
   get_user_info : () -> (Result_4) query;

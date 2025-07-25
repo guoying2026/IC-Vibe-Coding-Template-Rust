@@ -84,9 +84,9 @@ function App() {
       const state = internetIdentityService.getAuthState();
       setAuthState(state);
     };
-    window.addEventListener("ii-login-success", handleIILogin);
+    window.addEventListener('ii-login-success', handleIILogin);
     return () => {
-      window.removeEventListener("ii-login-success", handleIILogin);
+      window.removeEventListener('ii-login-success', handleIILogin);
     };
   }, []);
 
@@ -103,12 +103,38 @@ function App() {
   // 处理Internet Identity登录
   const handleConnectWallet = async () => {
     setLoading(true);
+    setError(undefined); // 清除之前的错误
+    
     try {
+      console.log("开始连接Internet Identity...");
+      
+      // 调用登录方法
       await internetIdentityService.login();
+      
+      // 获取认证状态
       const state = internetIdentityService.getAuthState();
+      console.log("登录成功，认证状态:", state);
+      
+      // 更新前端状态
       setAuthState(state);
+      
+      console.log("Internet Identity连接成功");
     } catch (error) {
-      handleError("Internet Identity登录失败");
+      console.error("Internet Identity连接失败:", error);
+      
+      // 根据错误类型显示不同的错误信息
+      let errorMessage = "Internet Identity登录失败";
+      if (error instanceof Error) {
+        if (error.message.includes("无法连接到后端服务")) {
+          errorMessage = "无法连接到后端服务，请确保dfx正在运行";
+        } else if (error.message.includes("用户取消")) {
+          errorMessage = "用户取消了登录操作";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      handleError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -130,7 +156,7 @@ function App() {
 
   // 处理用户信息更新
   const handleUserInfoUpdate = (updatedUserInfo: any) => {
-    setAuthState((prevState) => ({
+    setAuthState(prevState => ({
       ...prevState,
       userInfo: updatedUserInfo,
     }));
@@ -177,12 +203,10 @@ function App() {
       case "earn":
         // 如果有选中的金库，则显示详情页，否则显示金库列表页
         return selectedVault ? (
-          <VaultDetailPage vault={selectedVault} onBack={handleBackToVaults} />
+          <VaultDetailPage vault={selectedVault} onBack={handleBackToVaults} isAuthenticated={authState.isAuthenticated} />
         ) : (
-          <EarnPage
-            walletAddress={
-              authState.principal ? formatPrincipal(authState.principal) : null
-            }
+          <EarnPage 
+            walletAddress={authState.principal ? formatPrincipal(authState.principal) : null}
             userInfo={authState.userInfo}
             isAuthenticated={authState.isAuthenticated}
             principal={authState.principal}
@@ -198,6 +222,7 @@ function App() {
           <MarketDetailPage
             market={selectedMarket}
             onBack={handleBackToMarkets}
+            isAuthenticated={authState.isAuthenticated}
           />
         ) : (
           <BorrowPage
@@ -212,23 +237,19 @@ function App() {
       case "migrate":
         return <MigratePage />;
       case "dashboard":
-        return (
-          <DashboardPage
-            userInfo={authState.userInfo}
-            isAuthenticated={authState.isAuthenticated}
-            principal={authState.principal}
-            onUserInfoUpdate={handleUserInfoUpdate}
-          />
-        );
+        return <DashboardPage 
+          userInfo={authState.userInfo}
+          isAuthenticated={authState.isAuthenticated}
+          principal={authState.principal}
+          onUserInfoUpdate={handleUserInfoUpdate}
+        />;
       default:
-        return (
-          <DashboardPage
-            userInfo={authState.userInfo}
-            isAuthenticated={authState.isAuthenticated}
-            principal={authState.principal}
-            onUserInfoUpdate={handleUserInfoUpdate}
-          />
-        );
+        return <DashboardPage 
+          userInfo={authState.userInfo}
+          isAuthenticated={authState.isAuthenticated}
+          principal={authState.principal}
+          onUserInfoUpdate={handleUserInfoUpdate}
+        />;
     }
   };
 
@@ -259,7 +280,7 @@ function App() {
       )}
 
       {/* 全局错误显示 */}
-      {error && (
+      {/* {error && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
             <ErrorDisplay message={error} />
@@ -271,7 +292,7 @@ function App() {
             </button>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

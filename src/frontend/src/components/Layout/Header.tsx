@@ -4,7 +4,6 @@
 import { useState } from "react";
 import { PageRoute, NavItem, Language } from "../../types";
 import { useLanguage } from "../../hooks/useLanguage";
-
 import { UserInfo } from "../../services/InternetIdentityService";
 
 // 组件属性接口
@@ -21,64 +20,59 @@ interface HeaderProps {
 // 导航项配置
 const navItems: NavItem[] = [
   {
-    id: "dashboard",
     key: "dashboard",
-    label: "Dashboard", // 改为字符串
-    icon: '📊',
-    href: "/dashboard",
+    label: { en: "Dashboard", zh: "个人中心" },
+    // icon: '📊',
+    path: "/dashboard",
   },
   {
-    id: "earn",
     key: "earn",
-    label: "Earn", // 改为字符串
-    icon: '💰',
-    href: "/earn",
+    label: { en: "Earn", zh: "收益" },
+    // icon: '💰',
+    path: "/earn",
   },
   {
-    id: "borrow",
     key: "borrow",
-    label: "Borrow", // 改为字符串
-    icon: '🏦',
-    href: "/borrow",
+    label: { en: "Borrow", zh: "借贷" },
+    // icon: '🏦',
+    path: "/borrow",
   },
   {
-    id: "explore",
     key: "explore",
-    label: "Explore", // 改为字符串
-    icon: '🔍',
-    href: "/explore",
+    label: { en: "Explore", zh: "探索" },
+    // icon: '🔍',
+    path: "/explore",
   },
   {
-    id: "migrate",
     key: "migrate",
-    label: "Migrate", // 改为字符串
-    icon: '🔄',
-    href: "/migrate",
+    label: { en: "Migrate", zh: "教程" },
+    // icon: '🔄',
+    path: "/migrate",
   },
 ];
 
 // 顶部导航栏主组件
-export const Header = ({
-  currentPage,
-  onPageChange,
-  walletAddress,
-
+export const Header = ({ 
+  currentPage, 
+  onPageChange, 
+  walletAddress, 
   userInfo,
   isAuthenticated,
-  onConnectWallet,
+  onConnectWallet, 
   onDisconnectWallet,
 }: HeaderProps) => {
   // 多语言Hook
   const { t, language, toggleLanguage } = useLanguage();
-
+  
   // 移动端菜单显示状态
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  
   // 钱包下拉菜单显示状态
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
 
   // 格式化钱包地址显示
-  const formatWalletAddress = (address: string) => {
+  const formatWalletAddress = (address: string | null) => {
+    if (!address) return '';
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
@@ -106,7 +100,7 @@ export const Header = ({
                 ₿
               </div>
               <div className="text-xl font-bold text-white drop-shadow">
-                ICP DeFi
+                BLend
               </div>
             </div>
           </div>
@@ -116,30 +110,30 @@ export const Header = ({
             {navItems.map((item) => (
               <button
                 key={item.key}
-                onClick={() => handleNavClick(item.id)}
+                onClick={() => handleNavClick(item.key)}
                 className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
-                  currentPage === item.id
+                  currentPage === item.key
                     ? "bg-white/20 font-bold text-white shadow" // 选中态
                     : "text-white/90 hover:bg-white/10 hover:text-white"
                 }`}
               >
-                {item.label}
+                {item.label[language as Language]}
               </button>
             ))}
           </nav>
 
-          {/* 右侧：语言切换和Internet Identity连接 */}
+          {/* 右侧：用户信息和语言切换 */}
           <div className="flex items-center space-x-4">
             {/* 语言切换按钮 */}
             <button
               onClick={toggleLanguage}
-              className="rounded-lg border border-white/70 bg-white/10 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+              className="rounded-lg border border-white/70 bg-white/20 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-white/30 hover:text-white active:scale-95"
             >
-              {language === "en" ? "EN" : "CN"}
+              {language === 'en' ? '中文' : 'EN'}
             </button>
 
-            {/* Internet Identity连接区域 */}
-            {walletAddress ? (
+            {/* 用户认证状态 */}
+            {isAuthenticated ? (
               <div className="relative">
                 <button
                   onClick={() => setIsWalletMenuOpen(!isWalletMenuOpen)}
@@ -168,20 +162,20 @@ export const Header = ({
                     {/* 用户信息 */}
                     <div className="border-b border-gray-200 px-4 py-2 dark:border-gray-700">
                       <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {userInfo?.username || "用户"}
+                        {userInfo?.username || t("user")}
                       </div>
                       <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         {walletAddress}
                       </div>
                       <div className="mt-1 text-xs text-green-600 dark:text-green-400">
-                        ✓ 已认证
+                        ✓ {t("authenticated")}
                       </div>
                     </div>
 
                     {/* 余额信息 */}
                     <div className="border-b border-gray-200 px-4 py-2 dark:border-gray-700">
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        ckBTC 余额
+                        {t("ckbtc_balance")}
                       </div>
                       <div className="text-sm font-semibold text-gray-900 dark:text-white">
                         {userInfo?.ckbtc_balance || 0} ckBTC
@@ -193,7 +187,7 @@ export const Header = ({
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div>
                           <div className="text-gray-500 dark:text-gray-400">
-                            总收益
+                            {t("total_earned")}
                           </div>
                           <div className="font-semibold text-gray-900 dark:text-white">
                             {userInfo?.total_earned || 0}
@@ -201,7 +195,7 @@ export const Header = ({
                         </div>
                         <div>
                           <div className="text-gray-500 dark:text-gray-400">
-                            总借贷
+                            {t("total_borrowed")}
                           </div>
                           <div className="font-semibold text-gray-900 dark:text-white">
                             {userInfo?.total_borrowed || 0}
@@ -212,12 +206,12 @@ export const Header = ({
 
                     {/* 操作按钮 */}
                     <div className="px-2 py-1">
-                      <button
-                        onClick={handleDisconnect}
+                    <button
+                      onClick={handleDisconnect}
                         className="w-full rounded px-2 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                      >
+                    >
                         {t("disconnect")}
-                      </button>
+                    </button>
                     </div>
                   </div>
                 )}
@@ -269,15 +263,15 @@ export const Header = ({
               {navItems.map((item) => (
                 <button
                   key={item.key}
-                  onClick={() => handleNavClick(item.id)}
+                  onClick={() => handleNavClick(item.key)}
                   className={`flex items-center rounded-lg px-4 py-3 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
-                    currentPage === item.id
+                    currentPage === item.key
                       ? "bg-white/20 font-bold text-white"
                       : "text-white/90 hover:bg-white/10 hover:text-white"
                   }`}
                 >
                   <span className="font-semibold">
-                    {item.label}
+                    {item.label[language as Language]}
                   </span>
                 </button>
               ))}
@@ -287,4 +281,4 @@ export const Header = ({
       </div>
     </header>
   );
-};
+}; 

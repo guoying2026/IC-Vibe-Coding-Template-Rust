@@ -1,10 +1,11 @@
-# 🏦 ICP 借贷协议
+# 🏦 SatoshiPool
 
 基于互联网计算机（ICP）平台构建的去中心化借贷协议，具有供应、借贷、还款和提取功能，前端和后端之间实现实时数据集成。
 
 ## 🚀 功能特性
 
 ### 核心借贷协议
+
 - **供应（Supply）**: 用户可以将资产存入借贷池作为抵押品
 - **借贷（Borrow）**: 用户可以以其抵押品为担保借入资产
 - **还款（Repay）**: 用户可以偿还其借入的金额
@@ -12,6 +13,7 @@
 - **清算（Liquidation）**: 对抵押不足的头寸进行自动清算
 
 ### 技术特性
+
 - **实时数据**: 所有前端列表直接从后端罐子获取数据
 - **类型安全**: 与后端 Candid 接口的完整 TypeScript 集成
 - **身份认证**: Internet Identity 集成，确保安全的用户认证
@@ -19,6 +21,7 @@
 - **响应式界面**: 现代化的 React + Tailwind CSS 界面
 
 ### 架构设计
+
 - **后端**: 具有全面借贷逻辑的 Rust 罐子
 - **前端**: 具有实时后端集成的 React + TypeScript
 - **身份认证**: Internet Identity 用于安全的用户管理
@@ -149,24 +152,28 @@ dfx deploy --network ic
 ### 核心借贷功能
 
 #### 供应资产
+
 ```rust
 #[update]
 async fn supply(token_id: String, amount: NumTokens) -> Result<u64, String>
 ```
 
 #### 借贷资产
+
 ```rust
 #[update]
 async fn borrow(token_id: String, amount: NumTokens) -> Result<u64, String>
 ```
 
 #### 偿还借入资产
+
 ```rust
 #[update]
 async fn repay(token_id: String, amount: NumTokens) -> Result<u64, String>
 ```
 
 #### 提取供应资产
+
 ```rust
 #[update]
 async fn withdraw(token_id: String, amount: NumTokens) -> Result<u64, String>
@@ -175,24 +182,28 @@ async fn withdraw(token_id: String, amount: NumTokens) -> Result<u64, String>
 ### 查询功能
 
 #### 获取所有池子
+
 ```rust
 #[query]
 fn get_all_pools() -> Vec<Pool>
 ```
 
 #### 获取用户供应
+
 ```rust
 #[query]
 fn get_user_supplies(user: Principal) -> Vec<(Principal, NumTokens)>
 ```
 
 #### 获取用户借贷
+
 ```rust
 #[query]
 fn get_user_borrows(user: Principal) -> Vec<(Principal, NumTokens)>
 ```
 
 #### 获取用户健康因子
+
 ```rust
 #[query]
 fn get_user_health_factor(user: Principal) -> f64
@@ -201,18 +212,21 @@ fn get_user_health_factor(user: Principal) -> f64
 ### 身份认证功能
 
 #### 检查认证状态
+
 ```rust
 #[query]
 fn is_authenticated() -> bool
 ```
 
 #### 获取用户信息
+
 ```rust
 #[query]
 fn get_user_info() -> Result<UserInfo, String>
 ```
 
 #### 注册用户
+
 ```rust
 #[update]
 fn register_user(username: String) -> Result<UserInfo, String>
@@ -223,30 +237,35 @@ fn register_user(username: String) -> Result<UserInfo, String>
 ### 页面
 
 #### 仪表板
+
 - 用户投资组合概览
 - 总供应和借贷金额
 - 健康因子监控
 - 最近活动动态
 
 #### 收益页面
+
 - 可用金库列表
 - APY 利率和 TVL 信息
 - 用户存款跟踪
 - 筛选和搜索功能
 
 #### 借贷页面
+
 - 可用借贷市场
 - 抵押品要求
 - 利率和费用
 - 市场统计
 
 #### 市场详情页面
+
 - 详细市场信息
 - 供应和借贷操作
 - 市场统计和图表
 - 风险指标
 
 #### 金库详情页面
+
 - 金库特定信息
 - 性能指标
 - 存款和提取操作
@@ -255,18 +274,21 @@ fn register_user(username: String) -> Result<UserInfo, String>
 ### 组件
 
 #### UserInfoDisplay
+
 - 用户认证状态
 - 余额信息
 - 健康因子显示
 - 最近活动
 
 #### MarketListItem
+
 - 市场概览卡片
 - 关键指标显示
 - 交互式选择
 - 实时数据更新
 
 #### VaultListItem
+
 - 金库信息卡片
 - APY 和 TVL 显示
 - 用户头寸跟踪
@@ -314,7 +336,8 @@ const supplies = await internetIdentityService.getUserSupplies(principal);
 const borrows = await internetIdentityService.getUserBorrows(principal);
 
 // 获取用户健康因子
-const healthFactor = await internetIdentityService.getUserHealthFactor(principal);
+const healthFactor =
+  await internetIdentityService.getUserHealthFactor(principal);
 ```
 
 ### 类型安全
@@ -373,6 +396,7 @@ npm test
 ### 添加新功能
 
 1. **后端更改**:
+
    - 在 `src/backend/src/lib.rs` 中添加新函数
    - 更新 Candid 接口
    - 添加测试
@@ -394,16 +418,19 @@ npm test
 ### 主网部署步骤
 
 1. **准备环境**:
+
    ```bash
    dfx config --network ic
    ```
 
 2. **部署罐子**:
+
    ```bash
    dfx deploy --network ic
    ```
 
 3. **更新环境变量**:
+
    - 设置生产罐子 ID
    - 配置 Internet Identity
    - 更新价格预言机端点
@@ -433,12 +460,12 @@ service : () -> {
   borrow : (text, nat) -> (Result);
   repay : (text, nat) -> (Result);
   withdraw : (text, nat) -> (Result);
-  
+
   // 查询功能
   get_all_pools : () -> (vec Pool) query;
   get_user_supplies : (principal) -> (vec record { principal; nat }) query;
   get_user_borrows : (principal) -> (vec record { principal; nat }) query;
-  
+
   // 身份认证功能
   is_authenticated : () -> (bool) query;
   get_user_info : () -> (Result_4) query;
@@ -481,4 +508,5 @@ service : () -> {
 
 ---
 
-**为互联网计算机生态系统而构建 ❤️** 
+**为互联网计算机生态系统而构建 ❤️**
+ 

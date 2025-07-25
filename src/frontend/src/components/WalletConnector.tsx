@@ -1,3 +1,5 @@
+import { useLanguage } from "../hooks/useLanguage";
+
 interface WalletConnectorProps {
   connectedWallet: string | null;
   onConnect: () => void;
@@ -7,6 +9,9 @@ export const WalletConnector = ({
   connectedWallet,
   onConnect,
 }: WalletConnectorProps) => {
+  const { t } = useLanguage();
+  const isAuthenticated = !!connectedWallet;
+
   if (connectedWallet) {
     return (
       <div className="flex items-center space-x-3">
@@ -74,7 +79,7 @@ export const WalletConnector = ({
           d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
         />
       </svg>
-      <span>Connect Wallet</span>
+      <span>{isAuthenticated ? t("confirm") : t("connect_internet_identity")}</span>
     </button>
   );
 };

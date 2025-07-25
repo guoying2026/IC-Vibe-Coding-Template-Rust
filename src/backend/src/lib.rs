@@ -802,11 +802,6 @@ fn is_authenticated() -> bool {
     true
 }
 
-#[query] // 获取当前用户的主体ID
-fn get_principal() -> Principal {
-    msg_caller()
-}
-
 #[derive(CandidType, Deserialize, Serialize)]
 struct UserInfo {
     principal: Principal,
@@ -826,9 +821,7 @@ struct Activity {
 }
 
 #[query] // 获取用户信息
-fn get_user_info() -> Result<UserInfo, String> {
-    let principal = msg_caller();
-    
+fn get_user_info(principal: Principal) -> Result<UserInfo, String> {
     STATE.with(|s| {
         let state = s.borrow();
         
@@ -870,9 +863,7 @@ fn get_user_info() -> Result<UserInfo, String> {
 }
 
 #[update] // 注册用户
-fn register_user(username: String) -> Result<UserInfo, String> {
-    let principal = msg_caller();
-    
+fn register_user(principal: Principal, username: String) -> Result<UserInfo, String> {
     STATE.with(|s| {
         let mut state = s.borrow_mut();
         

@@ -40,7 +40,10 @@ export default function MigratePage() {
             {t("Go to Earn")}
           </button>
         </div>
-        <ol className="space-y-6">
+        <div className="mt-4 rounded border-l-4 border-blue-400 bg-blue-50 p-4 text-blue-800">
+          {t("earn_description")}
+        </div>
+        <ol className="space-y-6 mt-4">
           <li className="flex items-start gap-4">
             <div className="flex-shrink-0">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-400/60 text-lg font-bold text-white">
@@ -49,12 +52,10 @@ export default function MigratePage() {
             </div>
             <div>
               <div className="mb-1 text-base font-semibold">
-                {t("Deposit Assets")}
+                {t("step1_title")}
               </div>
               <div className="text-gray-700">
-                {t(
-                  "You supply supported assets (e.g., BTC, ETH) into the platform's vaults.",
-                )}
+                {t("step1_description")}
               </div>
             </div>
           </li>
@@ -66,12 +67,10 @@ export default function MigratePage() {
             </div>
             <div>
               <div className="mb-1 text-base font-semibold">
-                {t("Assets are Matched to Borrowers")}
+                {t("step2_title")}
               </div>
               <div className="text-gray-700">
-                {t(
-                  "Your supplied assets are algorithmically matched to borrowers, maximizing utilization and yield.",
-                )}
+                {t("step2_description")}
               </div>
             </div>
           </li>
@@ -83,24 +82,44 @@ export default function MigratePage() {
             </div>
             <div>
               <div className="mb-1 text-base font-semibold">
-                {t("Earn Interest")}
+                {t("step3_title")}
               </div>
               <div className="text-gray-700">
-                {t(
-                  "You earn interest paid by borrowers, with rates determined by market supply and demand.",
-                )}
+                {t("step3_description")}
+              </div>
+            </div>
+          </li>
+          <li className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-400/60 text-lg font-bold text-white">
+                4
+              </span>
+            </div>
+            <div>
+              <div className="mb-1 text-base font-semibold">
+                {t("step4_title")}
+              </div>
+              <div className="text-gray-700">
+                {t("step4_description")}
+              </div>
+            </div>
+          </li>
+          <li className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-400/60 text-lg font-bold text-white">
+                5
+              </span>
+            </div>
+            <div>
+              <div className="mb-1 text-base font-semibold">
+                {t("step5_title")}
+              </div>
+              <div className="text-gray-700">
+                {t("step5_description")}
               </div>
             </div>
           </li>
         </ol>
-        <div className="mt-4 rounded border-l-4 border-blue-400 bg-blue-50 p-4 text-blue-800">
-          {t("Advantages")}:<br />
-          {t("Non-custodial, assets always in your control.")}
-          <br />
-          {t("Competitive yields, optimized by smart matching.")}
-          <br />
-          {t("Transparent, on-chain operations.")}
-        </div>
       </section>
 
       {/* Borrow 机制介绍 */}
@@ -116,7 +135,10 @@ export default function MigratePage() {
             {t("Go to Borrow")}
           </button>
         </div>
-        <ol className="space-y-6">
+        <div className="mt-4 rounded border-l-4 border-purple-400 bg-purple-50 p-4 text-purple-800">
+          {t("borrow_description")}
+        </div>
+        <ol className="space-y-6 mt-4">
           <li className="flex items-start gap-4">
             <div className="flex-shrink-0">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-400/60 text-lg font-bold text-white">
@@ -125,10 +147,10 @@ export default function MigratePage() {
             </div>
             <div>
               <div className="mb-1 text-base font-semibold">
-                {t("Provide Collateral")}
+                {t("borrow_step1_title")}
               </div>
               <div className="text-gray-700">
-                {t("Deposit supported assets as collateral (e.g., BTC, ETH).")}
+                {t("borrow_step1_description")}
               </div>
             </div>
           </li>
@@ -140,12 +162,10 @@ export default function MigratePage() {
             </div>
             <div>
               <div className="mb-1 text-base font-semibold">
-                {t("Borrow Against Collateral")}
+                {t("borrow_step2_title")}
               </div>
               <div className="text-gray-700">
-                {t(
-                  "Borrow other assets up to a safe loan-to-value (LTV) ratio.",
-                )}
+                {t("borrow_step2_description")}
               </div>
             </div>
           </li>
@@ -157,22 +177,44 @@ export default function MigratePage() {
             </div>
             <div>
               <div className="mb-1 text-base font-semibold">
-                {t("Repay and Withdraw")}
+                {t("borrow_step3_title")}
               </div>
               <div className="text-gray-700">
-                {t("Repay your loan to unlock and withdraw your collateral.")}
+                {t("borrow_step3_description")}
+              </div>
+            </div>
+          </li>
+          <li className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-400/60 text-lg font-bold text-white">
+                4
+              </span>
+            </div>
+            <div>
+              <div className="mb-1 text-base font-semibold">
+                {t("borrow_step4_title")}
+              </div>
+              <div className="text-gray-700">
+                {t("borrow_step4_description")}
+              </div>
+            </div>
+          </li>
+          <li className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-400/60 text-lg font-bold text-white">
+                5
+              </span>
+            </div>
+            <div>
+              <div className="mb-1 text-base font-semibold">
+                {t("borrow_step5_title")}
+              </div>
+              <div className="text-gray-700">
+                {t("borrow_step5_description")}
               </div>
             </div>
           </li>
         </ol>
-        <div className="mt-4 rounded border-l-4 border-purple-400 bg-purple-50 p-4 text-purple-800">
-          {t("Advantages")}:<br />
-          {t("Flexible borrowing, multiple supported assets.")}
-          <br />
-          {t("Over-collateralized, reducing risk of bad debt.")}
-          <br />
-          {t("Transparent interest rates and liquidation rules.")}
-        </div>
       </section>
 
       {/* FAQ区 */}
@@ -196,16 +238,6 @@ export default function MigratePage() {
             <div className="text-sm text-gray-600">
               {t(
                 "Interest rates are dynamically adjusted based on market supply and demand.",
-              )}
-            </div>
-          </li>
-          <li>
-            <div className="font-medium text-blue-700">
-              {t("What happens if my collateral value drops?")}
-            </div>
-            <div className="text-sm text-gray-600">
-              {t(
-                "If your collateral value falls below the liquidation threshold, your position may be liquidated to protect the protocol.",
               )}
             </div>
           </li>
