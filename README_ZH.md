@@ -1,6 +1,6 @@
-# 🏦 SatoshiPool
+# 🏦 BLend - 互联网计算机去中心化借贷协议
 
-基于互联网计算机（ICP）平台构建的去中心化借贷协议，具有供应、借贷、还款和提取功能，前端和后端之间实现实时数据集成。
+基于互联网计算机（ICP）平台构建的现代化去中心化借贷协议，具有完整的用户界面、多语言支持和Internet Identity身份认证系统。
 
 ## 🚀 功能特性
 
@@ -12,20 +12,21 @@
 - **提取（Withdraw）**: 用户可以提取其供应的资产
 - **清算（Liquidation）**: 对抵押不足的头寸进行自动清算
 
+### 用户界面特性
+
+- **现代化设计**: 采用渐变背景、卡片式布局和响应式设计
+- **多语言支持**: 完整的中英文双语界面
+- **身份认证**: Internet Identity集成，安全的用户认证系统
+- **实时数据**: 所有前端数据直接从后端罐子获取
+- **交互式组件**: 模态框、下拉菜单、复制功能等
+
 ### 技术特性
 
-- **实时数据**: 所有前端列表直接从后端罐子获取数据
-- **类型安全**: 与后端 Candid 接口的完整 TypeScript 集成
-- **身份认证**: Internet Identity 集成，确保安全的用户认证
-- **价格预言机**: 集成 Pyth Network 获取实时价格数据
-- **响应式界面**: 现代化的 React + Tailwind CSS 界面
-
-### 架构设计
-
-- **后端**: 具有全面借贷逻辑的 Rust 罐子
-- **前端**: 具有实时后端集成的 React + TypeScript
-- **身份认证**: Internet Identity 用于安全的用户管理
-- **数据流**: 罐子到前端的直接数据获取
+- **类型安全**: 与后端Candid接口的完整TypeScript集成
+- **响应式界面**: 基于React + Tailwind CSS的现代化UI
+- **状态管理**: 完整的用户状态和认证状态管理
+- **错误处理**: 优雅的错误处理和用户反馈
+- **可访问性**: 支持键盘导航和屏幕阅读器
 
 ## 📋 前置要求
 
@@ -58,7 +59,7 @@ cd ../..
 ### 3. 启动本地环境
 
 ```bash
-# 启动 DFX 副本
+# 启动DFX副本
 dfx start --clean --background
 
 # 在新终端中，部署所有罐子
@@ -77,27 +78,37 @@ npm start
 ```
 icp_1/
 ├── src/
-│   ├── backend/                    # Rust 后端罐子
+│   ├── backend/                    # Rust后端罐子
 │   │   ├── src/
 │   │   │   ├── lib.rs             # 主要借贷协议逻辑
 │   │   │   └── types.rs           # 数据结构和类型
-│   │   ├── Cargo.toml             # Rust 依赖
-│   │   └── backend.did            # 自动生成的 Candid 接口
-│   ├── frontend/                   # React 前端应用
+│   │   ├── Cargo.toml             # Rust依赖
+│   │   └── backend.did            # 自动生成的Candid接口
+│   ├── frontend/                   # React前端应用
 │   │   ├── src/
-│   │   │   ├── components/        # 可重用 UI 组件
-│   │   │   │   ├── Borrow/        # 借贷相关组件
-│   │   │   │   ├── Earn/          # 收益相关组件
-│   │   │   │   └── Layout/        # 布局组件
+│   │   │   ├── components/        # 可重用UI组件
+│   │   │   │   ├── Layout/        # 布局组件（Header等）
+│   │   │   │   ├── UserInfoDisplay.tsx # 用户信息显示
+│   │   │   │   ├── TokenBalanceDisplay.tsx # 代币余额显示
+│   │   │   │   ├── LiquidityProvider.tsx # 流动性提供者
+│   │   │   │   └── MarketDetail.tsx # 市场详情
 │   │   │   ├── services/          # 后端服务层
+│   │   │   │   ├── InternetIdentityService.ts # II认证服务
+│   │   │   │   └── TokenBalanceService.ts # 代币余额服务
 │   │   │   ├── views/             # 页面组件
-│   │   │   ├── types/             # TypeScript 类型定义
-│   │   │   └── hooks/             # 自定义 React hooks
+│   │   │   │   ├── DashboardPage.tsx # 仪表板页面
+│   │   │   │   └── EarnView.tsx   # 收益页面
+│   │   │   ├── types/             # TypeScript类型定义
+│   │   │   ├── hooks/             # 自定义React hooks
+│   │   │   │   └── useLanguage.tsx # 多语言支持
+│   │   │   └── assets/            # 静态资源
+│   │   │       ├── btc.png        # 比特币图标
+│   │   │       └── btc1.png       # BLend徽标
 │   │   ├── package.json           # 前端依赖
 │   │   └── vite.config.ts         # 构建配置
 │   └── declarations/              # 自动生成的罐子接口
-├── dfx.json                       # DFX 配置
-├── Cargo.toml                     # 根 Rust 工作空间
+├── dfx.json                       # DFX配置
+├── Cargo.toml                     # 根Rust工作空间
 └── package.json                   # 根依赖
 ```
 
@@ -108,10 +119,10 @@ icp_1/
 在根目录创建 `.env` 文件：
 
 ```env
-# DFX 网络配置
+# DFX网络配置
 DFX_NETWORK=local
 
-# 罐子 ID（部署后自动生成）
+# 罐子ID（部署后自动生成）
 CANISTER_ID_BACKEND=your_backend_canister_id
 CANISTER_ID_FRONTEND=your_frontend_canister_id
 CANISTER_ID_INTERNET_IDENTITY=your_ii_canister_id
@@ -147,159 +158,74 @@ dfx config --network ic
 dfx deploy --network ic
 ```
 
-## 📊 后端 API
-
-### 核心借贷功能
-
-#### 供应资产
-
-```rust
-#[update]
-async fn supply(token_id: String, amount: NumTokens) -> Result<u64, String>
-```
-
-#### 借贷资产
-
-```rust
-#[update]
-async fn borrow(token_id: String, amount: NumTokens) -> Result<u64, String>
-```
-
-#### 偿还借入资产
-
-```rust
-#[update]
-async fn repay(token_id: String, amount: NumTokens) -> Result<u64, String>
-```
-
-#### 提取供应资产
-
-```rust
-#[update]
-async fn withdraw(token_id: String, amount: NumTokens) -> Result<u64, String>
-```
-
-### 查询功能
-
-#### 获取所有池子
-
-```rust
-#[query]
-fn get_all_pools() -> Vec<Pool>
-```
-
-#### 获取用户供应
-
-```rust
-#[query]
-fn get_user_supplies(user: Principal) -> Vec<(Principal, NumTokens)>
-```
-
-#### 获取用户借贷
-
-```rust
-#[query]
-fn get_user_borrows(user: Principal) -> Vec<(Principal, NumTokens)>
-```
-
-#### 获取用户健康因子
-
-```rust
-#[query]
-fn get_user_health_factor(user: Principal) -> f64
-```
-
-### 身份认证功能
-
-#### 检查认证状态
-
-```rust
-#[query]
-fn is_authenticated() -> bool
-```
-
-#### 获取用户信息
-
-```rust
-#[query]
-fn get_user_info() -> Result<UserInfo, String>
-```
-
-#### 注册用户
-
-```rust
-#[update]
-fn register_user(username: String) -> Result<UserInfo, String>
-```
-
 ## 🎨 前端功能
 
-### 页面
+### 页面组件
 
-#### 仪表板
+#### 仪表板页面 (DashboardPage)
 
-- 用户投资组合概览
-- 总供应和借贷金额
-- 健康因子监控
-- 最近活动动态
+- **用户信息显示**: 显示用户认证状态、Principal ID和Account ID
+- **统计卡片**: 总收益、总借贷、平均APY等关键指标
+- **代币余额**: 实时显示用户持有的各种代币余额
+- **响应式设计**: 适配桌面和移动设备
 
-#### 收益页面
+#### 收益页面 (EarnView)
 
-- 可用金库列表
-- APY 利率和 TVL 信息
-- 用户存款跟踪
-- 筛选和搜索功能
+- **资产池列表**: 显示可用的借贷资产池
+- **市场详情**: 点击查看详细的市场信息和操作界面
+- **流动性管理**: 供应和提取资产的模态框界面
+- **交易历史**: 显示用户的交易记录
 
-#### 借贷页面
-
-- 可用借贷市场
-- 抵押品要求
-- 利率和费用
-- 市场统计
-
-#### 市场详情页面
-
-- 详细市场信息
-- 供应和借贷操作
-- 市场统计和图表
-- 风险指标
-
-#### 金库详情页面
-
-- 金库特定信息
-- 性能指标
-- 存款和提取操作
-- 历史数据
-
-### 组件
+### 核心组件
 
 #### UserInfoDisplay
 
-- 用户认证状态
-- 余额信息
-- 健康因子显示
-- 最近活动
+- **身份信息**: 显示Principal ID和Account ID
+- **交互功能**: 点击眼睛图标切换显示/隐藏，复制按钮
+- **充值说明**: 美元符号按钮显示充值说明
+- **现代化设计**: 渐变背景、卡片式布局
 
-#### MarketListItem
+#### TokenBalanceDisplay
 
-- 市场概览卡片
-- 关键指标显示
-- 交互式选择
-- 实时数据更新
+- **余额查询**: 支持ICP、ckBTC等代币余额查询
+- **自定义代币**: 允许用户添加自定义代币
+- **实时更新**: 自动刷新余额数据
+- **错误处理**: 优雅的错误提示
 
-#### VaultListItem
+#### MarketDetail
 
-- 金库信息卡片
-- APY 和 TVL 显示
-- 用户头寸跟踪
-- 操作按钮
+- **市场统计**: 总供应量、总借贷量、可用流动性等
+- **操作界面**: 供应、借贷、还款、提取四个操作标签
+- **实时计算**: 动态计算最大可用金额和收益
+- **交易预览**: 显示交易详情和预期收益
+
+### 多语言支持
+
+应用程序支持完整的中英文双语界面：
+
+```typescript
+// 语言切换
+const { t, language, toggleLanguage } = useLanguage();
+
+// 使用翻译
+<h1>{t("dashboard_title")}</h1>
+<button>{t("connect_wallet")}</button>
+```
+
+支持的语言键包括：
+- 用户界面文本
+- 错误消息
+- 操作提示
+- 充值说明
 
 ## 🔐 身份认证
 
-应用程序使用 Internet Identity 进行安全认证：
+### Internet Identity集成
 
-1. **本地开发**: 使用本地 Internet Identity 罐子
-2. **主网**: 使用生产环境 Internet Identity
+应用程序使用Internet Identity进行安全认证：
+
+1. **本地开发**: 使用本地Internet Identity罐子
+2. **主网**: 使用生产环境Internet Identity
 3. **自动注册**: 新用户自动注册
 4. **会话管理**: 持久化认证状态
 
@@ -309,7 +235,7 @@ fn register_user(username: String) -> Result<UserInfo, String>
 // 初始化认证
 await internetIdentityService.initialize();
 
-// 使用 Internet Identity 登录
+// 使用Internet Identity登录
 await internetIdentityService.login();
 
 // 检查认证状态
@@ -318,6 +244,13 @@ const authState = internetIdentityService.getAuthState();
 // 获取用户信息
 const userInfo = await internetIdentityService.getUserInfo();
 ```
+
+### Principal ID和Account ID
+
+- **Principal ID**: 用户的唯一身份标识符
+- **Account ID**: 基于Principal生成的账户地址，用于接收代币
+- **安全显示**: 默认隐藏部分内容，支持显示/隐藏切换
+- **复制功能**: 一键复制到剪贴板
 
 ## 📈 数据集成
 
@@ -336,37 +269,81 @@ const supplies = await internetIdentityService.getUserSupplies(principal);
 const borrows = await internetIdentityService.getUserBorrows(principal);
 
 // 获取用户健康因子
-const healthFactor =
-  await internetIdentityService.getUserHealthFactor(principal);
+const healthFactor = await internetIdentityService.getUserHealthFactor(principal);
+```
+
+### 代币余额查询
+
+支持查询各种ICRC-1标准代币的余额：
+
+```typescript
+// 查询ICP余额
+const icpBalance = await tokenBalanceService.queryICPBalance(principal);
+
+// 查询ckBTC余额
+const ckbtcBalance = await tokenBalanceService.queryCkbtcBalance(principal);
+
+// 查询自定义代币余额
+const customBalance = await tokenBalanceService.queryTokenBalance(
+  tokenCanisterId,
+  accountId
+);
 ```
 
 ### 类型安全
 
-前端类型与后端 Candid 接口对齐：
+前端类型与后端Candid接口对齐：
 
 ```typescript
 // 后端对齐的接口
-interface Pool {
+interface Asset {
+  id: string;
+  symbol: string;
   name: string;
-  token_id: Principal;
-  pool_account: AssetConfig;
-  collateral: AssetConfig[];
-  amount: bigint;
-  used_amount: bigint;
-  maximum_token: bigint;
+  icon: string;
+  price: number;
+  balance: number;
+  apy: number;
+  tvl: number;
+  supplied: number;
+  borrowed: number;
+  collateralFactor: number;
+  liquidationThreshold: number;
+  borrowRate: number;
+  utilization: number;
 }
 
-interface AssetConfig {
-  name: string;
-  token_id: Principal;
-  account: Account;
-  price_id: string;
-  asset_type: AssetTypes;
-  decimals: number;
-  collateral_factor: number;
-  interest_rate: number;
+interface UserInfo {
+  username: string;
+  ckbtc_balance: number;
+  total_earned: number;
+  total_borrowed: number;
+  created_at: bigint;
+  recent_activities: any[];
 }
 ```
+
+## 🎨 UI/UX特性
+
+### 现代化设计
+
+- **渐变背景**: 使用蓝色到紫色的渐变背景
+- **卡片式布局**: 信息以卡片形式组织，层次清晰
+- **阴影效果**: 适当的阴影增强视觉层次
+- **圆角设计**: 现代化的圆角元素
+
+### 交互体验
+
+- **点击外部关闭**: 所有模态框支持点击外部区域关闭
+- **复制反馈**: 复制操作提供即时视觉反馈
+- **加载状态**: 异步操作显示加载动画
+- **错误处理**: 友好的错误提示和恢复建议
+
+### 响应式设计
+
+- **移动端适配**: 完整的移动端界面优化
+- **断点设计**: 使用Tailwind CSS的响应式断点
+- **触摸友好**: 按钮和交互元素适合触摸操作
 
 ## 🧪 测试
 
@@ -390,26 +367,27 @@ npm test
 - 前端组件测试
 - 集成测试
 - 认证流程测试
+- 多语言功能测试
 
 ## 🔧 开发
 
 ### 添加新功能
 
 1. **后端更改**:
-
-   - 在 `src/backend/src/lib.rs` 中添加新函数
-   - 更新 Candid 接口
+   - 在`src/backend/src/lib.rs`中添加新函数
+   - 更新Candid接口
    - 添加测试
 
 2. **前端更改**:
-   - 在 `src/frontend/src/components/` 中添加新组件
-   - 在 `src/frontend/src/types/` 中更新类型
-   - 在 `src/frontend/src/services/` 中添加服务方法
+   - 在`src/frontend/src/components/`中添加新组件
+   - 在`src/frontend/src/types/`中更新类型
+   - 在`src/frontend/src/services/`中添加服务方法
+   - 在`src/frontend/src/hooks/useLanguage.tsx`中添加多语言支持
 
 ### 代码质量
 
-- **Rust**: 遵循 Clippy 和 Rust FMT 指南
-- **TypeScript**: ESLint 和 Prettier 配置
+- **Rust**: 遵循Clippy和Rust FMT指南
+- **TypeScript**: ESLint和Prettier配置
 - **测试**: 全面的测试覆盖
 - **文档**: 内联代码文档
 
@@ -418,27 +396,25 @@ npm test
 ### 主网部署步骤
 
 1. **准备环境**:
-
    ```bash
    dfx config --network ic
    ```
 
 2. **部署罐子**:
-
    ```bash
    dfx deploy --network ic
    ```
 
 3. **更新环境变量**:
-
-   - 设置生产罐子 ID
-   - 配置 Internet Identity
+   - 设置生产罐子ID
+   - 配置Internet Identity
    - 更新价格预言机端点
 
 4. **验证部署**:
    - 测试所有功能
    - 验证身份认证
    - 检查数据集成
+   - 测试多语言功能
 
 ### 安全考虑
 
@@ -446,12 +422,13 @@ npm test
 - **输入验证**: 全面的参数验证
 - **错误处理**: 整个系统的优雅错误处理
 - **速率限制**: 为关键功能实施速率限制
+- **身份验证**: 安全的Internet Identity集成
 
-## 📚 API 文档
+## 📚 API文档
 
-### Candid 接口
+### Candid接口
 
-完整的 Candid 接口可在 `src/backend/backend.did` 中找到：
+完整的Candid接口可在`src/backend/backend.did`中找到：
 
 ```candid
 service : () -> {
@@ -475,7 +452,7 @@ service : () -> {
 
 ## 🤝 贡献
 
-1. Fork 仓库
+1. Fork仓库
 2. 创建功能分支
 3. 进行更改
 4. 为新功能添加测试
@@ -488,10 +465,11 @@ service : () -> {
 - 更新文档
 - 确保类型安全
 - 在本地和主网上测试
+- 添加多语言支持
 
 ## 📄 许可证
 
-本项目采用 MIT 许可证 - 详情请参阅 LICENSE 文件。
+本项目采用MIT许可证 - 详情请参阅 [LICENSE](LICENSE) 文件。
 
 ## 🆘 支持
 
@@ -504,7 +482,18 @@ service : () -> {
 
 ## 🔄 更新日志
 
-查看 [CHANGELOG.md](CHANGELOG.md) 了解详细的更改和更新历史。
+### 最新更新
+
+- ✅ 添加多语言支持（中英文）
+- ✅ 现代化UI设计，采用渐变背景和卡片式布局
+- ✅ 完整的Internet Identity集成
+- ✅ Principal ID和Account ID显示与管理
+- ✅ 代币余额查询功能
+- ✅ 响应式设计优化
+- ✅ 交互式组件（模态框、复制功能等）
+- ✅ 错误处理和用户反馈改进
+
+查看[CHANGELOG.md](CHANGELOG.md)了解详细的更改和更新历史。
 
 ---
 
