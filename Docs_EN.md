@@ -14,10 +14,10 @@ As native Bitcoin DeFi continues to evolve, more and more outstanding projects a
 
 ### 💡 Name Meaning: What does “BLend” stand for?
 
-The name *BLend* embodies the core philosophy behind our protocol:
+The name _BLend_ embodies the core philosophy behind our protocol:
 
-- **B** → Bitcoin, the foundational value anchor of crypto finance  
-- **Lend** → Lending, one of the most fundamental and widely adopted primitives in DeFi  
+- **B** → Bitcoin, the foundational value anchor of crypto finance
+- **Lend** → Lending, one of the most fundamental and widely adopted primitives in DeFi
 - **Blend** → Fusion, reconstruction, and reinvention — symbolizing our reimagination of BTC utility
 
 With this name, we aim to express our commitment to Bitcoin:  
@@ -27,9 +27,9 @@ Not just as a store of value, but as **a productive capital** in the world of De
 
 By deeply blending **“B” (Bitcoin)** and **“Lend” (Lending)**, **BLend** aims to create a:
 
-- **Bitcoin-centric** protocol  
-- With **efficient lending capabilities**  
-- That enables **cross-chain liquidity**  
+- **Bitcoin-centric** protocol
+- With **efficient lending capabilities**
+- That enables **cross-chain liquidity**
 - And is **trustless, verifiable, and composable**
 
 A truly native **decentralized financial infrastructure** — serving BTC users and developers, and driving the growth of Bitcoin DeFi on ICP.
@@ -58,14 +58,16 @@ $$
 If the pool has a total of 100 BTC and 60 BTC have been borrowed, then the utilization rate $U = 60\%$.
 
 &nbsp;
+
 <div align="center">
 
-| Parameter                 | Value   |
-|--------------------------|---------|
-| Base Rate                | 1.2%    |
-| Utilization Optimal Rate | 70%     |
-| Slope 1                  | 2%      |
-| Slope 2                  | 40%     |
+| Parameter                | Value |
+| ------------------------ | ----- |
+| Base Rate                | 1.2%  |
+| Utilization Optimal Rate | 70%   |
+| Slope 1                  | 2%    |
+| Slope 2                  | 40%   |
+
 </div>
 
 &nbsp;
@@ -90,14 +92,16 @@ $$
 
 &nbsp;
 
-This system ensures fair pricing:  
-- **Low usage = low rates = good time to borrow**  
+This system ensures fair pricing:
+
+- **Low usage = low rates = good time to borrow**
 - **High usage = higher rates = maybe wait or pay up**
 
 ---
+
 ### 💰 Supply Rate
 
-When a user supplies assets into BLend, **10% of the deposited amount** is automatically allocated to the **Reserve Pool** — a buffer designed to absorb risk for the protocol.  
+When a user supplies assets into BLend, **10% of the deposited amount** is automatically allocated to the **Reserve Pool** — a buffer designed to absorb risk for the protocol.
 
 But don’t worry — **that portion still belongs to you**, and you’ll get it back when you **fully withdraw** your liquidity.
 
@@ -118,9 +122,9 @@ $$
 
 Here’s how your funds are split:
 
-- **10%** → Platform reserve (risk buffer)  
-- **5%** → Still counted as yours, just kept in reserve  
-- **85%** → Actively enters the pool to earn interest  
+- **10%** → Platform reserve (risk buffer)
+- **5%** → Still counted as yours, just kept in reserve
+- **85%** → Actively enters the pool to earn interest
 
 So we calculate:
 
@@ -146,7 +150,7 @@ $$
 
 ### 📈 Annualized Yield per User
 
-Each user *i* earns annually:
+Each user _i_ earns annually:
 
 &nbsp;
 
@@ -215,20 +219,19 @@ This process is called **Liquidation**.
 
 #### 🎯 Purpose of Liquidation
 
-- ⛔ Prevent bad debt from hurting the protocol  
-- 🧮 Recover the debt by auctioning or discount-selling collateral  
-- 🔐 Ensure overall system health and protect depositors’ funds  
+- ⛔ Prevent bad debt from hurting the protocol
+- 🧮 Recover the debt by auctioning or discount-selling collateral
+- 🔐 Ensure overall system health and protect depositors’ funds
 
 > 💡 Liquidation is a **core risk management mechanism** in any DeFi lending protocol.
 
 ---
 
-| Parameter                  | Description                                           | ICP   | BTC/ETH | USDC  |
-|---------------------------|-------------------------------------------------------|-------|---------|--------|
-| **Collateral Factor**     | Portion of collateral value allowed to be borrowed    | 0.75  | 0.70    | 0.80   |
-| **Liquidation Threshold** | Max borrowing ratio before triggering liquidation     | 0.80  | 0.75    | 0.85   |
-| **Liquidation Bonus**     | Discount (bonus) granted to the liquidator            | 0.05  | 0.05    | 0.05   |
-
+| Parameter                 | Description                                        | ICP  | BTC/ETH | USDC |
+| ------------------------- | -------------------------------------------------- | ---- | ------- | ---- |
+| **Collateral Factor**     | Portion of collateral value allowed to be borrowed | 0.75 | 0.70    | 0.80 |
+| **Liquidation Threshold** | Max borrowing ratio before triggering liquidation  | 0.80 | 0.75    | 0.85 |
+| **Liquidation Bonus**     | Discount (bonus) granted to the liquidator         | 0.05 | 0.05    | 0.05 |
 
 ### 🧪 Health Factor (HF)
 
@@ -241,7 +244,7 @@ $$
 HF = \frac{\text{Collateral Value} \times \text{Liquidation Threshold}}{\text{Borrowed Amount} + \text{Accrued Interest}}
 $$
 
-- If **HF ≥ 1**: You're good! Your account is healthy and safe 🟢  
+- If **HF ≥ 1**: You're good! Your account is healthy and safe 🟢
 - If **HF < 1**: Danger zone! You’re undercollateralized and eligible for liquidation 🔥
 
 ---
@@ -263,11 +266,10 @@ $$
 
 In plain English:
 
-- **Numerator** = Your total collateral value, *adjusted for each asset’s liquidation threshold*  
-- **Denominator** = Everything you owe: principal + all accumulated interest  
+- **Numerator** = Your total collateral value, _adjusted for each asset’s liquidation threshold_
+- **Denominator** = Everything you owe: principal + all accumulated interest
 
 > The higher your HF, the safer your position. Think of it as your DeFi "credit score" — and yes, we’re watching it in real time 👀.
-
 
 ## 🔥 Liquidation Flow (Simplified Version)
 
@@ -303,7 +305,6 @@ In plain English:
 > 📌 Different assets have different liquidation bonuses.  
 > For maximum incentive, **BTC gives the highest reward: 10%** — because it’s king 👑.
 
-
 ## II. 🧭 User Guide
 
 ### 🚀 Getting Started
@@ -333,6 +334,7 @@ Once that’s done, you’re ready to dive in and start exploring!
 - Go to the **“Borrow”** page, choose the collateral you want to lock up (ICP, BTC, ETH, or USDC), enter the amount, and hit **“Submit”**.
 - Based on your collateral, the system will show you the **maximum borrowable amount**. Choose how much you want to borrow and click **“Confirm Borrow”**.
 - On the **Personal Center** page, you can keep track of all the important stuff:
+
   - Total debt (including interest)
   - Your **Health Factor** (aka how close you are to getting liquidated 😬)
   - Accrued interest (updated daily — yay, compound interest!)
@@ -363,12 +365,11 @@ When a user supplies assets to the protocol, the following steps are executed un
 5. **Record user deposit**  
    Update the user's supply record and the pool’s token capacity accordingly.
 
-
 ### 🛠 Borrow Logic
 
 When a user tries to borrow some tokens, we don’t just throw the money at them — here’s what actually happens:
 
-1. **Check if the user wants *more than zero***  
+1. **Check if the user wants _more than zero_**  
    Because borrowing 0 tokens is just... philosophical. We need `NumTokens > 0`.
 
 2. **Validate the token pool exists**  
@@ -378,7 +379,7 @@ When a user tries to borrow some tokens, we don’t just throw the money at them
    User must have deposited accepted assets (like ICP, BTC, ETH, USDC). No imaginary coins allowed.
 
 4. **Calculate max borrowable amount**  
-   Based on deposited collateral, price feeds, liquidation thresholds, and protocol parameters, we compute how much the user *can* borrow — safely.
+   Based on deposited collateral, price feeds, liquidation thresholds, and protocol parameters, we compute how much the user _can_ borrow — safely.
 
 5. **Ensure the user isn’t trying to YOLO too much**  
    The requested `NumTokens` must be ≤ `MaxBorrowableAmount`. Over-borrowing gets rejected.
@@ -389,9 +390,7 @@ When a user tries to borrow some tokens, we don’t just throw the money at them
 7. **Update the borrow record**  
    We update the user's borrow balance, interest tracking, and health factor. Basically: “Congrats, you're now officially in debt.”
 
-
-
-### 🔁 Repay Logic 
+### 🔁 Repay Logic
 
 When a user wants to repay their loan — great! But we still need to verify they’re not just clicking buttons for fun.
 
@@ -421,7 +420,6 @@ Here’s what happens under the hood:
 8. **Update the user’s borrow record**  
    New debt balance, reduced interest accumulation, and a better health factor. You're less likely to be liquidated — yay!
 
-
 ### 🏧 Withdraw
 
 1. **Check the amount**: Make sure `Numtokens > 0`. No ghost withdrawals allowed.
@@ -433,7 +431,6 @@ Here’s what happens under the hood:
 7. **Transfer funds**: Send the appropriate amount from the pool back to the user.
 8. **Update records**: Adjust the user's supply balance and pool's total state.
 
-
 ### 💥 Liquidate (Liquidation Mechanism)
 
 When a borrower's health factor falls below the protocol-defined threshold, third-party liquidators are allowed to repay the borrower's debt and acquire a portion of their collateral. The following outlines the standardized liquidation flow:
@@ -443,7 +440,7 @@ When a borrower's health factor falls below the protocol-defined threshold, thir
 
 2. **Calculate Health Factor**  
    Evaluate the borrower's account by computing the Health Factor using the formula:  
-   *(Collateral Value × Liquidation Threshold) / (Borrowed Amount + Accrued Interest)*.  
+   _(Collateral Value × Liquidation Threshold) / (Borrowed Amount + Accrued Interest)_.  
    If **Health Factor < 1**, liquidation is permitted.
 
 3. **Determine Liquidation Payment Amount**  
@@ -457,4 +454,3 @@ When a borrower's health factor falls below the protocol-defined threshold, thir
 
 6. **Update System States**  
    The system updates the borrower's `borrow` and `supply` balances, and reflects changes in the pool’s available liquidity and total reserves.
-

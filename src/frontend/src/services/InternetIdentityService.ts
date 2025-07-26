@@ -363,7 +363,9 @@ export class InternetIdentityService {
       );
     }
 
+    // 重新创建 TokenBalanceService 以使用认证身份
     this.tokenBalanceService = new TokenBalanceService(this.agent);
+    console.log("TokenBalanceService created with authenticated identity");
   }
 
   // Retry fetching Root Key
@@ -402,21 +404,28 @@ export class InternetIdentityService {
   public ensureTokenBalanceService(): TokenBalanceService {
     if (!this.tokenBalanceService) {
       const { network, isLocal, host } = this.getNetworkConfig();
-      console.log(
-        "Agent not initialized, creating anonymous Agent for balance queries...",
-      );
-      const options: HttpAgentOptions = { host };
-      const agent = HttpAgent.createSync(options);
-      this.tokenBalanceService = new TokenBalanceService(agent);
-      if (isLocal) {
-        agent
-          .fetchRootKey()
-          .catch((error: unknown) =>
-            console.error(
-              "Anonymous Agent Root Key fetch failed:",
-              error instanceof Error ? error.message : String(error),
-            ),
-          );
+
+      // 检查是否有认证身份可用
+      if (this.identity && this.agent) {
+        console.log("使用认证身份创建 TokenBalanceService");
+        this.tokenBalanceService = new TokenBalanceService(this.agent);
+      } else {
+        console.log(
+          "Agent not initialized, creating anonymous Agent for balance queries...",
+        );
+        const options: HttpAgentOptions = { host };
+        const agent = HttpAgent.createSync(options);
+        this.tokenBalanceService = new TokenBalanceService(agent);
+        if (isLocal) {
+          agent
+            .fetchRootKey()
+            .catch((error: unknown) =>
+              console.error(
+                "Anonymous Agent Root Key fetch failed:",
+                error instanceof Error ? error.message : String(error),
+              ),
+            );
+        }
       }
     }
     return this.tokenBalanceService;

@@ -130,32 +130,57 @@ export class TokenBalanceService {
     subaccount?: Uint8Array,
   ): Promise<string> {
     try {
+      console.log("TokenBalanceService: 开始生成Account ID");
+      console.log("Principal:", principal.toText());
+
       const padding = new Uint8Array([
         0x0a,
         ...new TextEncoder().encode("account-id"),
       ]);
+      console.log("Padding length:", padding.length);
+
       const principalBytes = principal.toUint8Array();
+      console.log("Principal bytes length:", principalBytes.length);
+
       const sub = subaccount ?? new Uint8Array(32);
+      console.log("Subaccount length:", sub.length);
+
       const data = new Uint8Array(
         padding.length + principalBytes.length + sub.length,
       );
       data.set(padding, 0);
       data.set(principalBytes, padding.length);
       data.set(sub, padding.length + principalBytes.length);
+      console.log("Total data length:", data.length);
 
       // SHA-224 hash
+      console.log("开始计算SHA-224哈希...");
       const hashBuffer = await crypto.subtle.digest("SHA-224", data);
       const hash = new Uint8Array(hashBuffer);
+      console.log("SHA-224哈希完成，长度:", hash.length);
 
       // CRC32 checksum
+      console.log("开始计算CRC32校验和...");
       const crc32 = this.calculateCRC32(hash);
+      console.log("CRC32校验和完成，长度:", crc32.length);
+
       const result = new Uint8Array(4 + hash.length);
       result.set(crc32, 0);
       result.set(hash, 4);
+      console.log("最终结果长度:", result.length);
 
-      return this.toHex(result);
+      const hexResult = this.toHex(result);
+      console.log("Account ID生成成功:", hexResult);
+      return hexResult;
     } catch (error) {
-      console.error("Failed to generate Account ID:", error);
+      console.error(
+        "TokenBalanceService: Failed to generate Account ID:",
+        error,
+      );
+      console.error("错误详情:", {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
