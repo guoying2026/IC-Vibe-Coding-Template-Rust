@@ -22,11 +22,13 @@ use std::ops::{AddAssign, MulAssign, Sub, SubAssign};
 
 #[init] // 初始化池子的admin，先确定唯一作者
 fn init() {
+    let caller = msg_caller();
+    assert!(caller != Principal::anonymous(), "Anonymous caller not allowed");
     STATE.with(|s| {
         let mut state = s.borrow_mut();
-        state.admin = msg_caller();
+        state.admin = caller;
     });
-    ic_cdk::println!("Lending Contract initialized by {:?}", msg_caller());
+    ic_cdk::println!("Lending Contract initialized by {:?}", caller);
 }
 
 #[derive(Clone, Debug, CandidType, Serialize, Deserialize)]
@@ -935,11 +937,11 @@ fn update_interest_amount() {
 
 /*-------------------------Calculate Function------------------------*/
 #[query] // 计算利率（先固定利率）
-fn cal_interest(token: Principal) -> f64{
+fn cal_interest(token: Principal) -> f64 {
     let slope1 = 0.02;
     let slope2 = 0.4;
     let utilisation_optimal_rate = 0.7;
-    STATE.with(|s|{
+    STATE.with(|s| {
         let state = s.borrow();
         let pool = state.pool.get(&token).ok_or("Error token").unwrap().clone();
         let base_rate = state.assets.get(&token).unwrap().interest_rate; // 固定利率
@@ -947,12 +949,13 @@ fn cal_interest(token: Principal) -> f64{
         let used_amount = numtokens_to_f64(&pool.amount, decimals);
         let amount = numtokens_to_f64(&pool.used_amount, decimals);
         let u = safe_div(used_amount, amount); // 利用率利率
-        if u <= 0.7{
+        if u <= 0.7 {
             base_rate + (u / utilisation_optimal_rate) * slope1
-        }else{
-            base_rate + slope1 + ((u / utilisation_optimal_rate)/(1.0 - utilisation_optimal_rate)) * slope2
+        } else {
+            base_rate
+                + slope1
+                + ((u / utilisation_optimal_rate) / (1.0 - utilisation_optimal_rate)) * slope2
         }
-
     })
 }
 
@@ -1428,21 +1431,6 @@ fn get_user_health_factor(user: Principal) -> f64 {
 #[query]
 pub fn get_admin() -> Principal {
     STATE.with(|s| s.borrow().admin)
-}
-
-#[update]
-pub fn set_admin(new_admin: Principal) -> Result<(), String> {
-    STATE.with(|s| {
-        let mut state = s.borrow_mut();
-        assert_eq!(
-            state.admin,
-            msg_caller(),
-            "Only current admin can set new admin"
-        );
-        state.admin = new_admin;
-        ic_cdk::println!("Admin updated to: {:?}", new_admin);
-        Ok(())
-    })
 }
 
 export_candid!();
