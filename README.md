@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # ⚡️BLend — Unlock Real Yield from Your Bitcoin
 
 > Your BTC deserves better than collecting digital dust.
@@ -36,21 +35,7 @@ It should work for you — securely, natively, and 24/7.
 📖 [CN 用户指南 ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/Docs_CN.md)
 
 以及以下这里就是超技术的Readme文档
-=======
-# 🟧 BLend: BTC Lending Protocol on ICP
 
-## I. Overview
-
-### 📌 Protocol Introduction
-
-In the current context of rapidly developing Bitcoin-native DeFi, more and more excellent projects are exploring how to activate on-chain liquidity for BTC. However, we have noticed:
-
-> Despite the rapid advancement of the track, in the **ICP ecosystem**, there is still a lack of a **mature, native, and highly optimized BTC lending protocol**.
-
-The emergence of **BLend** is precisely to fill this gap and build a truly native decentralized financial infrastructure that serves BTC users.
-
----
->>>>>>> 797f8024974ba2de448156a77b903a34396fcfa9
 
 ### 💡 Protocol Naming Explanation (What does "BLend" mean?)
 
