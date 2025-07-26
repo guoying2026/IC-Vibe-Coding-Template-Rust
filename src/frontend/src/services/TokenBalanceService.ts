@@ -1,8 +1,6 @@
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { AccountIdentifier, Tokens } from "@dfinity/ledger-icp";
 import { createAgent } from "@dfinity/utils";
-import { LedgerCanister } from "@dfinity/ledger-icp";
 import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
 import { sha224 } from "js-sha256";
 
@@ -45,45 +43,33 @@ export class TokenBalanceService {
     return { network, isLocal, host };
   }
 
-  // Query ICP balance using official ledger-icp library
-  async queryICPBalance(principal: Principal): Promise<{ balance?: bigint; error?: string }> {
+  // Query ICP balance using ICRC interface (since ledger-icp has Buffer issues in browser)
+  async queryICPBalance(
+    principal: Principal,
+  ): Promise<{ balance?: bigint; error?: string }> {
     try {
       console.log("Querying ICP balance for principal:", principal.toText());
-      
-      // Generate account identifier
-      const accountId = await this.generateAccountId(principal);
-      console.log("Generated account ID:", accountId);
 
       const { host } = this.getNetworkConfig();
-      
+
       // Create agent using @dfinity/utils
       const agent = await createAgent({
         identity: this.identity,
         host,
       });
 
-      // Create ICP ledger canister
-      const ledger = LedgerCanister.create({
+      // Use ICRC interface for ICP ledger to avoid Buffer issues
+      const ledger = IcrcLedgerCanister.create({
         agent,
-        canisterId: Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"),
+        canisterId: Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"), // ICP ledger canister ID
       });
 
-      // Convert hex string to Uint8Array for AccountIdentifier
-      const hexToBytes = (hex: string): Uint8Array => {
-        const bytes = new Uint8Array(hex.length / 2);
-        for (let i = 0; i < hex.length; i += 2) {
-          bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
-        }
-        return bytes;
-      };
-
-      // Query balance
-      const balanceResult = await ledger.accountBalance({ 
-        accountIdentifier: accountId 
+      // Query balance using ICRC interface
+      const balance = await ledger.balance({
+        owner: principal,
       });
-      const balance = balanceResult;
+
       console.log("ICP balance:", balance);
-      
       return { balance };
     } catch (error) {
       console.error("Failed to query ICP balance:", error);
@@ -98,10 +84,13 @@ export class TokenBalanceService {
     subaccount?: Uint8Array,
   ): Promise<{ balance?: bigint; error?: string }> {
     try {
-      console.log(`Querying ICRC token balance for ${tokenCanisterId}, principal:`, principal.toText());
-      
+      console.log(
+        `Querying ICRC token balance for ${tokenCanisterId}, principal:`,
+        principal.toText(),
+      );
+
       const { host } = this.getNetworkConfig();
-      
+
       // Create agent using @dfinity/utils
       const agent = await createAgent({
         identity: this.identity,
@@ -119,7 +108,7 @@ export class TokenBalanceService {
         owner: principal,
         subaccount,
       });
-      
+
       console.log(`${tokenCanisterId} balance:`, balance);
       return { balance };
     } catch (error) {
@@ -139,7 +128,11 @@ export class TokenBalanceService {
       return await this.queryICPBalance(principal);
     } else {
       // For ICRC tokens (ckBTC, ckETH, etc.)
-      return await this.queryICRCTokenBalance(tokenCanisterId, principal, subaccount || undefined);
+      return await this.queryICRCTokenBalance(
+        tokenCanisterId,
+        principal,
+        subaccount || undefined,
+      );
     }
   }
 
@@ -226,7 +219,7 @@ export class TokenBalanceService {
       }
 
       console.log(`Fetching token info for ${tokenCanisterId}`);
-      
+
       const { host } = this.getNetworkConfig();
       const agent = await createAgent({
         identity: this.identity,
@@ -252,11 +245,20 @@ export class TokenBalanceService {
         const metadata = await ledger.metadata({});
         const nameEntry = metadata.find(([key]) => key === "icrc1:name");
         const symbolEntry = metadata.find(([key]) => key === "icrc1:symbol");
-        const decimalsEntry = metadata.find(([key]) => key === "icrc1:decimals");
+        const decimalsEntry = metadata.find(
+          ([key]) => key === "icrc1:decimals",
+        );
 
-        const name = nameEntry && "Text" in nameEntry[1] ? nameEntry[1].Text : "Unknown Token";
-        const symbol = symbolEntry && "Text" in symbolEntry[1] ? symbolEntry[1].Text : "";
-        const decimals = decimalsEntry && "Nat" in decimalsEntry[1] ? Number(decimalsEntry[1].Nat) : 8;
+        const name =
+          nameEntry && "Text" in nameEntry[1]
+            ? nameEntry[1].Text
+            : "Unknown Token";
+        const symbol =
+          symbolEntry && "Text" in symbolEntry[1] ? symbolEntry[1].Text : "";
+        const decimals =
+          decimalsEntry && "Nat" in decimalsEntry[1]
+            ? Number(decimalsEntry[1].Nat)
+            : 8;
 
         tokenInfo = { name, symbol, decimals };
       }

@@ -325,7 +325,10 @@ export class InternetIdentityService {
     }
 
     // 重新创建 TokenBalanceService 以使用认证身份
-    this.tokenBalanceService = new TokenBalanceService(this.agent, this.identity);
+    this.tokenBalanceService = new TokenBalanceService(
+      this.agent,
+      this.identity,
+    );
     console.log("TokenBalanceService created with authenticated identity");
   }
 
@@ -369,14 +372,20 @@ export class InternetIdentityService {
       // 检查是否有认证身份可用
       if (this.identity && this.agent) {
         console.log("使用认证身份创建 TokenBalanceService");
-        this.tokenBalanceService = new TokenBalanceService(this.agent, this.identity);
+        this.tokenBalanceService = new TokenBalanceService(
+          this.agent,
+          this.identity,
+        );
       } else {
         console.log(
           "Agent not initialized, creating anonymous Agent for balance queries...",
         );
         const options: HttpAgentOptions = { host };
         const agent = HttpAgent.createSync(options);
-        this.tokenBalanceService = new TokenBalanceService(agent, new AnonymousIdentity());
+        this.tokenBalanceService = new TokenBalanceService(
+          agent,
+          new AnonymousIdentity(),
+        );
         if (isLocal) {
           agent
             .fetchRootKey()
