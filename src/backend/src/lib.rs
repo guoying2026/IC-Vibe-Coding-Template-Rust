@@ -23,7 +23,10 @@ use std::ops::{AddAssign, MulAssign, Sub, SubAssign};
 #[init] // 初始化池子的admin，先确定唯一作者
 fn init() {
     let caller = msg_caller();
-    assert!(caller != Principal::anonymous(), "Anonymous caller not allowed");
+    assert!(
+        caller != Principal::anonymous(),
+        "Anonymous caller not allowed"
+    );
     STATE.with(|s| {
         let mut state = s.borrow_mut();
         state.admin = caller;
