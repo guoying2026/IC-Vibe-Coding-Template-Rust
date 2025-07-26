@@ -719,9 +719,7 @@ async fn get_price(token: Principal) -> f64 {
             .price_id
             .clone()
     });
-    let url = format!(
-        "https://hermes.pyth.network/api/latest_price_feeds?ids[]={price_id}"
-    );
+    let url = format!("https://hermes.pyth.network/api/latest_price_feeds?ids[]={price_id}");
     let request_headers = vec![HttpHeader {
         name: "User-Agent".to_string(),
         value: "pyth_canister".to_string(),
