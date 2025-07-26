@@ -6,8 +6,10 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, CandidType, Deserialize, Serialize)]
-pub struct AssetConfig {
+
+#[derive(Debug, Clone, PartialEq,
+    PartialOrd, CandidType, Deserialize, Serialize)]
+pub struct AssetConfig{
     pub name: String,
     pub token_id: Principal,
     pub account: Account,
@@ -15,6 +17,20 @@ pub struct AssetConfig {
     pub decimals: u32,
     pub collateral_factor: f64,
     pub interest_rate: f64,
+}
+
+impl Default for AssetConfig {
+    fn default() -> Self {
+        Self{
+            name: "".to_string(),
+            token_id: Principal::anonymous(),
+            account : Account{owner: Principal::anonymous(), subaccount: None},
+            price_id: "".to_string(),
+            decimals: 0u32,
+            collateral_factor: 0f64,
+            interest_rate: 0f64,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default, CandidType, Deserialize, Serialize)]
@@ -35,10 +51,10 @@ pub struct Pool {
     pub maximum_token: NumTokens,
 }
 
-impl Default for Pool {
-    fn default() -> Self {
-        Self {
-            name: String::new(),
+impl Default for Pool{
+    fn default() -> Self{
+        Self{
+            name: "".to_string(),
             token_id: Principal::anonymous(),
             pool_account: AssetConfig::default(),
             collateral: Vec::new(),
