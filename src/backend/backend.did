@@ -86,6 +86,7 @@ service : () -> {
   register_user : (principal, text) -> (Result_2);
   remove_pool_collateral : (text, text) -> ();
   repay : (text, nat) -> (Result);
+  set_admin : () -> (Result_1);
   supply : (text, nat) -> (Result);
   transfer_token : (Account, Account, nat) -> (Result);
   update_contract_assets : (AssetParameter) -> ();
