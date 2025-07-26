@@ -14,7 +14,7 @@ export interface Account {
 // ICRC Ledger interface
 export interface ICRCLedger {
   icrc1_balance_of: (args: {
-    account: { owner: Principal; subaccount?: Uint8Array[] | [] };
+    account: { owner: Principal; subaccount?: number[] };
   }) => Promise<bigint>;
   icrc1_name: () => Promise<string>;
   icrc1_symbol: () => Promise<string>;
@@ -99,15 +99,18 @@ export class TokenBalanceService {
         agent: this.agent,
         canisterId: tokenCanisterId,
       });
-      // 修正参数格式
-      const params: any = {
+      
+      // 构建account参数
+      const account: any = {
         owner: principal,
       };
+      
+      // 如果有subaccount，转换为number[]；如果没有，不传递subaccount字段
       if (subaccount && subaccount.length === 32) {
-        params.subaccount = [subaccount];
+        account.subaccount = Array.from(subaccount);
       }
-      // 不要传 subaccount: []，没有就不传
-      const result = await actor.icrc1_balance_of({ account: params });
+      
+      const result = await actor.icrc1_balance_of({ account });
       return { balance: result as bigint };
     } catch (error) {
       console.error("Failed to query token balance:", error);
