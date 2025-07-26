@@ -137,7 +137,7 @@ export class TokenBalanceService {
       // 按照 ICP 官方文档的公式：
       // account_identifier(principal, subaccount) := CRC32(h) || h
       // where h = SHA224("\x0Aaccount-id" || principal || subaccount)
-      
+
       // 1. 构建 padding: "\x0Aaccount-id" (11字节)
       const padding = new Uint8Array([
         0x0a,

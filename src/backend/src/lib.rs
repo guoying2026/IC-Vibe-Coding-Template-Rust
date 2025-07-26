@@ -1,7 +1,7 @@
 pub mod auth;
 pub mod types;
 
-use crate::types::{AssetConfig, Pool, STATE, UserAccounts};
+use crate::types::{AssetConfig, Pool, UserAccounts, STATE};
 use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_cdk::api::{canister_self, msg_caller, time};
 use ic_cdk::call::Call;
@@ -1123,11 +1123,11 @@ async fn get_user_info(principal: Principal) -> Result<UserInfo, String> {
         let state = s.borrow();
         state.users.contains_key(&principal)
     });
-    
+
     if !user_exists {
         return Err("用户不存在".to_string());
     }
-    
+
     // 计算用户数据 - 需要 await
     let collateral_value = cal_collateral_value(principal).await;
     let borrow_value = cal_borrow_value(principal).await;

@@ -325,8 +325,11 @@ export class InternetIdentityService {
     console.log("Using host:", host);
     console.log("Network config:", network);
     // 新增：打印当前身份principal
-    if (this.identity && typeof this.identity.getPrincipal === 'function') {
-      console.log("[Agent Init] 当前身份 Principal:", this.identity.getPrincipal().toText());
+    if (this.identity && typeof this.identity.getPrincipal === "function") {
+      console.log(
+        "[Agent Init] 当前身份 Principal:",
+        this.identity.getPrincipal().toText(),
+      );
     } else {
       console.log("[Agent Init] 当前为匿名身份");
     }
@@ -622,7 +625,10 @@ export class InternetIdentityService {
           console.log("User info fetched successfully for existing user");
           return; // 成功获取用户信息，不抛出错误
         } catch (fetchError) {
-          console.error("Failed to fetch user info for existing user:", fetchError);
+          console.error(
+            "Failed to fetch user info for existing user:",
+            fetchError,
+          );
         }
       }
       // 对于其他错误，设置基本状态但不抛出
@@ -798,7 +804,10 @@ export class InternetIdentityService {
     const tokenBalanceService = this.ensureTokenBalanceService();
     const principal = this.getCurrentPrincipal();
     // 新增：打印当前principal
-    console.log("[Query Balance] 当前 principal:", principal ? principal.toText() : "匿名");
+    console.log(
+      "[Query Balance] 当前 principal:",
+      principal ? principal.toText() : "匿名",
+    );
     if (!principal) {
       console.log(
         "User not logged in, querying balance with anonymous Principal...",
