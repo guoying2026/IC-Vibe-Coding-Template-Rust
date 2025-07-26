@@ -23,7 +23,10 @@ use std::ops::{AddAssign, MulAssign, Sub, SubAssign};
 #[init] // 初始化池子的admin，先确定唯一作者
 fn init() {
     let caller = msg_caller();
-    assert!(caller != Principal::anonymous(), "Anonymous caller not allowed");
+    assert!(
+        caller != Principal::anonymous(),
+        "Anonymous caller not allowed"
+    );
     STATE.with(|s| {
         let mut state = s.borrow_mut();
         state.admin = caller;
@@ -1438,8 +1441,12 @@ pub fn set_admin() -> Result<(), String> {
     STATE.with(|s| {
         let mut state = s.borrow_mut();
         // 直接设置为固定的 admin
-        state.admin = Principal::from_text("utczu-b7es3-fs23u-etjih-qong5-q6zq3-xgbl3-ubhwu-z5lpc-llyko-uae").unwrap();
-        ic_cdk::println!("Admin set to: utczu-b7es3-fs23u-etjih-qong5-q6zq3-xgbl3-ubhwu-z5lpc-llyko-uae");
+        state.admin =
+            Principal::from_text("utczu-b7es3-fs23u-etjih-qong5-q6zq3-xgbl3-ubhwu-z5lpc-llyko-uae")
+                .unwrap();
+        ic_cdk::println!(
+            "Admin set to: utczu-b7es3-fs23u-etjih-qong5-q6zq3-xgbl3-ubhwu-z5lpc-llyko-uae"
+        );
         Ok(())
     })
 }
