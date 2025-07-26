@@ -935,17 +935,33 @@ fn update_interest_amount() {
 
 /*-------------------------Calculate Function------------------------*/
 #[query] // 计算利率（先固定利率）
-fn cal_interest(token: Principal) -> f64 {
-    STATE.with(|s| {
+fn cal_interest(token: Principal) -> f64{
+    let slope1 = 0.02;
+    let slope2 = 0.4;
+    let utilisation_optimal_rate = 0.7;
+    STATE.with(|s|{
         let state = s.borrow();
-        let collateral_factor = state
-            .assets
-            .get(&token)
-            .ok_or("Error token")
-            .unwrap()
-            .collateral_factor;
-        collateral_factor
+        let pool = state.pool.get(&token).ok_or("Error token").unwrap().clone();
+        let base_rate = state.assets.get(&token).unwrap().interest_rate; // 固定利率
+        let decimals = state.assets.get(&token).unwrap().decimals;
+        let used_amount = numtokens_to_f64(&pool.amount, decimals);
+        let amount = numtokens_to_f64(&pool.used_amount, decimals);
+        let u = safe_div(used_amount, amount); // 利用率利率
+        if u <= 0.7{
+            base_rate + (u / utilisation_optimal_rate) * slope1
+        }else{
+            base_rate + slope1 + ((u / utilisation_optimal_rate)/(1.0 - utilisation_optimal_rate)) * slope2
+        }
+
     })
+}
+
+fn safe_div(a: f64, b: f64) -> f64 {
+    if b == 0.0 {
+        0.0
+    } else {
+        a / b
+    }
 }
 
 #[query] // 计算收益率
