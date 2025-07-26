@@ -22,7 +22,9 @@ export interface ICRCLedger {
   icrc1_fee: () => Promise<bigint>;
   icrc1_total_supply: () => Promise<bigint>;
   icrc1_minting_account: () => Promise<Account | null>;
-  icrc1_supported_standards: () => Promise<Array<{ name: string; url: string }>>;
+  icrc1_supported_standards: () => Promise<
+    Array<{ name: string; url: string }>
+  >;
   icrc1_transfer: (args: {
     from_subaccount?: Uint8Array;
     to: Account;
@@ -131,7 +133,10 @@ const icrc1Idl: IDL.InterfaceFactory = ({ IDL }) =>
             CreatedInFuture: IDL.Record({ ledger_time: IDL.Nat64 }),
             Duplicate: IDL.Record({ duplicate_of: IDL.Nat }),
             TemporarilyUnavailable: IDL.Null,
-            GenericError: IDL.Record({ error_code: IDL.Nat, message: IDL.Text }),
+            GenericError: IDL.Record({
+              error_code: IDL.Nat,
+              message: IDL.Text,
+            }),
           }),
         }),
       ],
@@ -163,7 +168,10 @@ const icrc1Idl: IDL.InterfaceFactory = ({ IDL }) =>
             CreatedInFuture: IDL.Record({ ledger_time: IDL.Nat64 }),
             Duplicate: IDL.Record({ duplicate_of: IDL.Nat }),
             TemporarilyUnavailable: IDL.Null,
-            GenericError: IDL.Record({ error_code: IDL.Nat, message: IDL.Text }),
+            GenericError: IDL.Record({
+              error_code: IDL.Nat,
+              message: IDL.Text,
+            }),
           }),
         }),
       ],
@@ -256,7 +264,7 @@ export class TokenBalanceService {
         owner: principal,
         subaccount: subaccount,
       };
-      
+
       console.log(
         "Querying balance with args:",
         JSON.stringify(
@@ -338,7 +346,10 @@ export class TokenBalanceService {
       console.log("Account ID生成成功:", hexResult);
       return hexResult;
     } catch (error) {
-      console.error("TokenBalanceService: Failed to generate Account ID:", error);
+      console.error(
+        "TokenBalanceService: Failed to generate Account ID:",
+        error,
+      );
       console.error("错误详情:", {
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -348,9 +359,7 @@ export class TokenBalanceService {
   }
 
   // Get token information
-  async getTokenInfo(
-    tokenCanisterId: string,
-  ): Promise<{
+  async getTokenInfo(tokenCanisterId: string): Promise<{
     name: string;
     symbol: string;
     decimals: number;
@@ -438,6 +447,8 @@ export const TOKEN_CANISTER_IDS = {
 };
 
 // Create global instance
-export function createTokenBalanceService(agent: HttpAgent): TokenBalanceService {
+export function createTokenBalanceService(
+  agent: HttpAgent,
+): TokenBalanceService {
   return new TokenBalanceService(agent);
 }
