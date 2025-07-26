@@ -14,7 +14,7 @@ export interface Account {
 // ICRC Ledger interface
 export interface ICRCLedger {
   icrc1_balance_of: (args: {
-    account: { owner: Principal; subaccount: Uint8Array[] | [] };
+    account: { owner: Principal; subaccount?: Uint8Array[] | [] };
   }) => Promise<bigint>;
   icrc1_name: () => Promise<string>;
   icrc1_symbol: () => Promise<string>;
@@ -95,33 +95,23 @@ export class TokenBalanceService {
     subaccount?: Uint8Array,
   ): Promise<{ balance?: bigint; error?: string }> {
     try {
-      console.log(
-        `Querying token balance: Canister=${tokenCanisterId}, Principal=${principal.toText()}, Subaccount=${
-          subaccount ? this.toHex(subaccount) : "none"
-        }`,
-      );
-
       const actor = Actor.createActor<ICRCLedger>(icrc1Idl, {
         agent: this.agent,
         canisterId: tokenCanisterId,
       });
-
-      // 正确处理subaccount参数 - ICRC-1期望opt vec nat8
-      const account = {
+      // 修正参数格式
+      const params: any = {
         owner: principal,
-        subaccount: subaccount ? [subaccount] : [], // 转换为opt vec nat8格式
       };
-
-      const balance = await actor.icrc1_balance_of({ account });
-      console.log(`Balance retrieved: ${balance}`);
-      return { balance };
+      if (subaccount && subaccount.length === 32) {
+        params.subaccount = [subaccount];
+      }
+      // 不要传 subaccount: []，没有就不传
+      const result = await actor.icrc1_balance_of({ account: params });
+      return { balance: result as bigint };
     } catch (error) {
       console.error("Failed to query token balance:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      return {
-        error: `Failed to query ${tokenCanisterId} balance: ${errorMessage}`,
-      };
+      return { error: error instanceof Error ? error.message : String(error) };
     }
   }
 

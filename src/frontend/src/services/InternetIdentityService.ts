@@ -70,20 +70,6 @@ interface BackendService {
   update_ckbtc_balance: (
     amount: number,
   ) => Promise<{ Ok: number } | { Err: string }>;
-  get_borrow_positions: () => Promise<
-    { Ok: BorrowPosition[] } | { Err: string }
-  >;
-  get_earn_positions: () => Promise<{ Ok: EarnPosition[] } | { Err: string }>;
-  add_borrow_position: (
-    asset: string,
-    amount: number,
-    rate: number,
-  ) => Promise<{ Ok: BorrowPosition } | { Err: string }>;
-  add_earn_position: (
-    asset: string,
-    amount: number,
-    apy: number,
-  ) => Promise<{ Ok: EarnPosition } | { Err: string }>;
 }
 
 // ckBTC deposit state interface
@@ -192,38 +178,6 @@ const idlFactory: IDL.InterfaceFactory = ({ IDL }) =>
         }),
       ],
       ["query"],
-    ),
-    add_borrow_position: IDL.Func(
-      [IDL.Text, IDL.Float64, IDL.Float64],
-      [
-        IDL.Variant({
-          Ok: IDL.Record({
-            id: IDL.Text,
-            asset: IDL.Text,
-            amount: IDL.Float64,
-            rate: IDL.Float64,
-            health_factor: IDL.Float64,
-          }),
-          Err: IDL.Text,
-        }),
-      ],
-      [],
-    ),
-    add_earn_position: IDL.Func(
-      [IDL.Text, IDL.Float64, IDL.Float64],
-      [
-        IDL.Variant({
-          Ok: IDL.Record({
-            id: IDL.Text,
-            asset: IDL.Text,
-            amount: IDL.Float64,
-            apy: IDL.Float64,
-            earned: IDL.Float64,
-          }),
-          Err: IDL.Text,
-        }),
-      ],
-      [],
     ),
   });
 
@@ -674,82 +628,6 @@ export class InternetIdentityService {
       throw new Error(result.Err);
     } catch (error) {
       console.error("Failed to update ckBTC balance:", error);
-      throw error;
-    }
-  }
-
-  // Get borrow positions
-  async getBorrowPositions(): Promise<BorrowPosition[]> {
-    if (!this.actor) {
-      throw new Error("Actor not initialized");
-    }
-    try {
-      const result = await this.actor.get_borrow_positions();
-      if ("Ok" in result) {
-        return result.Ok;
-      }
-      throw new Error(result.Err);
-    } catch (error) {
-      console.error("Failed to get borrow positions:", error);
-      throw error;
-    }
-  }
-
-  // Get earn positions
-  async getEarnPositions(): Promise<EarnPosition[]> {
-    if (!this.actor) {
-      throw new Error("Actor not initialized");
-    }
-    try {
-      const result = await this.actor.get_earn_positions();
-      if ("Ok" in result) {
-        return result.Ok;
-      }
-      throw new Error(result.Err);
-    } catch (error) {
-      console.error("Failed to get earn positions:", error);
-      throw error;
-    }
-  }
-
-  // Add borrow position
-  async addBorrowPosition(
-    asset: string,
-    amount: number,
-    rate: number,
-  ): Promise<BorrowPosition> {
-    if (!this.actor) {
-      throw new Error("Actor not initialized");
-    }
-    try {
-      const result = await this.actor.add_borrow_position(asset, amount, rate);
-      if ("Ok" in result) {
-        return result.Ok;
-      }
-      throw new Error(result.Err);
-    } catch (error) {
-      console.error("Failed to add borrow position:", error);
-      throw error;
-    }
-  }
-
-  // Add earn position
-  async addEarnPosition(
-    asset: string,
-    amount: number,
-    apy: number,
-  ): Promise<EarnPosition> {
-    if (!this.actor) {
-      throw new Error("Actor not initialized");
-    }
-    try {
-      const result = await this.actor.add_earn_position(asset, amount, apy);
-      if ("Ok" in result) {
-        return result.Ok;
-      }
-      throw new Error(result.Err);
-    } catch (error) {
-      console.error("Failed to add earn position:", error);
       throw error;
     }
   }

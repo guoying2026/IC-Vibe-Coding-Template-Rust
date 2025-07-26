@@ -1402,4 +1402,9 @@ fn get_user_health_factor(user: Principal) -> f64 {
 }
 */
 
+#[query]
+pub fn get_admin() -> Principal {
+    STATE.with(|s| s.borrow().admin)
+}
+
 export_candid!();
