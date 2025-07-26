@@ -19,6 +19,19 @@ pub struct AssetConfig{
     pub interest_rate: f64,
 }
 
+impl Default for AssetConfig {
+    fn default() -> Self {
+        Self{
+            name: "".to_string(),
+            token_id: Principal::anonymous(),
+            account : Account{owner: Principal::anonymous(), subaccount: None},
+            price_id: "".to_string(),
+            decimals: 0u32,
+            collateral_factor: 0f64,
+            interest_rate: 0f64,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Default, CandidType, Deserialize, Serialize)]
 pub struct UserAccounts{
@@ -36,6 +49,20 @@ pub struct Pool{
     pub amount: NumTokens,
     pub used_amount: NumTokens,
     pub maximum_token: NumTokens,
+}
+
+impl Default for Pool{
+    fn default() -> Self{
+        Self{
+            name: "".to_string(),
+            token_id: Principal::anonymous(),
+            pool_account: AssetConfig::default(),
+            collateral: Vec::new(),
+            amount: NumTokens::default(),
+            used_amount: NumTokens::default(),
+            maximum_token: NumTokens::default(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize, Serialize)]
