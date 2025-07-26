@@ -1411,7 +1411,11 @@ pub fn get_admin() -> Principal {
 pub fn set_admin(new_admin: Principal) -> Result<(), String> {
     STATE.with(|s| {
         let mut state = s.borrow_mut();
-        assert_eq!(state.admin, msg_caller(), "Only current admin can set new admin");
+        assert_eq!(
+            state.admin,
+            msg_caller(),
+            "Only current admin can set new admin"
+        );
         state.admin = new_admin;
         ic_cdk::println!("Admin updated to: {:?}", new_admin);
         Ok(())

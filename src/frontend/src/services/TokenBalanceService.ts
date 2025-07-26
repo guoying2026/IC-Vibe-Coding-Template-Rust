@@ -100,15 +100,11 @@ export class TokenBalanceService {
         canisterId: tokenCanisterId,
       });
       
-      // 构建account参数
+      // 构建account参数，始终包含subaccount字段
       const account: any = {
         owner: principal,
+        subaccount: subaccount && subaccount.length === 32 ? Array.from(subaccount) : undefined,
       };
-      
-      // 如果有subaccount，转换为number[]；如果没有，不传递subaccount字段
-      if (subaccount && subaccount.length === 32) {
-        account.subaccount = Array.from(subaccount);
-      }
       
       const result = await actor.icrc1_balance_of({ account });
       return { balance: result as bigint };
