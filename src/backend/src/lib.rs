@@ -709,22 +709,21 @@ fn check_user_collateral(token: Principal) -> Vec<Principal> {
 }
 
 #[update] // 从Pyth预言机 获取指定代币的价格
-async fn get_price(token: Principal) -> f64 {
-    let price_id = STATE.with(|s| {
-        s.borrow()
-            .assets
-            .get(&token)
-            .ok_or("Not Support this token")
-            .unwrap()
-            .price_id
-            .clone()
-    });
-    let url = format!("https://hermes.pyth.network/api/latest_price_feeds?ids[]={price_id}");
-    let request_headers = vec![HttpHeader {
-        name: "User-Agent".to_string(),
-        value: "pyth_canister".to_string(),
-    }];
-    let request = HttpRequestArgs {
+async fn get_price(token: Principal)->f64{
+    let price_id = STATE.with(|s|
+        s.borrow().assets.get(&token).ok_or("Not Support this token").unwrap().price_id.clone()
+    );
+    let url = format!(
+        "https://hermes.pyth.network/api/latest_price_feeds?ids[]={}",
+        price_id
+    );
+    let request_headers = vec![
+        HttpHeader {
+            name: "User-Agent".to_string(),
+            value: "pyth_canister".to_string(),
+        },
+    ];
+    let request = HttpRequestArgs{
         url: url.clone(),
         method: HttpMethod::GET,
         body: None,
@@ -737,9 +736,12 @@ async fn get_price(token: Principal) -> f64 {
         .expect("HTTP request failed (Pyth Hermes)");
     let json: Value = serde_json::from_slice(&response.body).expect("JSON decode error");
     let feeds = json.as_array().expect("Expected JSON array");
+    ic_cdk::println!("feeds: {:?}", feeds[0]);
     let feed = &feeds[0];
-    let price_raw = feed["price"].as_f64().expect("Expected price");
-    let expo = feed["expo"].as_i64().expect("Expected expo");
+    let price_obj = &feed["price"];
+    ic_cdk::println!("feed: {:?}", price_obj);
+    let price_raw = price_obj["price"].as_str().unwrap().parse::<f64>().expect("Expected price");
+    let expo = price_obj["expo"].as_i64().expect("Expected expo");
 
     price_raw * 10f64.powi(expo as i32)
 }

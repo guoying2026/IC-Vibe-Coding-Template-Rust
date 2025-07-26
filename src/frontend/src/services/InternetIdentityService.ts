@@ -654,7 +654,7 @@ export class InternetIdentityService {
   ): Account {
     return {
       owner: principal,
-      subaccount: subaccount ?? undefined,
+      subaccount: subaccount ?? null,
     };
   }
 
@@ -865,7 +865,7 @@ export async function verifyIds(expectedAccountId?: string) {
     }
     const result = await internetIdentityService.queryTokenBalance(canisterId, {
       owner: principal,
-      subaccount: undefined,
+      subaccount: null,
     });
     const tokenInfo = await internetIdentityService.getTokenInfo(canisterId);
     console.log(

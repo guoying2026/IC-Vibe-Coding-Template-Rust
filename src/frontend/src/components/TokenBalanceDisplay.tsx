@@ -31,13 +31,13 @@ const SUPPORTED_TOKENS = [
     descriptionKey: "ckbtc_description",
   },
   {
-    id: "sns1",
-    name: "SNS-1",
-    symbol: "SNS1",
-    canisterId: TOKEN_CANISTER_IDS.SNS1,
+    id: "cketh",
+    name: "ckETH",
+    symbol: "ckETH",
+    canisterId: TOKEN_CANISTER_IDS.CKETH,
     color: "blue",
     icon: "🔵",
-    descriptionKey: "sns1_description",
+    descriptionKey: "cketh_description",
   },
 ];
 
