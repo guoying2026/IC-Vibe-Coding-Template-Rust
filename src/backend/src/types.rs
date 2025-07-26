@@ -6,16 +6,13 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, CandidType, Deserialize, Serialize)]
+#[derive(Default)]
 pub enum AssetTypes {
+    #[default]
     ICP,
     ICRC2,
 }
 
-impl Default for AssetTypes {
-    fn default() -> Self {
-        AssetTypes::ICP
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, CandidType, Deserialize, Serialize)]
 pub struct AssetConfig {
