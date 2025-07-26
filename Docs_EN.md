@@ -1,8 +1,6 @@
 # 🟧 BLend: BTC Lending Protocol on ICP
 
-## I. Overview
-
-### 📌 Protocol Introduction
+## 📌 Protocol Introduction
 
 As native Bitcoin DeFi continues to evolve, more and more outstanding projects are exploring how to unlock BTC's on-chain liquidity. However, we have observed that:
 
@@ -10,9 +8,9 @@ As native Bitcoin DeFi continues to evolve, more and more outstanding projects a
 
 **BLend** was created to fill this gap — aiming to become a truly BTC-focused, decentralized financial infrastructure built natively on ICP.
 
----
+![BLend Logo](picture/BLend%20Logo.png)
 
-### 💡 Name Meaning: What does “BLend” stand for?
+## 💡 Name Meaning: What does “BLend” stand for?
 
 The name *BLend* embodies the core philosophy behind our protocol:
 
@@ -34,11 +32,8 @@ By deeply blending **“B” (Bitcoin)** and **“Lend” (Lending)**, **BLend**
 
 A truly native **decentralized financial infrastructure** — serving BTC users and developers, and driving the growth of Bitcoin DeFi on ICP.
 
----
 
-## II. Core Operation Mechanism
-
-### 🏦 Borrowing: When You Need Extra Firepower
+## 🏦 Borrowing: When You Need Extra Firepower
 
 At **BLend**, the interest you pay when borrowing is determined by a **Dynamic Interest Rate Model based on Utilization Rate** — fancy words for a system that adapts as more people borrow.
 
@@ -94,8 +89,8 @@ This system ensures fair pricing:
 - **Low usage = low rates = good time to borrow**  
 - **High usage = higher rates = maybe wait or pay up**
 
----
-### 💰 Supply Rate
+
+## 💰 Supply Rate
 
 When a user supplies assets into BLend, **10% of the deposited amount** is automatically allocated to the **Reserve Pool** — a buffer designed to absorb risk for the protocol.  
 
@@ -104,7 +99,6 @@ But don’t worry — **that portion still belongs to you**, and you’ll get it
 Meanwhile, your **supply rate (interest earnings)** comes from the interest paid by borrowers.  
 After the protocol takes a small fee, the **remaining interest is proportionally distributed** to all liquidity providers based on their share in the pool.
 
----
 
 ### 💸 Deposit Allocation Logic
 
@@ -142,7 +136,6 @@ $$
 Withdraw_{user} = ReserveShare_{user} + ActiveLiquidity_{user} + AccruedInterest_{user}
 $$
 
----
 
 ### 📈 Annualized Yield per User
 
@@ -156,15 +149,15 @@ $$
 
 That’s it — your deposit works while you chill 😎
 
----
 
-### 🔁 Repay (Paying Back Your Loan)
+
+## 🔁 Repay (Paying Back Your Loan)
 
 "Repay" means returning the BTC (or any other borrowed asset) back to the lending pool — settling both the **principal + interest**, unlocking your collateral, and restoring your borrowing capacity.
 
 At **BLend**, we believe **debt should be transparent**, not buried in confusing APR/APY jargon.
 
----
+
 
 ### 👤 User Perspective
 
@@ -174,7 +167,6 @@ At **BLend**, we believe **debt should be transparent**, not buried in confusing
 4. Your **borrow balance and Health Factor** are updated.
 5. If fully repaid, your **collateral is unlocked and withdrawable**.
 
----
 
 ### 🛠 Under the Hood (Tech Flow)
 
@@ -188,11 +180,10 @@ At **BLend**, we believe **debt should be transparent**, not buried in confusing
 
 ---
 
-### 💰 Withdraw (Getting Your Assets Back)
+## 💰 Withdraw (Getting Your Assets Back)
 
 "Withdraw" means taking out your supplied BTC (or other assets), along with the **interest you've earned** — either partially or in full.
 
----
 
 ### 👤 User Flow
 
@@ -204,16 +195,15 @@ At **BLend**, we believe **debt should be transparent**, not buried in confusing
 4. If your request exceeds available funds → system enables **Slow Withdraw Mode™** 🐢 (more on that later)
 5. Once processed, your **supply status is updated** accordingly.
 
----
 
 > ⛽️ TL;DR: Repay clears your debt, Withdraw reclaims your assets. BLend ensures both are smooth, transparent, and user-first.
 
-### 💥 Liquidation Mechanism
+## 💥 Liquidation Mechanism
 
 When a borrower’s collateral value drops — or the borrowed amount becomes too large — the system must step in to **partially or fully close the borrower’s position** to prevent losses.  
 This process is called **Liquidation**.
 
-#### 🎯 Purpose of Liquidation
+### 🎯 Purpose of Liquidation
 
 - ⛔ Prevent bad debt from hurting the protocol  
 - 🧮 Recover the debt by auctioning or discount-selling collateral  
@@ -221,7 +211,8 @@ This process is called **Liquidation**.
 
 > 💡 Liquidation is a **core risk management mechanism** in any DeFi lending protocol.
 
----
+
+<div align="center">
 
 | Parameter                  | Description                                           | ICP   | BTC/ETH | USDC  |
 |---------------------------|-------------------------------------------------------|-------|---------|--------|
@@ -229,8 +220,8 @@ This process is called **Liquidation**.
 | **Liquidation Threshold** | Max borrowing ratio before triggering liquidation     | 0.80  | 0.75    | 0.85   |
 | **Liquidation Bonus**     | Discount (bonus) granted to the liquidator            | 0.05  | 0.05    | 0.05   |
 
+</div>
 
-### 🧪 Health Factor (HF)
 
 The **Health Factor (HF)** is like your wallet’s cholesterol level —  
 a quick check to see if your position is healthy or on the verge of collapse 🫣.
@@ -244,9 +235,8 @@ $$
 - If **HF ≥ 1**: You're good! Your account is healthy and safe 🟢  
 - If **HF < 1**: Danger zone! You’re undercollateralized and eligible for liquidation 🔥
 
----
 
-### 📊 Health Factor with Multiple Collateral Assets
+#### 📊 Health Factor with Multiple Collateral Assets
 
 Most users don’t just deposit one coin, so let’s talk multi-asset portfolios.
 
@@ -269,7 +259,7 @@ In plain English:
 > The higher your HF, the safer your position. Think of it as your DeFi "credit score" — and yes, we’re watching it in real time 👀.
 
 
-## 🔥 Liquidation Flow (Simplified Version)
+### 🔥 Liquidation Flow (Simplified Version)
 
 1. Anyone spots an account with a **Health Factor (HF) < 1** — Uh-oh!
 2. The liquidation process kicks in, allowing **liquidators** to repay the borrower’s debt.
@@ -289,7 +279,7 @@ In plain English:
 - You lose part of your collateral and pay the price — literally — via liquidation penalties.
 - ✅ Pro tip: Top up or repay when HF gets close to 1 to avoid the axe.
 
----
+
 
 ### 🦾 Liquidator's POV: “How do I make money here?”
 
@@ -304,157 +294,69 @@ In plain English:
 > For maximum incentive, **BTC gives the highest reward: 10%** — because it’s king 👑.
 
 
-## II. 🧭 User Guide
+## 🧪 Tokenomics
 
-### 🚀 Getting Started
+**Token Name**: BLEND 👩🏻‍🔬  
+Other details: *Coming soon. Sit tight!*
 
-![Internet Identity Login Interface](picture/ICP_login.png)
 
-<p align="center">Internet Identity Login Interface</p>
+## 📍 BLend Protocol Roadmap
 
-First, create your own **Internet Identity** — your key to accessing everything in BLend.  
-Once that’s done, you’re ready to dive in and start exploring!
-
----
-
-### ⚙️ Core Operations
-
-#### 💰 Supplying / Depositing Assets
-
-- Head over to the **“Earnings”** page. You’ll see 4 vault options — choose one and enter the amount you want to deposit, then click **“Deposit”**.
-- Once deposited, your assets will **start earning interest automatically** — no manual actions needed!
-- You can track your **principal + accumulated interest** at any time in the **Personal Center**. Interest is calculated daily and reflected together with your balance.
-- When you’re ready to withdraw, you can **withdraw both principal and interest anytime**.  
-  For large amounts, the system will automatically trigger a **gradual withdrawal mechanism**, spreading your funds over multiple transactions to protect pool stability.
-
-#### 🏦 Borrowing Assets
-
-- Click **“Connect”** to authenticate your identity and access the system.
-- Go to the **“Borrow”** page, choose the collateral you want to lock up (ICP, BTC, ETH, or USDC), enter the amount, and hit **“Submit”**.
-- Based on your collateral, the system will show you the **maximum borrowable amount**. Choose how much you want to borrow and click **“Confirm Borrow”**.
-- On the **Personal Center** page, you can keep track of all the important stuff:
-  - Total debt (including interest)
-  - Your **Health Factor** (aka how close you are to getting liquidated 😬)
-  - Accrued interest (updated daily — yay, compound interest!)
-
-- You can **repay at any time**, either partially or in full. Once you clear your debt, your collateral is **automatically unlocked and ready for withdrawal**. 🎉
+### ✅ Mid-July 2025｜**The Birth of BLend**
+- Officially launched on the ICP ecosystem, specializing in BTC lending  
+- Integrated wallet extensions & identity authorization (e.g., Internet Identity)  
+- Pyth Network oracle connected for real-time pricing accuracy  
+- Supported deposits & loans for core assets (BTC, ETH, ICP, USDC)  
+- Introduced Health Factor mechanism and one-click liquidation logic  
+- Initial release of the withdrawal throttling system and dynamic interest rate model  
 
 ---
 
-## III. 🧠 Protocol Mechanics (For Developers / Power Users)
+### 🔜 Q3 2025｜**Mainnet Optimization Phase**
+- Enhanced user interface & interest rate curve display  
+- Live TVL tracking and liquidation leaderboard  
+- Partial liquidation support goes live  
+- Documentation portal & developer API endpoints released  
 
-### 🛠 Supply Logic (Developer View)
+---
 
-When a user supplies assets to the protocol, the following steps are executed under the hood:
+### 🚧 Q4 2025｜**Feature Expansion & More Assets**
+- Onboard more blue-chip assets (e.g., SOL, SUI)  
+- Launch of dual-mode vaults: “Stable Yield” & “Flexible Yield”  
+- Allow users to customize collateral factor combinations  
+- Start building real-time analytics: APR curves, Health Factor trends, etc.
 
-1. **Validate input amount**  
-   Ensure `NumTokens > 0` — zero is not a valid deposit.
+---
 
-2. **Verify pool existence**  
-   Confirm that a pool corresponding to the specified `token_id` exists.
+### 🌉 Q1 2026｜**Cross-chain Expansion & Multi-pool Support**
+- Begin cross-chain rollout: Arbitrum, Sui, and more  
+- Introduce Multi-pool Routing engine  
+- Cross-chain collateral & lending: BTC on ICP ↔ ETH on Arbitrum  
+- Integrate with LSD and RWA sector products for wider utility  
 
-3. **Check pool capacity**  
-   Ensure that the pool has enough room:  
-   `(Max Pool Capacity - Current Pool Balance) ≥ NumTokens`.
+---
 
-4. **Update pool balance**  
-   Add the supplied tokens to the pool.
+### 🪙 Q2 2026｜**BLend Master Plan**
+- Launch risk-isolated vaults & institutional-grade pools  
+- Release “1-click Refinance” tool  
+- Develop on-chain credit scoring system  
+- Kick off Beta for undercollateralized loans  
+- Pilot flash loan modules—yes, even on ICP  
 
-5. **Record user deposit**  
-   Update the user's supply record and the pool’s token capacity accordingly.
+---
 
+### 🌌 H2 2026｜**Tokenomics Launch (Preview)**
 
-### 🛠 Borrow Logic
-
-When a user tries to borrow some tokens, we don’t just throw the money at them — here’s what actually happens:
-
-1. **Check if the user wants *more than zero***  
-   Because borrowing 0 tokens is just... philosophical. We need `NumTokens > 0`.
-
-2. **Validate the token pool exists**  
-   Ensure there's a lending pool for the given `token_id`. If not, no tokens for you.
-
-3. **Check if the user has legit collateral**  
-   User must have deposited accepted assets (like ICP, BTC, ETH, USDC). No imaginary coins allowed.
-
-4. **Calculate max borrowable amount**  
-   Based on deposited collateral, price feeds, liquidation thresholds, and protocol parameters, we compute how much the user *can* borrow — safely.
-
-5. **Ensure the user isn’t trying to YOLO too much**  
-   The requested `NumTokens` must be ≤ `MaxBorrowableAmount`. Over-borrowing gets rejected.
-
-6. **Transfer funds from the pool**  
-   If the pool has enough liquidity, we send the tokens to the user. It's like a payday, except you owe us.
-
-7. **Update the borrow record**  
-   We update the user's borrow balance, interest tracking, and health factor. Basically: “Congrats, you're now officially in debt.”
+- Launch governance token: **$BLEND**  
+- Introduce incentive system: deposit mining, liquidation rewards, active user bonuses  
+- Roll out BLEND DAO governance module  
+- Release tokenomics whitepaper & DAO community forum  
 
 
 
-### 🔁 Repay Logic 
+> 🛠️ This roadmap outlines our vision—actual delivery timelines may vary.  
+> 
+> Are you a builder, DeFi dreamer, or just a curious degenerate? Come build with us!  
+> [Telegram](https://t.me/potato89757) / [X](https://x.com/potato89757_3) / [GitHub](https://github.com/looikaizhi)
 
-When a user wants to repay their loan — great! But we still need to verify they’re not just clicking buttons for fun.
-
-Here’s what happens under the hood:
-
-1. **Check if the user actually typed a number > 0**  
-   `NumTokens > 0` — we don’t process fake generosity.
-
-2. **Confirm there's a valid lending pool for the given token**  
-   If this token isn't borrowable, repayment is meaningless.
-
-3. **Verify the user really has a loan to repay**  
-   No borrow history? No repayment needed. Don’t pretend to be responsible.
-
-4. **Calculate the max repayable amount**  
-   This includes all unpaid principal and accrued interest. Know your total tab.
-
-5. **Ensure the user isn’t trying to over-repay**  
-   `NumTokens` must be less than or equal to what they actually owe. No donations accepted.
-
-6. **Send the repayment back to the pool**  
-   We split it into interest and principal. The pool says: “Thanks for the tip.”
-
-7. **Update borrow rate if utilization has changed**  
-   Since repayment affects utilization, we recalculate the interest rate accordingly.
-
-8. **Update the user’s borrow record**  
-   New debt balance, reduced interest accumulation, and a better health factor. You're less likely to be liquidated — yay!
-
-
-### 🏧 Withdraw
-
-1. **Check the amount**: Make sure `Numtokens > 0`. No ghost withdrawals allowed.
-2. **Validate the pool**: Ensure there's a pool that supports the given token ID.
-3. **Verify ownership**: Confirm that the user actually has a deposit in this pool.
-4. **Calculate max withdrawable amount**: Based on user's supply minus any borrowed amounts.
-5. **Validate input**: Make sure `Numtokens <= max withdrawable amount`. No magic tricks.
-6. **Check liquidity**: Ensure the pool has enough unborrowed tokens to meet the request.
-7. **Transfer funds**: Send the appropriate amount from the pool back to the user.
-8. **Update records**: Adjust the user's supply balance and pool's total state.
-
-
-### 💥 Liquidate (Liquidation Mechanism)
-
-When a borrower's health factor falls below the protocol-defined threshold, third-party liquidators are allowed to repay the borrower's debt and acquire a portion of their collateral. The following outlines the standardized liquidation flow:
-
-1. **Verify Borrower Existence**  
-   Ensure the target address is a valid user and has outstanding debt recorded in the system.
-
-2. **Calculate Health Factor**  
-   Evaluate the borrower's account by computing the Health Factor using the formula:  
-   *(Collateral Value × Liquidation Threshold) / (Borrowed Amount + Accrued Interest)*.  
-   If **Health Factor < 1**, liquidation is permitted.
-
-3. **Determine Liquidation Payment Amount**  
-   Calculate the total repayment amount required from the liquidator to cover the borrower's current debt. This typically includes both principal and accrued interest.
-
-4. **Calculate Maximum Collateral Transferable to Liquidator**  
-   Based on the protocol's liquidation bonus rate, determine the maximum value of collateral that can be seized by the liquidator at a discounted rate.
-
-5. **Execute Liquidation**  
-   The liquidator repays part or all of the borrower's outstanding debt. In return, the corresponding portion of collateral is transferred to the liquidator, according to the protocol-defined rules.
-
-6. **Update System States**  
-   The system updates the borrower's `borrow` and `supply` balances, and reflects changes in the pool’s available liquidity and total reserves.
 

@@ -1,24 +1,40 @@
-# 🏦 BLend - Internet Computer Decentralized Lending Protocol
+# ⚡️BLend — Unlock Real Yield from Your Bitcoin
 
-A modern decentralized lending protocol built on the Internet Computer (ICP) platform, featuring a complete user interface, multi-language support, and Internet Identity authentication system.
+> Your BTC deserves better than collecting digital dust.
 
-## 🚀 Features
+**BLend** is the first truly decentralized Bitcoin lending protocol on Internet Computer (ICP).  
 
-### Core Lending Protocol
+No wrapped assets. No bridges. No compromises.
 
-- **Supply**: Users can deposit assets into lending pools as collateral
-- **Borrow**: Users can borrow assets secured by their collateral
-- **Repay**: Users can repay their borrowed amounts
-- **Withdraw**: Users can withdraw their supplied assets
-- **Liquidation**: Automatic liquidation of undercollateralized positions
+- 🚀 Earn interest on BTC, ETH, or stablecoins  
+- 🔐 Borrow against your BTC with clear risk controls  
+- 💥 Liquidate toxic debt, earn protocol rewards  
+- 🧠 Simple login via Internet Identity — no seed phrases
 
-### User Interface Features
+### Why BLend?
 
-- **Modern Design**: Gradient backgrounds, card-based layouts, and responsive design
-- **Multi-language Support**: Complete bilingual interface in Chinese and English
-- **Identity Authentication**: Internet Identity integration for secure user authentication
-- **Real-time Data**: All frontend data is fetched directly from backend canisters
-- **Interactive Components**: Modals, dropdown menus, copy functionality, etc.
+Because Bitcoin shouldn’t sleep.  
+It should work for you — securely, natively, and 24/7.
+
+> **Stake ETH. Farm memes. But finally... Lend your BTC.**
+
+---
+
+## The Whole Project Thing
+
+📚 [EN Detailed Docs xD](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/Docs_EN.md)
+
+📖 [CN 详细文档](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/Docs_CN.md)
+
+📚 [EN Mechanism Docs ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/Docs_CN.md)
+
+📖 [CN 技术文档 ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/Docs_CN.md)
+
+📚 [EN User Guide ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/Docs_CN.md)
+
+📖 [CN 用户指南 ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/Docs_CN.md)
+
+以及以下这里就是超技术的Readme文档
 
 ### Technical Features
 
