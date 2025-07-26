@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { backendService } from "../../src/services/backendService";
+import { BackendService } from "../../src/services/backendService";
 
-describe("backendService", () => {
+describe("BackendService", () => {
   it("should be defined", () => {
-    expect(backendService).toBeDefined();
+    expect(BackendService).toBeDefined();
   });
 
-  // Note: Currently backendService is empty as we're using InternetIdentityService directly
+  // Note: Currently BackendService is available as we're using InternetIdentityService directly
   // Add tests here when actual backend methods are implemented
 });

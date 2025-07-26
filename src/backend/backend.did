@@ -65,6 +65,7 @@ service : () -> {
   edit_contract_assets : (text, opt text, opt float64, opt float64) -> ();
   edit_contract_liquidation : (float64) -> ();
   generate_random_subaccount : () -> (blob);
+  get_admin : () -> (principal) query;
   get_liquidation_threshold : () -> (float64) query;
   get_pool_borrow_apy : (text) -> (float64) query;
   get_pool_info : (text) -> (PoolInfo) query;

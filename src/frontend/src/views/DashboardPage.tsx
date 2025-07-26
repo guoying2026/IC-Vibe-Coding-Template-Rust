@@ -105,25 +105,25 @@ export default function DashboardPage({
       //   return;
       // }
 
-      // 并行加载收益和借贷位置
-      const [earnResult, borrowResult] = await Promise.allSettled([
-        internetIdentityService.getEarnPositions(),
-        internetIdentityService.getBorrowPositions(),
-      ]);
+      // 暂时注释掉不存在的后端方法调用
+      // const [earnResult, borrowResult] = await Promise.allSettled([
+      //   internetIdentityService.getEarnPositions(),
+      //   internetIdentityService.getBorrowPositions(),
+      // ]);
 
-      // 处理收益位置结果
-      if (earnResult.status === "fulfilled") {
-        setEarnPositions(earnResult.value);
-      } else {
-        console.error("加载收益位置失败:", earnResult.reason);
-      }
+      // // 处理收益位置结果
+      // if (earnResult.status === "fulfilled") {
+      //   setEarnPositions(earnResult.value);
+      // } else {
+      //   console.error("加载收益位置失败:", earnResult.reason);
+      // }
 
-      // 处理借贷位置结果
-      if (borrowResult.status === "fulfilled") {
-        setBorrowPositions(borrowResult.value);
-      } else {
-        console.error("加载借贷位置失败:", borrowResult.reason);
-      }
+      // // 处理借贷位置结果
+      // if (borrowResult.status === "fulfilled") {
+      //   setBorrowPositions(borrowResult.value);
+      // } else {
+      //   console.error("加载借贷位置失败:", borrowResult.reason);
+      // }
     } catch (error) {
       console.error("加载用户数据失败:", error);
       setError(error instanceof Error ? error.message : "加载数据失败");
