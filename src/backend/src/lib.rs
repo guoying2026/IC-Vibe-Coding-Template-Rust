@@ -1,7 +1,7 @@
-pub mod types;
 pub mod auth;
+pub mod types;
 
-use crate::types::{AssetConfig, Pool, STATE};
+use crate::types::{AssetConfig, Pool, STATE, UserAccounts};
 use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_cdk::api::{canister_self, msg_caller, time};
 use ic_cdk::call::Call;
@@ -137,10 +137,7 @@ async fn borrow(token_id: String, amount: NumTokens) -> Result<u64, String> {
         .decimals;
     let borrow_f64 = numtokens_to_f64(&amount, decimals);
     let total_borrow_value = borrow_f64 * get_price(token).await; // 还要除小数点
-    assert!(
-        total_borrow_value <= max_borrow,
-        "Don't borrow too more"
-    );
+    assert!(total_borrow_value <= max_borrow, "Don't borrow too more");
 
     // 6. 从池子借出
     // 执行交易， pool转出至用户
@@ -646,10 +643,7 @@ fn pool_state_liquidate1(
         // user 被清算人账户
         {
             let user_account = state.users.entry(user).or_default();
-            let user_supply_amount = user_account
-                .supplies
-                .entry(target_token)
-                .or_default();
+            let user_supply_amount = user_account.supplies.entry(target_token).or_default();
             user_supply_amount.sub_assign(target_amount.clone()); // 用户的supply减少
         }
         {
@@ -659,10 +653,7 @@ fn pool_state_liquidate1(
         }
         {
             let user_account = state.users.entry(user).or_default();
-            let user_interest_amount = user_account
-                .interest
-                .entry(repay_token)
-                .or_default();
+            let user_interest_amount = user_account.interest.entry(repay_token).or_default();
             // 分配利息给repay池子提供流动性的用户
             if repay_amount.ge(user_interest_amount) {
                 distribute_earnings(repay_token, user_interest_amount.clone()); // 分配利润
@@ -681,10 +672,8 @@ fn pool_state_liquidate1(
         {
             // liquidate 清算人账户
             let liquidate_account = state.users.entry(msg_caller()).or_default();
-            let liquidate_supply_amount = liquidate_account
-                .supplies
-                .entry(target_token)
-                .or_default();
+            let liquidate_supply_amount =
+                liquidate_account.supplies.entry(target_token).or_default();
             // 被清算人的账户变化
             liquidate_supply_amount.add_assign(target_amount.clone()); // 清算人的抵押品增加
         }
@@ -730,9 +719,7 @@ async fn get_price(token: Principal) -> f64 {
             .price_id
             .clone()
     });
-    let url = format!(
-        "https://hermes.pyth.network/api/latest_price_feeds?ids[]={price_id}"
-    );
+    let url = format!("https://hermes.pyth.network/api/latest_price_feeds?ids[]={price_id}");
     let request_headers = vec![HttpHeader {
         name: "User-Agent".to_string(),
         value: "pyth_canister".to_string(),
@@ -896,10 +883,7 @@ fn increase_maximum_token(token_id: String, maximum_token: NumTokens) {
         assert!(state.pool.contains_key(&token), "Not exists this pool");
         let pool = state.pool.entry(token).or_default();
         let result = pool.maximum_token.lt(&maximum_token);
-        assert!(
-            result,
-            "Must be greater than the current maximum token"
-        );
+        assert!(result, "Must be greater than the current maximum token");
         pool.maximum_token = maximum_token;
     })
 }
@@ -1114,76 +1098,96 @@ fn get_pool_info(token: String) -> PoolInfo {
     }
 }
 
-#[query] // 查询指定用户的supply token
-fn get_user_supply_token(user: String, token: String) -> f64 {
-    let user_id = Principal::from_text(user).unwrap();
-    let token_id = Principal::from_text(token).unwrap();
-    let supply_token = STATE.with(|s| {
-        s.borrow()
-            .users
-            .get(&user_id)
-            .cloned()
-            .unwrap_or_default()
-            .supplies
-            .get(&token_id)
-            .cloned()
-            .unwrap_or_default()
-    });
-    numtokens_to_f64(&supply_token, get_token_decimals(token_id))
-}
-
-#[query] // 查询指定用户的borrow token
-fn get_user_borrow_token(user: String, token: String) -> f64 {
-    let user_id = Principal::from_text(user).unwrap();
-    let token_id = Principal::from_text(token).unwrap();
-    let supply_token = STATE.with(|s| {
-        s.borrow()
-            .users
-            .get(&user_id)
-            .cloned()
-            .unwrap_or_default()
-            .borrows
-            .get(&token_id)
-            .cloned()
-            .unwrap_or_default()
-    });
-    numtokens_to_f64(&supply_token, get_token_decimals(token_id))
-}
-
-#[query] // 查询指定用户的interest token
-fn get_user_interest_token(user: String, token: String) -> f64 {
-    let user_id = Principal::from_text(user).unwrap();
-    let token_id = Principal::from_text(token).unwrap();
-    let supply_token = STATE.with(|s| {
-        s.borrow()
-            .users
-            .get(&user_id)
-            .cloned()
-            .unwrap_or_default()
-            .interest
-            .get(&token_id)
-            .cloned()
-            .unwrap_or_default()
-    });
-    numtokens_to_f64(&supply_token, get_token_decimals(token_id))
-}
-
-#[derive(Clone, Debug, CandidType, Serialize, Deserialize)]
+#[derive(CandidType, Deserialize, Serialize)]
 struct UserInfo {
-    supply: f64,
-    borrow: f64,
-    interest: f64,
+    principal: Principal,
+    username: String,
+    ckbtc_balance: f64,
+    total_earned: f64,
+    total_borrowed: f64,
+    health_factor: f64,
+    created_at: u64,
+    recent_activities: Vec<Activity>,
 }
-#[query] // 查询指定用户的代币数量
-fn get_user_info(user: String, token: String) -> UserInfo {
-    let supply = get_user_supply_token(user.clone(), token.clone());
-    let borrow = get_user_borrow_token(user.clone(), token.clone());
-    let interest = get_user_interest_token(user.clone(), token.clone());
-    UserInfo {
-        supply,
-        borrow,
-        interest,
+
+#[derive(CandidType, Deserialize, Serialize)]
+struct Activity {
+    description: String,
+    timestamp: u64,
+}
+
+#[query] // 获取用户信息
+async fn get_user_info(principal: Principal) -> Result<UserInfo, String> {
+    // 检查用户是否存在
+    let user_exists = STATE.with(|s| {
+        let state = s.borrow();
+        state.users.contains_key(&principal)
+    });
+    
+    if !user_exists {
+        return Err("用户不存在".to_string());
     }
+    
+    // 计算用户数据 - 需要 await
+    let collateral_value = cal_collateral_value(principal).await;
+    let borrow_value = cal_borrow_value(principal).await;
+    let health_factor = cal_health_factor(principal).await;
+
+    // 创建用户信息
+    let user_info = UserInfo {
+        principal,
+        username: format!("User_{}", &principal.to_text()[0..8]),
+        ckbtc_balance: collateral_value,
+        total_earned: collateral_value,
+        total_borrowed: borrow_value,
+        health_factor,
+        created_at: time(),
+        recent_activities: vec![
+            Activity {
+                description: "登录成功".to_string(),
+                timestamp: time(),
+            },
+            Activity {
+                description: "查看借贷池".to_string(),
+                timestamp: time() - 60000_000_000,
+            },
+        ],
+    };
+
+    Ok(user_info)
+}
+
+#[update] // 注册用户
+fn register_user(principal: Principal, username: String) -> Result<UserInfo, String> {
+    STATE.with(|s| {
+        let mut state = s.borrow_mut();
+
+        // 检查用户是否已存在
+        if state.users.contains_key(&principal) {
+            return Err("用户已存在".to_string());
+        }
+
+        // 创建新用户账户
+        let user_account = UserAccounts::default();
+        state.users.insert(principal, user_account);
+
+        // 创建用户信息
+        let user_info = UserInfo {
+            principal,
+            username,
+            ckbtc_balance: 0.0,
+            total_earned: 0.0,
+            total_borrowed: 0.0,
+            health_factor: 0.0,
+            created_at: time(),
+            recent_activities: vec![Activity {
+                description: "用户注册成功".to_string(),
+                timestamp: time(),
+            }],
+        };
+
+        Ok(user_info)
+    })
 }
 
 /*-------------------Unit Conversion Function--------------------*/

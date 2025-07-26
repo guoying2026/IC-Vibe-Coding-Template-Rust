@@ -3,6 +3,7 @@
 import { Actor, HttpAgent, ActorSubclass } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { IDL } from "@dfinity/candid";
+import { sha224 } from "js-sha256";
 
 // Account interface
 export interface Account {
@@ -133,18 +134,26 @@ export class TokenBalanceService {
       console.log("TokenBalanceService: 开始生成Account ID");
       console.log("Principal:", principal.toText());
 
+      // 按照 ICP 官方文档的公式：
+      // account_identifier(principal, subaccount) := CRC32(h) || h
+      // where h = SHA224("\x0Aaccount-id" || principal || subaccount)
+      
+      // 1. 构建 padding: "\x0Aaccount-id" (11字节)
       const padding = new Uint8Array([
         0x0a,
         ...new TextEncoder().encode("account-id"),
       ]);
       console.log("Padding length:", padding.length);
 
+      // 2. 获取 principal 的原始字节
       const principalBytes = principal.toUint8Array();
       console.log("Principal bytes length:", principalBytes.length);
 
+      // 3. 处理 subaccount: 如果没有提供，使用32字节的0
       const sub = subaccount ?? new Uint8Array(32);
       console.log("Subaccount length:", sub.length);
 
+      // 4. 拼接数据: padding || principal || subaccount
       const data = new Uint8Array(
         padding.length + principalBytes.length + sub.length,
       );
@@ -153,17 +162,19 @@ export class TokenBalanceService {
       data.set(sub, padding.length + principalBytes.length);
       console.log("Total data length:", data.length);
 
-      // SHA-224 hash
-      console.log("开始计算SHA-224哈希...");
-      const hashBuffer = await crypto.subtle.digest("SHA-224", data);
-      const hash = new Uint8Array(hashBuffer);
-      console.log("SHA-224哈希完成，长度:", hash.length);
+      // 5. 计算 SHA224 哈希 (使用 js-sha256 库)
+      console.log("开始计算SHA224哈希...");
+      const hash224 = sha224.create();
+      hash224.update(data);
+      const hash = new Uint8Array(hash224.array());
+      console.log("SHA224哈希完成，长度:", hash.length);
 
-      // CRC32 checksum
+      // 6. 计算 CRC32 校验和
       console.log("开始计算CRC32校验和...");
       const crc32 = this.calculateCRC32(hash);
       console.log("CRC32校验和完成，长度:", crc32.length);
 
+      // 7. 拼接最终结果: CRC32(h) || h
       const result = new Uint8Array(4 + hash.length);
       result.set(crc32, 0);
       result.set(hash, 4);

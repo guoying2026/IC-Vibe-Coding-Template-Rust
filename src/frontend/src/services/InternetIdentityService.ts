@@ -324,6 +324,12 @@ export class InternetIdentityService {
     console.log("=== Agent initialization info ===");
     console.log("Using host:", host);
     console.log("Network config:", network);
+    // 新增：打印当前身份principal
+    if (this.identity && typeof this.identity.getPrincipal === 'function') {
+      console.log("[Agent Init] 当前身份 Principal:", this.identity.getPrincipal().toText());
+    } else {
+      console.log("[Agent Init] 当前为匿名身份");
+    }
 
     const options: HttpAgentOptions = { identity: this.identity, host };
     this.agent = await HttpAgent.create(options);
@@ -589,7 +595,7 @@ export class InternetIdentityService {
           userInfo: result.Ok,
         };
         console.log("User auto-registered successfully:", username);
-      } else if (result.Err.includes("User already exists")) {
+      } else if (result.Err.includes("用户已存在")) {
         console.log("User already exists, fetching user info...");
         const userInfoResult = await this.actor.get_user_info(principal);
         this.authState = {
@@ -597,13 +603,30 @@ export class InternetIdentityService {
           principal,
           userInfo: "Ok" in userInfoResult ? userInfoResult.Ok : null,
         };
+        console.log("User info fetched successfully for existing user");
       } else {
         throw new Error(result.Err);
       }
     } catch (error) {
       console.error("Failed to auto-register user:", error);
+      // 如果是用户已存在的错误，不要抛出，而是尝试获取用户信息
+      if (error instanceof Error && error.message.includes("用户已存在")) {
+        console.log("User already exists, attempting to fetch user info...");
+        try {
+          const userInfoResult = await this.actor!.get_user_info(principal);
+          this.authState = {
+            isAuthenticated: true,
+            principal,
+            userInfo: "Ok" in userInfoResult ? userInfoResult.Ok : null,
+          };
+          console.log("User info fetched successfully for existing user");
+          return; // 成功获取用户信息，不抛出错误
+        } catch (fetchError) {
+          console.error("Failed to fetch user info for existing user:", fetchError);
+        }
+      }
+      // 对于其他错误，设置基本状态但不抛出
       this.authState = { isAuthenticated: true, principal, userInfo: null };
-      throw error;
     }
   }
 
@@ -774,6 +797,8 @@ export class InternetIdentityService {
   async queryCurrentUserBalance(tokenCanisterId: string): Promise<bigint> {
     const tokenBalanceService = this.ensureTokenBalanceService();
     const principal = this.getCurrentPrincipal();
+    // 新增：打印当前principal
+    console.log("[Query Balance] 当前 principal:", principal ? principal.toText() : "匿名");
     if (!principal) {
       console.log(
         "User not logged in, querying balance with anonymous Principal...",

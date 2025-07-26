@@ -5,14 +5,12 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, CandidType, Deserialize, Serialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, CandidType, Deserialize, Serialize, Default)]
 pub enum AssetTypes {
     #[default]
     ICP,
     ICRC2,
 }
-
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, CandidType, Deserialize, Serialize)]
 pub struct AssetConfig {
