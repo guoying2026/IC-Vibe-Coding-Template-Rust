@@ -1,214 +1,28 @@
-// Token Balance Query Service
-
-import { Actor, HttpAgent, ActorSubclass } from "@dfinity/agent";
+import { HttpAgent, Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { IDL } from "@dfinity/candid";
+import { AccountIdentifier, Tokens } from "@dfinity/ledger-icp";
+import { createAgent } from "@dfinity/utils";
+import { LedgerCanister } from "@dfinity/ledger-icp";
+import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
 import { sha224 } from "js-sha256";
 
 // Account interface
 export interface Account {
   owner: Principal;
-  subaccount: Uint8Array | null; // 明确为 Uint8Array 或 null
+  subaccount: Uint8Array | null;
 }
-
-// ICRC Ledger interface (ICRC-1 + ICRC-2)
-export interface ICRCLedger {
-  icrc1_balance_of: (args: {
-    account: { owner: Principal; subaccount?: Uint8Array };
-  }) => Promise<bigint>;
-  icrc1_name: () => Promise<string>;
-  icrc1_symbol: () => Promise<string>;
-  icrc1_decimals: () => Promise<number>;
-  icrc1_fee: () => Promise<bigint>;
-  icrc1_total_supply: () => Promise<bigint>;
-  icrc1_minting_account: () => Promise<Account | null>;
-  icrc1_supported_standards: () => Promise<
-    Array<{ name: string; url: string }>
-  >;
-  icrc1_transfer: (args: {
-    from_subaccount?: Uint8Array;
-    to: Account;
-    amount: bigint;
-    fee?: bigint;
-    memo?: Uint8Array;
-    created_at_time?: bigint;
-  }) => Promise<{ Ok: bigint } | { Err: TransferError }>;
-  // ICRC-2 methods
-  icrc2_approve: (args: {
-    from_subaccount?: Uint8Array;
-    spender: Account;
-    amount: bigint;
-    expires_at?: bigint;
-    memo?: Uint8Array;
-    created_at_time?: bigint;
-  }) => Promise<{ Ok: bigint } | { Err: ApproveError }>;
-  icrc2_allowance: (args: {
-    account: Account;
-    spender: Account;
-  }) => Promise<{ allowance: bigint; expires_at?: bigint }>;
-}
-
-export interface TransferError {
-  BadFee?: { expected_fee: bigint };
-  BadBurn?: { min_burn_amount: bigint };
-  InsufficientFunds?: { balance: bigint };
-  TooOld?: null;
-  CreatedInFuture?: { ledger_time: bigint };
-  Duplicate?: { duplicate_of: bigint };
-  TemporarilyUnavailable?: null;
-  GenericError?: { error_code: bigint; message: string };
-}
-
-export interface ApproveError {
-  BadFee?: { expected_fee: bigint };
-  InsufficientFunds?: { balance: bigint };
-  AllowanceChanged?: { current_allowance: bigint };
-  Expired?: null;
-  TooOld?: null;
-  CreatedInFuture?: { ledger_time: bigint };
-  Duplicate?: { duplicate_of: bigint };
-  TemporarilyUnavailable?: null;
-  GenericError?: { error_code: bigint; message: string };
-}
-
-// ICRC Ledger IDL
-const icrc1Idl: IDL.InterfaceFactory = ({ IDL }) =>
-  IDL.Service({
-    icrc1_balance_of: IDL.Func(
-      [
-        IDL.Record({
-          account: IDL.Record({
-            owner: IDL.Principal,
-            subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)), // 使用 Vec(Nat8) 对应 blob
-          }),
-        }),
-      ],
-      [IDL.Nat],
-      ["query"],
-    ),
-    icrc1_name: IDL.Func([], [IDL.Text], ["query"]),
-    icrc1_symbol: IDL.Func([], [IDL.Text], ["query"]),
-    icrc1_decimals: IDL.Func([], [IDL.Nat8], ["query"]),
-    icrc1_fee: IDL.Func([], [IDL.Nat], ["query"]),
-    icrc1_total_supply: IDL.Func([], [IDL.Nat], ["query"]),
-    icrc1_minting_account: IDL.Func(
-      [],
-      [
-        IDL.Opt(
-          IDL.Record({
-            owner: IDL.Principal,
-            subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
-          }),
-        ),
-      ],
-      ["query"],
-    ),
-    icrc1_supported_standards: IDL.Func(
-      [],
-      [IDL.Vec(IDL.Record({ name: IDL.Text, url: IDL.Text }))],
-      ["query"],
-    ),
-    icrc1_transfer: IDL.Func(
-      [
-        IDL.Record({
-          from_subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
-          to: IDL.Record({
-            owner: IDL.Principal,
-            subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
-          }),
-          amount: IDL.Nat,
-          fee: IDL.Opt(IDL.Nat),
-          memo: IDL.Opt(IDL.Vec(IDL.Nat8)),
-          created_at_time: IDL.Opt(IDL.Nat64),
-        }),
-      ],
-      [
-        IDL.Variant({
-          Ok: IDL.Nat,
-          Err: IDL.Variant({
-            BadFee: IDL.Record({ expected_fee: IDL.Nat }),
-            BadBurn: IDL.Record({ min_burn_amount: IDL.Nat }),
-            InsufficientFunds: IDL.Record({ balance: IDL.Nat }),
-            TooOld: IDL.Null,
-            CreatedInFuture: IDL.Record({ ledger_time: IDL.Nat64 }),
-            Duplicate: IDL.Record({ duplicate_of: IDL.Nat }),
-            TemporarilyUnavailable: IDL.Null,
-            GenericError: IDL.Record({
-              error_code: IDL.Nat,
-              message: IDL.Text,
-            }),
-          }),
-        }),
-      ],
-      [],
-    ),
-    icrc2_approve: IDL.Func(
-      [
-        IDL.Record({
-          from_subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
-          spender: IDL.Record({
-            owner: IDL.Principal,
-            subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
-          }),
-          amount: IDL.Nat,
-          expires_at: IDL.Opt(IDL.Nat64),
-          memo: IDL.Opt(IDL.Vec(IDL.Nat8)),
-          created_at_time: IDL.Opt(IDL.Nat64),
-        }),
-      ],
-      [
-        IDL.Variant({
-          Ok: IDL.Nat,
-          Err: IDL.Variant({
-            BadFee: IDL.Record({ expected_fee: IDL.Nat }),
-            InsufficientFunds: IDL.Record({ balance: IDL.Nat }),
-            AllowanceChanged: IDL.Record({ current_allowance: IDL.Nat }),
-            Expired: IDL.Null,
-            TooOld: IDL.Null,
-            CreatedInFuture: IDL.Record({ ledger_time: IDL.Nat64 }),
-            Duplicate: IDL.Record({ duplicate_of: IDL.Nat }),
-            TemporarilyUnavailable: IDL.Null,
-            GenericError: IDL.Record({
-              error_code: IDL.Nat,
-              message: IDL.Text,
-            }),
-          }),
-        }),
-      ],
-      [],
-    ),
-    icrc2_allowance: IDL.Func(
-      [
-        IDL.Record({
-          account: IDL.Record({
-            owner: IDL.Principal,
-            subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
-          }),
-          spender: IDL.Record({
-            owner: IDL.Principal,
-            subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
-          }),
-        }),
-      ],
-      [
-        IDL.Record({
-          allowance: IDL.Nat,
-          expires_at: IDL.Opt(IDL.Nat64),
-        }),
-      ],
-      ["query"],
-    ),
-  });
 
 export class TokenBalanceService {
   private agent: HttpAgent;
+  private identity: Identity;
   private tokenInfoCache: Map<
     string,
     { name: string; symbol: string; decimals: number }
   >;
 
-  constructor(agent: HttpAgent) {
+  constructor(agent: HttpAgent, identity: Identity) {
     this.agent = agent;
+    this.identity = identity;
     this.tokenInfoCache = new Map();
     const network = import.meta.env.DFX_NETWORK || "ic";
     if (network === "local") {
@@ -231,59 +45,101 @@ export class TokenBalanceService {
     return { network, isLocal, host };
   }
 
-  // Generate Account from Principal
-  generateAccountFromPrincipal(
-    principal: Principal,
-    subaccount?: Uint8Array,
-  ): Account {
-    return {
-      owner: principal,
-      subaccount: subaccount ?? null, // 默认使用 null
-    };
+  // Query ICP balance using official ledger-icp library
+  async queryICPBalance(principal: Principal): Promise<{ balance?: bigint; error?: string }> {
+    try {
+      console.log("Querying ICP balance for principal:", principal.toText());
+      
+      // Generate account identifier
+      const accountId = await this.generateAccountId(principal);
+      console.log("Generated account ID:", accountId);
+
+      const { host } = this.getNetworkConfig();
+      
+      // Create agent using @dfinity/utils
+      const agent = await createAgent({
+        identity: this.identity,
+        host,
+      });
+
+      // Create ICP ledger canister
+      const ledger = LedgerCanister.create({
+        agent,
+        canisterId: Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"),
+      });
+
+      // Convert hex string to Uint8Array for AccountIdentifier
+      const hexToBytes = (hex: string): Uint8Array => {
+        const bytes = new Uint8Array(hex.length / 2);
+        for (let i = 0; i < hex.length; i += 2) {
+          bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+        }
+        return bytes;
+      };
+
+      // Query balance
+      const balanceResult = await ledger.accountBalance({ 
+        accountIdentifier: accountId 
+      });
+      const balance = balanceResult;
+      console.log("ICP balance:", balance);
+      
+      return { balance };
+    } catch (error) {
+      console.error("Failed to query ICP balance:", error);
+      return { error: error instanceof Error ? error.message : String(error) };
+    }
   }
 
-  // Generate default account (no subaccount)
-  generateDefaultAccount(principal: Principal): Account {
-    return this.generateAccountFromPrincipal(principal);
-  }
-
-  // Query token balance
-  async queryTokenBalance(
+  // Query ICRC token balance using official ledger-icrc library
+  async queryICRCTokenBalance(
     tokenCanisterId: string,
     principal: Principal,
     subaccount?: Uint8Array,
   ): Promise<{ balance?: bigint; error?: string }> {
     try {
-      const actor = Actor.createActor<ICRCLedger>(icrc1Idl, {
-        agent: this.agent,
-        canisterId: tokenCanisterId,
+      console.log(`Querying ICRC token balance for ${tokenCanisterId}, principal:`, principal.toText());
+      
+      const { host } = this.getNetworkConfig();
+      
+      // Create agent using @dfinity/utils
+      const agent = await createAgent({
+        identity: this.identity,
+        host,
       });
 
-      // 构建 account 参数，使用 undefined 表示没有 subaccount
-      const account: { owner: Principal; subaccount?: Uint8Array } = {
+      // Create ICRC ledger canister
+      const ledger = IcrcLedgerCanister.create({
+        agent,
+        canisterId: Principal.fromText(tokenCanisterId),
+      });
+
+      // Query balance
+      const balance = await ledger.balance({
         owner: principal,
-        subaccount: subaccount,
-      };
-
-      console.log(
-        "Querying balance with args:",
-        JSON.stringify(
-          account,
-          (key, value) => {
-            if (value instanceof Uint8Array) {
-              return Array.from(value);
-            }
-            return value;
-          },
-          2,
-        ),
-      );
-
-      const result = await actor.icrc1_balance_of({ account });
-      return { balance: result as bigint };
+        subaccount,
+      });
+      
+      console.log(`${tokenCanisterId} balance:`, balance);
+      return { balance };
     } catch (error) {
-      console.error("Failed to query token balance:", error);
+      console.error(`Failed to query ${tokenCanisterId} balance:`, error);
       return { error: error instanceof Error ? error.message : String(error) };
+    }
+  }
+
+  // Query token balance - unified interface
+  async queryTokenBalance(
+    tokenCanisterId: string,
+    principal: Principal,
+    subaccount: Uint8Array | null,
+  ): Promise<{ balance?: bigint; error?: string }> {
+    // Check if it's ICP ledger
+    if (tokenCanisterId === "ryjl3-tyaaa-aaaaa-aaaba-cai") {
+      return await this.queryICPBalance(principal);
+    } else {
+      // For ICRC tokens (ckBTC, ckETH, etc.)
+      return await this.queryICRCTokenBalance(tokenCanisterId, principal, subaccount || undefined);
     }
   }
 
@@ -370,18 +226,41 @@ export class TokenBalanceService {
       }
 
       console.log(`Fetching token info for ${tokenCanisterId}`);
-      const actor = Actor.createActor<ICRCLedger>(icrc1Idl, {
-        agent: this.agent,
-        canisterId: tokenCanisterId,
+      
+      const { host } = this.getNetworkConfig();
+      const agent = await createAgent({
+        identity: this.identity,
+        host,
       });
 
-      const [name, symbol, decimals] = await Promise.all([
-        actor.icrc1_name(),
-        actor.icrc1_symbol(),
-        actor.icrc1_decimals(),
-      ]);
+      let tokenInfo: { name: string; symbol: string; decimals: number };
 
-      const tokenInfo = { name, symbol, decimals: Number(decimals) };
+      if (tokenCanisterId === "ryjl3-tyaaa-aaaaa-aaaba-cai") {
+        // ICP token info
+        tokenInfo = {
+          name: "Internet Computer",
+          symbol: "ICP",
+          decimals: 8,
+        };
+      } else {
+        // ICRC token info
+        const ledger = IcrcLedgerCanister.create({
+          agent,
+          canisterId: Principal.fromText(tokenCanisterId),
+        });
+
+        const metadata = await ledger.metadata({});
+        const nameEntry = metadata.find(([key]) => key === "icrc1:name");
+        const symbolEntry = metadata.find(([key]) => key === "icrc1:symbol");
+        const decimalsEntry = metadata.find(([key]) => key === "icrc1:decimals");
+
+        const name = nameEntry && "Text" in nameEntry[1] ? nameEntry[1].Text : "Unknown Token";
+        const symbol = symbolEntry && "Text" in symbolEntry[1] ? symbolEntry[1].Text : "";
+        const decimals = decimalsEntry && "Nat" in decimalsEntry[1] ? Number(decimalsEntry[1].Nat) : 8;
+
+        tokenInfo = { name, symbol, decimals };
+      }
+
       this.tokenInfoCache.set(tokenCanisterId, tokenInfo);
       return tokenInfo;
     } catch (error) {
@@ -440,7 +319,7 @@ export class TokenBalanceService {
 export const TOKEN_CANISTER_IDS = {
   ICP: "ryjl3-tyaaa-aaaaa-aaaba-cai",
   CKBTC: "mxzaz-hqaaa-aaaar-qaada-cai",
-  CKETH: "ss2fx-dyaaa-aaaar-qacoq-cai", // 替换 SNS1 为 ckETH
+  CKETH: "ss2fx-dyaaa-aaaar-qacoq-cai",
   LOCAL_ICP: import.meta.env.LOCAL_ICP_CANISTER_ID || "",
   LOCAL_CKBTC: import.meta.env.LOCAL_CKBTC_CANISTER_ID || "",
   LOCAL_CKETH: import.meta.env.LOCAL_CKETH_CANISTER_ID || "",
@@ -449,6 +328,7 @@ export const TOKEN_CANISTER_IDS = {
 // Create global instance
 export function createTokenBalanceService(
   agent: HttpAgent,
+  identity: Identity,
 ): TokenBalanceService {
-  return new TokenBalanceService(agent);
+  return new TokenBalanceService(agent, identity);
 }

@@ -1,6 +1,3 @@
-// Internet Identity Service
-// Handles user authentication and backend interaction
-
 import { AuthClient } from "@dfinity/auth-client";
 import {
   Identity,
@@ -8,6 +5,7 @@ import {
   Actor,
   ActorSubclass,
   HttpAgentOptions,
+  AnonymousIdentity,
 } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { IDL } from "@dfinity/candid";
@@ -327,7 +325,7 @@ export class InternetIdentityService {
     }
 
     // 重新创建 TokenBalanceService 以使用认证身份
-    this.tokenBalanceService = new TokenBalanceService(this.agent);
+    this.tokenBalanceService = new TokenBalanceService(this.agent, this.identity);
     console.log("TokenBalanceService created with authenticated identity");
   }
 
@@ -371,14 +369,14 @@ export class InternetIdentityService {
       // 检查是否有认证身份可用
       if (this.identity && this.agent) {
         console.log("使用认证身份创建 TokenBalanceService");
-        this.tokenBalanceService = new TokenBalanceService(this.agent);
+        this.tokenBalanceService = new TokenBalanceService(this.agent, this.identity);
       } else {
         console.log(
           "Agent not initialized, creating anonymous Agent for balance queries...",
         );
         const options: HttpAgentOptions = { host };
         const agent = HttpAgent.createSync(options);
-        this.tokenBalanceService = new TokenBalanceService(agent);
+        this.tokenBalanceService = new TokenBalanceService(agent, new AnonymousIdentity());
         if (isLocal) {
           agent
             .fetchRootKey()
@@ -669,7 +667,7 @@ export class InternetIdentityService {
     account: Account,
   ): Promise<{ balance?: bigint; error?: string }> {
     const tokenBalanceService = this.ensureTokenBalanceService();
-    const subaccount = account.subaccount ?? undefined; // Normalize null to undefined
+    const subaccount = account.subaccount ?? null; // 使用 null 而不是 []
     return await tokenBalanceService.queryTokenBalance(
       tokenCanisterId,
       account.owner,
@@ -693,12 +691,14 @@ export class InternetIdentityService {
       const result = await tokenBalanceService.queryTokenBalance(
         tokenCanisterId,
         Principal.anonymous(),
+        null, // 添加缺失的第三个参数
       );
       return result.balance || BigInt(0);
     }
     const result = await tokenBalanceService.queryTokenBalance(
       tokenCanisterId,
       principal,
+      null, // 添加缺失的第三个参数
     );
     return result.balance || BigInt(0);
   }

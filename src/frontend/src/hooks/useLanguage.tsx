@@ -485,6 +485,7 @@ const translations: Translations = {
   // 代币类型描述
   icp_description: { en: "Internet Computer Protocol", zh: "互联网计算机协议" },
   ckbtc_description: { en: "Chain-key Bitcoin", zh: "链密钥比特币" },
+  cketh_description: { en: "Chain-key Ethereum", zh: "链密钥以太坊" },
   sns1_description: { en: "SNS Governance Token", zh: "SNS治理代币" },
 
   // 自定义代币添加说明
