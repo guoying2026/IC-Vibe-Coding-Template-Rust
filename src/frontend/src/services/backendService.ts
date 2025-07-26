@@ -54,29 +54,41 @@ interface BackendActor {
     principal: Principal,
     username: string,
   ) => Promise<{ Ok: UserInfo } | { Err: string }>;
-  
+
   // 池子信息查询
   get_pool_info: (token: string) => Promise<PoolInfo>;
   get_real_pool_amount: (token: string) => Promise<number>;
   get_pool_supply_apy: (token: string) => Promise<number>;
   get_pool_borrow_apy: (token: string) => Promise<number>;
-  
+
   // 用户计算
   cal_collateral_value: (user: Principal) => Promise<number>;
   cal_borrow_value: (user: Principal) => Promise<number>;
   cal_health_factor: (user: Principal) => Promise<number>;
   max_borrow_amount: (user: Principal) => Promise<number>;
-  
+
   // 系统信息
   get_liquidation_threshold: () => Promise<number>;
   get_token_decimals: (token: Principal) => Promise<number>;
   get_price: (token: Principal) => Promise<number>;
-  
+
   // 借贷操作 (update 方法)
-  supply: (token_id: string, amount: bigint) => Promise<{ Ok: number } | { Err: string }>;
-  borrow: (token_id: string, amount: bigint) => Promise<{ Ok: number } | { Err: string }>;
-  repay: (token_id: string, amount: bigint) => Promise<{ Ok: number } | { Err: string }>;
-  withdraw: (token_id: string, amount: bigint) => Promise<{ Ok: number } | { Err: string }>;
+  supply: (
+    token_id: string,
+    amount: bigint,
+  ) => Promise<{ Ok: number } | { Err: string }>;
+  borrow: (
+    token_id: string,
+    amount: bigint,
+  ) => Promise<{ Ok: number } | { Err: string }>;
+  repay: (
+    token_id: string,
+    amount: bigint,
+  ) => Promise<{ Ok: number } | { Err: string }>;
+  withdraw: (
+    token_id: string,
+    amount: bigint,
+  ) => Promise<{ Ok: number } | { Err: string }>;
 }
 
 // Backend IDL definition
@@ -135,7 +147,7 @@ const backendIdlFactory: IDL.InterfaceFactory = ({ IDL }) =>
       ],
       [],
     ),
-    
+
     // 池子信息查询
     get_pool_info: IDL.Func(
       [IDL.Text],
@@ -170,18 +182,18 @@ const backendIdlFactory: IDL.InterfaceFactory = ({ IDL }) =>
     get_real_pool_amount: IDL.Func([IDL.Text], [IDL.Float64], ["query"]),
     get_pool_supply_apy: IDL.Func([IDL.Text], [IDL.Float64], ["query"]),
     get_pool_borrow_apy: IDL.Func([IDL.Text], [IDL.Float64], ["query"]),
-    
+
     // 用户计算
     cal_collateral_value: IDL.Func([IDL.Principal], [IDL.Float64], ["query"]),
     cal_borrow_value: IDL.Func([IDL.Principal], [IDL.Float64], ["query"]),
     cal_health_factor: IDL.Func([IDL.Principal], [IDL.Float64], ["query"]),
     max_borrow_amount: IDL.Func([IDL.Principal], [IDL.Float64], ["query"]),
-    
+
     // 系统信息
     get_liquidation_threshold: IDL.Func([], [IDL.Float64], ["query"]),
     get_token_decimals: IDL.Func([IDL.Principal], [IDL.Nat8], ["query"]),
     get_price: IDL.Func([IDL.Principal], [IDL.Float64], ["query"]),
-    
+
     // 借贷操作 (update 方法)
     supply: IDL.Func(
       [IDL.Text, IDL.Nat],
@@ -235,7 +247,10 @@ export class BackendService {
     }
   }
 
-  async registerUser(principal: Principal, username: string): Promise<UserInfo | null> {
+  async registerUser(
+    principal: Principal,
+    username: string,
+  ): Promise<UserInfo | null> {
     if (!this.actor) throw new Error("Actor not initialized");
     try {
       const result = await this.actor.register_user(principal, username);

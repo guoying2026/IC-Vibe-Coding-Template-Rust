@@ -635,26 +635,26 @@ approve_token(from, to, amount) - 授权操作
 这些函数只读取数据，不需要用户签名：
 
 - 用户信息
-get_user_info(principal: Principal) - 获取用户信息
-register_user(principal, username) - 注册用户
+  get_user_info(principal: Principal) - 获取用户信息
+  register_user(principal, username) - 注册用户
 
 - 池子信息
-get_pool_info(token: String) - 获取池子详情
-get_real_pool_amount(token: String) - 获取池子真实存款
-get_pool_supply_apy(token: String) - 获取存款APY
-get_pool_borrow_apy(token: String) - 获取借款APY
+  get_pool_info(token: String) - 获取池子详情
+  get_real_pool_amount(token: String) - 获取池子真实存款
+  get_pool_supply_apy(token: String) - 获取存款APY
+  get_pool_borrow_apy(token: String) - 获取借款APY
 
 - 计算函数
-cal_collateral_value(user: Principal) - 计算抵押品价值
-cal_borrow_value(user: Principal) - 计算借款价值
-cal_health_factor(user: Principal) - 计算健康因子
-max_borrow_amount(user: Principal) - 计算最大可借金额
-cal_interest(token: Principal) - 计算利率
-cal_earning(token: Principal) - 计算收益率
+  cal_collateral_value(user: Principal) - 计算抵押品价值
+  cal_borrow_value(user: Principal) - 计算借款价值
+  cal_health_factor(user: Principal) - 计算健康因子
+  max_borrow_amount(user: Principal) - 计算最大可借金额
+  cal_interest(token: Principal) - 计算利率
+  cal_earning(token: Principal) - 计算收益率
 - 系统信息
-get_liquidation_threshold() - 获取清算阈值
-get_token_decimals(token: Principal) - 获取代币小数位
-get_price(token: Principal) - 获取代币价格（从Pyth预言机）
+  get_liquidation_threshold() - 获取清算阈值
+  get_token_decimals(token: Principal) - 获取代币小数位
+  get_price(token: Principal) - 获取代币价格（从Pyth预言机）
 
 ### 代币余额查询
 
