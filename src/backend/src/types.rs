@@ -1,11 +1,9 @@
 use candid::{CandidType, Principal};
-use ic_cdk::api::time;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::NumTokens;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
-
 
 #[derive(Debug, Clone, PartialEq,
     PartialOrd, CandidType, Deserialize, Serialize)]
@@ -14,6 +12,7 @@ pub struct AssetConfig{
     pub token_id: Principal,
     pub account: Account,
     pub price_id: String, // from Pyth Network
+    pub asset_type: AssetTypes,
     pub decimals: u32,
     pub collateral_factor: f64,
     pub interest_rate: f64,
@@ -34,10 +33,9 @@ impl Default for AssetConfig {
 }
 
 #[derive(Debug, Clone, Default, CandidType, Deserialize, Serialize)]
-pub struct UserAccounts{
-    pub supplies: HashMap<Principal, NumTokens>,  // 存款 + 收益
-    pub borrows: HashMap<Principal, NumTokens>,   // 借款 + 利息
-    pub interest: HashMap<Principal, NumTokens>,  // 利息
+pub struct UserAccounts {
+    pub supplies: HashMap<Principal, NumTokens>,
+    pub borrows: HashMap<Principal, NumTokens>,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize, Serialize)]
@@ -71,11 +69,8 @@ pub struct LendingContract {
     pub assets: HashMap<Principal, AssetConfig>,
     pub users: HashMap<Principal, UserAccounts>,
     pub pool: HashMap<Principal, Pool>,
-    pub liquidate_earnings: f64,     // 清算人奖励
-    pub liquidation_threshold: f64,  // 清算最大区间
-    pub safety_vault_percentage: f64, // 金库
-    pub owner_earnings: f64, // 项目方的抽成
-    pub last_time: u64, // 最后结算利息的时间
+    pub liquidation_threshold: f64,
+    pub safety_vault_percentage: f64,
 }
 
 impl Default for LendingContract {
@@ -85,28 +80,12 @@ impl Default for LendingContract {
             assets: HashMap::new(),
             users: HashMap::new(),
             pool: HashMap::new(),
-            liquidate_earnings: 0.05,
-            liquidation_threshold: 0.05,
-            safety_vault_percentage: 0.05,  // 10%
-            owner_earnings: 0.1, // 10%
-            last_time: time(),
+            liquidation_threshold: 0.0,
+            safety_vault_percentage: 0.1, // 10%
         }
     }
 }
 
-#[derive(Debug, Clone, Hash, Eq, CandidType, Deserialize, Serialize, PartialEq)]
-pub struct TokenPair{
-    pub token1: Principal,
-    pub token2: Principal,
-}
-
-#[derive(Debug, Clone, CandidType, Deserialize, Serialize)]
-pub struct PoolDirection{
-    pub swap_pool: Principal,
-    pub direction: bool,
-}
-
 thread_local! {
     pub static STATE: RefCell<LendingContract> = RefCell::new(LendingContract::default());
-    pub static ICPSWAP: RefCell<HashMap<TokenPair, PoolDirection>> = RefCell::new(HashMap::new());
 }

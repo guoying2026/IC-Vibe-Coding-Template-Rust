@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ⚡️BLend — Unlock Real Yield from Your Bitcoin
 
 > Your BTC deserves better than collecting digital dust.
@@ -35,14 +36,410 @@ It should work for you — securely, natively, and 24/7.
 📖 [CN 用户指南 ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/Docs_CN.md)
 
 以及以下这里就是超技术的Readme文档
+=======
+# 🟧 BLend: BTC Lending Protocol on ICP
 
-### Technical Features
+## I. Overview
 
-- **Type Safety**: Complete TypeScript integration with backend Candid interfaces
-- **Responsive Interface**: Modern UI based on React + Tailwind CSS
-- **State Management**: Complete user state and authentication state management
-- **Error Handling**: Graceful error handling and user feedback
-- **Accessibility**: Support for keyboard navigation and screen readers
+### 📌 Protocol Introduction
+
+In the current context of rapidly developing Bitcoin-native DeFi, more and more excellent projects are exploring how to activate on-chain liquidity for BTC. However, we have noticed:
+
+> Despite the rapid advancement of the track, in the **ICP ecosystem**, there is still a lack of a **mature, native, and highly optimized BTC lending protocol**.
+
+The emergence of **BLend** is precisely to fill this gap and build a truly native decentralized financial infrastructure that serves BTC users.
+
+---
+>>>>>>> 797f8024974ba2de448156a77b903a34396fcfa9
+
+### 💡 Protocol Naming Explanation (What does "BLend" mean?)
+
+The naming of BLend deeply interprets the core philosophy of our protocol:
+
+- **B** → Bitcoin, the value anchor of crypto finance
+- **Lend** → Lending behavior, the most fundamental and widely used financial tool in DeFi
+- **Blend** → Integration, reconstruction, and recreation, symbolizing our redefinition of BTC usage
+
+We hope to convey our commitment to BTC through this name:  
+Not just a store of value asset, but efficient capital in the DeFi world.
+
+---
+
+### 🧩 Core Vision (What We Aim to Build)
+
+By deeply integrating **"B" and "Lend"**, **BLend** is committed to building a:
+
+- **Bitcoin-centric**
+- **Efficient lending capability**
+- **Cross-chain liquidity support**
+- **Trustless, verifiable, composable**
+
+native **decentralized financial protocol**, serving BTC users and developers, and promoting Bitcoin financial infrastructure construction in the ICP ecosystem.
+
+---
+
+## II. Core Operation Mechanism
+
+### 🏦 Borrow
+
+**BLend's borrowing interest rate adopts a dynamic interest rate model based on utilization rate**, balancing incentives between lenders and borrowers as supply and demand change.
+
+#### 📐 Utilization Rate
+
+The utilization rate measures what proportion of liquid assets in the current pool have been borrowed:
+
+&nbsp;
+
+$$
+U = \frac{Amount of assets already borrowed}{Total assets in pool (borrowed + available)}
+$$
+
+&nbsp;
+
+For example: Suppose there are 100 BTC in the pool, and 60 BTC have been borrowed, then U=60%.
+
+&nbsp;
+
+<div align="center">
+
+| Parameter                | Value |
+| ------------------------ | ----- |
+| Base Rate                | 1.2%  |
+| Utilisation Optimal Rate | 70%   |
+| Slope 1                  | 2%    |
+| Slope 2                  | 40%   |
+
+</div>
+
+&nbsp;
+
+When $U \leq U_{optimal}$:
+
+$$
+BorrowRate = BaseRate + \left( \frac{U}{U_{optimal}} \right) \times Slope1
+$$
+
+When $U > U_{optimal}$:
+
+$$
+BorrowRate = BaseRate + Slope1 + \left( \frac{U - U_{optimal}}{1 - U_{optimal}} \right) \times Slope2
+$$
+
+&nbsp;
+
+### 💰 Supply Rate
+
+When each user provides liquidity, the system automatically allocates **10%** of their deposited amount to the protocol's **Reserve Factor** as risk buffer funds for the pool.
+
+However, these funds still belong to the user and can be withdrawn at any time, and will be returned when the user chooses to **fully exit liquidity**.
+
+Additionally, the **deposit interest rate (Supply Rate)** is determined by the interest paid by borrowers. After the platform collects a small fee, **the remaining profits are distributed proportionally to all depositors**, and all liquidity providers will receive **fair profit distribution** based on their proportion in the pool.
+
+### 💸 Deposit Fund Allocation Logic
+
+Assuming the user's total deposit amount is:
+
+$$
+Deposit_{user} = X
+$$
+
+Where:
+
+- **15%** is allocated to the reserve pool (10% platform fee + 5% still belongs to the user)
+- **85%** enters the main pool that can participate in profit distribution
+
+Then:
+
+$$
+ReserveShare_user = 0.15× X
+$$
+
+$$
+ActiveLiquidity_user = 0.85 × X
+$$
+
+When the user exits, both parts will be returned:
+
+$$
+Withdraw_user = ReserveShare_user + ActiveLiquidity_user + AccruedInterest_user
+$$
+
+Each user i's annualized earnings are:
+
+$$
+UserEarningsi​=(Total Interest per year​×(1−ReserveFactor))
+$$
+
+### 🔁 Repay
+
+Repay refers to borrowers repaying the borrowed BTC (or other assets) to the lending pool, returning principal and interest, releasing collateral, and restoring borrowing capacity.
+
+In the **BLend protocol**, we are committed to making users clearly perceive borrowing costs, no longer hiding "debt" behind complex APR/APY or technical terms.
+
+### 👤 User Perspective
+
+1. User initiates repayment, **sees only one total amount** (interest + principal)
+2. System prioritizes deducting accumulated interest payable (`Accrued Interest`)
+3. Remaining portion used to repay principal (`Borrowed Principal`)
+4. Update user's borrowing balance and health factor
+5. If all debt is cleared, **release locked collateral assets**
+
+### 🛠 Technical Level
+
+1. Verify user input repayment amount > 0
+2. Check if the repaid asset corresponds to a supported lending pool
+3. Get the maximum amount the user needs to repay
+4. Ensure user has existing borrowings (borrowed amount > 0)
+5. Verify user repayment amount ≤ current borrowing amount
+6. Transfer repayment assets to the corresponding lending pool
+7. Update user's borrowing balance data
+
+### 💰 Withdraw
+
+Withdraw refers to users choosing to partially or fully withdraw their deposited BTC (or other assets) and accumulated earnings after providing liquidity.
+
+### 👤 User Perspective Operation Flow
+
+1. User initiates `Withdraw` operation (can choose partial or full)
+2. Protocol calculates current withdrawable asset amount, including:
+   - Initial deposited principal
+   - Earned interest (`Accrued Interest`)
+3. If pool liquidity is sufficient, assets are returned to user immediately
+4. If withdrawal amount exceeds available balance in pool, handle via "gradual withdrawal mechanism" (see below)
+5. After successful withdrawal, user's supply status is updated synchronously
+
+### 💥 Liquidation Mechanism
+
+When a borrower's asset value falls, or borrowing amount is too high, causing insufficient collateral to cover debt, the system must intervene promptly to partially or fully close their position to prevent protocol losses. This is **Liquidation**.
+
+Main purposes of liquidation mechanism:
+
+- ⛔ Avoid protocol losses due to bad debts
+- 🧮 Recover debt through auction or discounted sale of collateral
+- 🔐 Ensure overall system health and depositor fund safety
+
+> 💡 Liquidation is a core risk management module in DeFi protocols.
+
+| Parameter             | Meaning                                                        | ICP  | BTC/ETH | USDC |
+| --------------------- | -------------------------------------------------------------- | ---- | ------- | ---- |
+| Collateral Factor     | Proportion of borrower's total collateral that can be borrowed | 0.75 | 0.7     | 0.8  |
+| Liquidation Threshold | Maximum borrowing ratio available for collateral assets        | 0.80 | 0.75    | 0.85 |
+| Liquidation Bonus     | Discount reward received by liquidator                         | 0.05 | 0.05    | 0.05 |
+
+### Health Factor (HF)
+
+We use Health Factor (HF) to measure account safety:
+
+$$
+Health Factor = (Collateral Asset Value × Liquidation Threshold) / (Total Borrowed + Accumulated Interest)
+$$
+
+- If **HF ≥ 1**: Account is healthy, safe operation
+- If **HF < 1**: Account is unhealthy, enters liquidation process
+
+### Multi-Asset Health Factor Calculation
+
+We use the following formula to calculate Health Factor (HF) including multiple assets:
+
+$$
+HF = \frac{
+\sum_i (\text{Collateral Asset}_i \times \text{Current Price}_i \times \text{Liquidation Threshold}_i)
+}{
+\sum_j (\text{Borrowed Asset}_j + \text{Corresponding Accumulated Interest}_j)
+}
+$$
+
+#### In other words:
+
+- **Numerator**: Total weighted value of **all your collateral assets** (considering liquidation threshold)
+- **Denominator**: **All your borrowed asset principal + respective interest**
+
+## Liquidation Process (Simplified)
+
+1. Anyone discovers that a certain account's Health Factor (HF) is below 1.
+2. Initiate liquidation logic, allowing liquidators to repay all their debt.
+3. In exchange, liquidators can obtain borrower's collateral assets at a discount.
+4. Borrower's account is fully liquidated, health factor restored to safe level.
+
+> ⚠️ Current stage, liquidators only support one-time liquidation of all debt. Future versions will upgrade to support **partial liquidation**. If safety is not restored after liquidation, the system will continue liquidation until account is zeroed or safety is restored.
+
+---
+
+### 👤 User Perspective: If I'm a Borrower
+
+- You borrow assets, the system tracks your health factor in real-time.
+- If BTC price falls, your collateral asset value decreases.
+- Once HF < 1, the system **"sells"** part of your collateral assets to liquidators.
+- You lose part of your collateral assets and bear liquidation costs (usually reflected as discounted processing).
+- ✅ Best to actively add collateral or repay when HF approaches 1 to avoid liquidation.
+
+---
+
+### 🦾 Liquidator Perspective: How to Make Money?
+
+- Liquidators can use funds to repay part of others' debt.
+- System sells collateral assets to liquidators at **discounted prices (5% - 10%)**.
+- Example:
+  - You repay debt worth 1 BTC,
+  - System gives you collateral assets worth 1.1 BTC,
+  - 💰 Your profit is the 10% difference (0.1 BTC).
+
+> 📌 Liquidation rewards vary for each asset. To ensure BTC liquidity, **BTC liquidation reward is the highest at 10%.**
+
+## II. User Guide
+
+### Getting Started
+
+![Internet Identity Login Interface](picture/ICP_login.png)
+
+<p align="center"> Internet Identity Login Interface
+
+Create your own "Internet Identity", then you can start exploring Blend!
+
+### Core Operations
+
+### Supplying / Depositing Assets
+
+- Deposit operations are located on the "Earn" page, which will display 4 vault options. Please select the amount of assets you want to deposit and click the "Deposit" button.
+- Once successfully deposited, your assets will **automatically start earning interest** without any additional operations.
+- In "Personal Center", you can view your **principal and accumulated interest** in real-time. Interest is settled daily and displayed together with principal.
+- After earnings are credited, you can **withdraw principal and interest together at any time**. If the amount is large, the system will automatically enable **gradual withdrawal mechanism**, crediting in batches to ensure pool stability.
+
+### Borrowing Assets
+
+- Click "Connect Identity" to enter the system.
+- Go to the "Borrow" page, select collateral assets (ICP, BTC, ETH, USDC), set the amount you want to collateralize and submit.
+- The system will prompt you with the maximum amount you can borrow based on your collateral assets. After selecting the borrowing amount, click "Confirm Borrow".
+- On the "Personal Center" page, you can view the following information in real-time:
+  - Current total debt (including interest)
+  - Health factor (representing account liquidation risk)
+  - Accumulated interest growth (updated daily)
+- Borrowings can be **partially or fully repaid at any time**. Once fully repaid, collateral assets will be automatically unlocked and withdrawable.
+
+## III. Protocol Mechanics - Developer/Advanced User Perspective
+
+### 🛠 Supply Logic
+
+When users deposit assets into the protocol, the system processes according to the following flow:
+
+1. **Validate Input Amount**
+   Ensure `NumTokens > 0`, 0 amount is invalid.
+
+2. **Verify Pool Existence**
+   Confirm that the pool corresponding to the user-specified `token_id` has been created.
+
+3. **Check Pool Remaining Capacity**
+   Ensure current pool still has sufficient space:
+   `(Maximum capacity - Current capacity) ≥ User input amount`
+
+4. **Update Pool Balance**
+   Add user-submitted assets to the corresponding pool.
+
+5. **Record User Contribution Information**
+   Update user's contribution records while updating pool's token balance.
+
+### 🛠 Borrow Logic
+
+When users attempt to borrow assets, the system executes the following steps to ensure borrowing is safe and compliant:
+
+1. **Validate Input Amount**
+   Ensure `NumTokens > 0`, otherwise reject the request.
+
+2. **Verify Pool Existence**
+   Check if the user-specified `token_id` corresponds to an available pool.
+
+3. **Validate Collateral Asset Legitimacy**
+   Check if user's deposited collateral assets meet the pool's support conditions (e.g., whether it accepts ICP/BTC/ETH, etc.).
+
+4. **Calculate Maximum Borrowable Amount**
+   Calculate `MaxBorrowableAmount` based on user's collateral asset value, liquidation threshold, current borrowing status, and other factors.
+
+5. **Validate Request Amount Compliance**
+   Verify: `NumTokens ≤ MaxBorrowableAmount`, preventing over-borrowing.
+
+6. **Disburse from Pool**
+   If funds are sufficient, deduct borrowing amount from corresponding pool and transfer to user address.
+
+7. **Update User Borrowing Status**
+   Increase user's `BorrowedAmount` and record initial interest accrual start time and other information.
+
+### 🔁 Repay
+
+When users initiate repayment operations, the system will process according to the following standard flow:
+
+1. **Validate Input Amount**
+   Ensure repayment amount `NumTokens` is greater than 0, avoiding invalid transactions.
+
+2. **Verify Lending Pool Existence**
+   Check if the input `token_id` corresponds to an existing supported lending pool.
+
+3. **Confirm User Has Outstanding Debt**
+   System will confirm that the user has valid borrowing records in this pool.
+
+4. **Calculate Maximum Repayable Amount**
+   Including principal and accumulated interest payable, ensuring users understand their total debt situation.
+
+5. **Validate Repayment Amount Not Excessive**
+   Input repayment amount must not exceed user's current repayable amount, avoiding processing excess funds.
+
+6. **Execute Repayment Operation**
+   Transfer assets to corresponding lending pool, system will prioritize repaying accumulated interest, remaining portion used to repay principal.
+
+7. **Update Borrowing Interest Rate Model**
+   Based on the pool's latest utilization rate after repayment, system will dynamically adjust interest rates, maintaining market incentive mechanism balance.
+
+8. **Update User Borrowing Records and Health Factor**
+   System will synchronously update user's debt information and recalculate health factor to reflect their account safety status.
+
+### 🧾 Withdraw Operation Flow
+
+The withdrawal process is not just about taking money out. The system is not stupid - it needs to confirm layer by layer that you really have money to withdraw, not giving away for free.
+
+1. **Check Input Legitimacy**
+   Ensure your input `NumTokens > 0`, don't think about withdrawing air.
+
+2. **Verify Pool Existence**
+   Check if the corresponding `token_id` really has a pool, otherwise you're talking to air.
+
+3. **Confirm You Really Have Deposits**
+   System will check if you have indeed deposited coins in this pool, don't try to fake it.
+
+4. **Calculate Maximum Withdrawable Amount**
+   System considers whether you have borrowed money, if there's partial occupation, only allowing you to withdraw assets within safe range.
+
+5. **Check If What You Want to Withdraw Exceeds Maximum**
+   Withdraw too much? No, exceeding your rightful portion, system will stop.
+
+6. **Check If That Portion of Assets Is Not Collateralized**
+   If part of your deposits is carrying debt, don't expect to get it back now.
+
+7. **Transfer Assets from Pool to You**
+   After all checks pass, system will transfer corresponding `NumTokens` from pool to your wallet.
+
+8. **Update User and Pool Status Data**
+   System will synchronously update your `Supply` status and pool's available balance.
+
+### 💥 Liquidate
+
+When a borrower's account health factor falls below the protocol's liquidation threshold, the system will allow third-party liquidators to intervene for debt liquidation operations. Below is the standard execution flow:
+
+1. **Check Borrower Existence**
+   Verify if target address is a legitimate account and confirm they have outstanding borrowing records.
+
+2. **Calculate Health Factor**
+   Based on collateral value, liquidation threshold, total borrowing and accumulated interest, assess user's account health status. If health factor is **less than 1**, trigger liquidation process.
+
+3. **Calculate Amount Liquidator Needs to Pay**
+   Based on current borrower's total debt, determine the asset amount liquidator needs to pay for full liquidation (usually including certain proportion of reward incentives).
+
+4. **Calculate Maximum Collateral Amount Liquidator Can Obtain**
+   Based on protocol's liquidation discount ratio (Liquidation Bonus), calculate maximum collateral assets liquidator can obtain at discounted price.
+
+5. **Execute Liquidation Operation**
+   Liquidator repays part or all of borrower's debt, protocol transfers corresponding collateral proportionally to liquidator's account.
+
+6. **Update System Status**
+   Protocol updates liquidated user's `Borrow` and `Supply` status in real-time, while synchronizing pool's total assets and available liquidity information.
 
 ## 📋 Prerequisites
 
@@ -78,7 +475,7 @@ cd ../..
 # Start DFX replica
 dfx start --clean --background
 
-# In a new terminal, deploy all canisters
+# In new terminal, deploy all canisters
 dfx deploy
 ```
 
@@ -104,7 +501,7 @@ icp_1/
 │   │   ├── src/
 │   │   │   ├── components/        # Reusable UI components
 │   │   │   │   ├── Layout/        # Layout components (Header, etc.)
-│   │   │   │   ├── UserInfoDisplay.tsx # User information display
+│   │   │   │   ├── UserInfoDisplay.tsx # User info display
 │   │   │   │   ├── TokenBalanceDisplay.tsx # Token balance display
 │   │   │   │   ├── LiquidityProvider.tsx # Liquidity provider
 │   │   │   │   └── MarketDetail.tsx # Market details
@@ -117,7 +514,7 @@ icp_1/
 │   │   │   ├── types/             # TypeScript type definitions
 │   │   │   ├── hooks/             # Custom React hooks
 │   │   │   │   └── useLanguage.tsx # Multi-language support
-│   │   │   └── assets/            # Static assets
+│   │   │   └── assets/            # Static resources
 │   │   │       ├── btc.png        # Bitcoin icon
 │   │   │       └── btc1.png       # BLend logo
 │   │   ├── package.json           # Frontend dependencies
@@ -132,7 +529,7 @@ icp_1/
 
 ### Environment Variables
 
-Create a `.env` file in the root directory:
+Create `.env` file in root directory:
 
 ```env
 # DFX network configuration
@@ -181,16 +578,16 @@ dfx deploy --network ic
 #### Dashboard Page (DashboardPage)
 
 - **User Information Display**: Shows user authentication status, Principal ID and Account ID
-- **Statistics Cards**: Key metrics like total earnings, total borrowed, average APY
+- **Statistics Cards**: Key metrics like total earnings, total borrowing, average APY
 - **Token Balances**: Real-time display of user's various token balances
-- **Responsive Design**: Adapts to desktop and mobile devices
+- **Responsive Design**: Adapted for desktop and mobile devices
 
 #### Earn Page (EarnView)
 
 - **Asset Pool List**: Displays available lending asset pools
 - **Market Details**: Click to view detailed market information and operation interface
-- **Liquidity Management**: Modal interface for supplying and withdrawing assets
-- **Transaction History**: Displays user's transaction records
+- **Liquidity Management**: Supply and withdraw asset modal interfaces
+- **Transaction History**: Shows user's transaction records
 
 ### Core Components
 
@@ -199,7 +596,7 @@ dfx deploy --network ic
 - **Identity Information**: Displays Principal ID and Account ID
 - **Interactive Features**: Click eye icon to toggle show/hide, copy button
 - **Recharge Instructions**: Dollar sign button shows recharge instructions
-- **Modern Design**: Gradient backgrounds, card-based layouts
+- **Modern Design**: Gradient backgrounds, card-based layout
 
 #### TokenBalanceDisplay
 
@@ -210,14 +607,14 @@ dfx deploy --network ic
 
 #### MarketDetail
 
-- **Market Statistics**: Total supply, total borrowed, available liquidity, etc.
+- **Market Statistics**: Total supply, total borrowing, available liquidity, etc.
 - **Operation Interface**: Four operation tabs for supply, borrow, repay, withdraw
 - **Real-time Calculation**: Dynamically calculates maximum available amounts and earnings
 - **Transaction Preview**: Shows transaction details and expected earnings
 
 ### Multi-language Support
 
-The application supports complete bilingual interface in Chinese and English:
+The application supports complete Chinese-English bilingual interface:
 
 ```typescript
 // Language switching
@@ -240,283 +637,3 @@ Supported language keys include:
 ### Internet Identity Integration
 
 The application uses Internet Identity for secure authentication:
-
-1. **Local Development**: Uses local Internet Identity canister
-2. **Mainnet**: Uses production Internet Identity
-3. **Auto Registration**: New users are automatically registered
-4. **Session Management**: Persistent authentication state
-
-### Authentication Flow
-
-```typescript
-// Initialize authentication
-await internetIdentityService.initialize();
-
-// Login with Internet Identity
-await internetIdentityService.login();
-
-// Check authentication status
-const authState = internetIdentityService.getAuthState();
-
-// Get user information
-const userInfo = await internetIdentityService.getUserInfo();
-```
-
-### Principal ID and Account ID
-
-- **Principal ID**: User's unique identity identifier
-- **Account ID**: Account address generated based on Principal, used for receiving tokens
-- **Secure Display**: Default hidden partial content, supports show/hide toggle
-- **Copy Function**: One-click copy to clipboard
-
-## 📈 Data Integration
-
-### Real-time Data Flow
-
-All frontend data is fetched directly from backend canisters:
-
-```typescript
-// Get pool data
-const pools = await internetIdentityService.getAllPools();
-
-// Get user supplies
-const supplies = await internetIdentityService.getUserSupplies(principal);
-
-// Get user borrows
-const borrows = await internetIdentityService.getUserBorrows(principal);
-
-// Get user health factor
-const healthFactor =
-  await internetIdentityService.getUserHealthFactor(principal);
-```
-
-### Token Balance Queries
-
-Supports querying balances of various ICRC-1 standard tokens:
-
-```typescript
-// Query ICP balance
-const icpBalance = await tokenBalanceService.queryICPBalance(principal);
-
-// Query ckBTC balance
-const ckbtcBalance = await tokenBalanceService.queryCkbtcBalance(principal);
-
-// Query custom token balance
-const customBalance = await tokenBalanceService.queryTokenBalance(
-  tokenCanisterId,
-  accountId,
-);
-```
-
-### Type Safety
-
-Frontend types align with backend Candid interfaces:
-
-```typescript
-// Backend-aligned interfaces
-interface Asset {
-  id: string;
-  symbol: string;
-  name: string;
-  icon: string;
-  price: number;
-  balance: number;
-  apy: number;
-  tvl: number;
-  supplied: number;
-  borrowed: number;
-  collateralFactor: number;
-  liquidationThreshold: number;
-  borrowRate: number;
-  utilization: number;
-}
-
-interface UserInfo {
-  username: string;
-  ckbtc_balance: number;
-  total_earned: number;
-  total_borrowed: number;
-  created_at: bigint;
-  recent_activities: any[];
-}
-```
-
-## 🎨 UI/UX Features
-
-### Modern Design
-
-- **Gradient Backgrounds**: Uses blue to purple gradient backgrounds
-- **Card-based Layout**: Information organized in cards with clear hierarchy
-- **Shadow Effects**: Appropriate shadows enhance visual hierarchy
-- **Rounded Corners**: Modern rounded corner elements
-
-### Interactive Experience
-
-- **Click Outside to Close**: All modals support closing by clicking outside area
-- **Copy Feedback**: Copy operations provide immediate visual feedback
-- **Loading States**: Asynchronous operations display loading animations
-- **Error Handling**: Friendly error prompts and recovery suggestions
-
-### Responsive Design
-
-- **Mobile Adaptation**: Complete mobile interface optimization
-- **Breakpoint Design**: Uses Tailwind CSS responsive breakpoints
-- **Touch Friendly**: Buttons and interactive elements suitable for touch operations
-
-## 🧪 Testing
-
-### Running Tests
-
-```bash
-# Run all tests
-npm test
-
-# Run specific test file
-npm test tests/src/backend.test.ts
-
-# Run frontend tests
-cd src/frontend
-npm test
-```
-
-### Test Coverage
-
-- Backend canister logic tests
-- Frontend component tests
-- Integration tests
-- Authentication flow tests
-- Multi-language functionality tests
-
-## 🔧 Development
-
-### Adding New Features
-
-1. **Backend Changes**:
-
-   - Add new functions in `src/backend/src/lib.rs`
-   - Update Candid interface
-   - Add tests
-
-2. **Frontend Changes**:
-   - Add new components in `src/frontend/src/components/`
-   - Update types in `src/frontend/src/types/`
-   - Add service methods in `src/frontend/src/services/`
-   - Add multi-language support in `src/frontend/src/hooks/useLanguage.tsx`
-
-### Code Quality
-
-- **Rust**: Follows Clippy and Rust FMT guidelines
-- **TypeScript**: ESLint and Prettier configuration
-- **Testing**: Comprehensive test coverage
-- **Documentation**: Inline code documentation
-
-## 🚀 Production Deployment
-
-### Mainnet Deployment Steps
-
-1. **Prepare Environment**:
-
-   ```bash
-   dfx config --network ic
-   ```
-
-2. **Deploy Canisters**:
-
-   ```bash
-   dfx deploy --network ic
-   ```
-
-3. **Update Environment Variables**:
-
-   - Set production canister IDs
-   - Configure Internet Identity
-   - Update price oracle endpoints
-
-4. **Verify Deployment**:
-   - Test all functionality
-   - Verify identity authentication
-   - Check data integration
-   - Test multi-language functionality
-
-### Security Considerations
-
-- **Access Control**: Admin-only functions for pool management
-- **Input Validation**: Comprehensive parameter validation
-- **Error Handling**: Graceful error handling throughout the system
-- **Rate Limiting**: Rate limiting for critical functions
-- **Identity Authentication**: Secure Internet Identity integration
-
-## 📚 API Documentation
-
-### Candid Interface
-
-Complete Candid interface can be found in `src/backend/backend.did`:
-
-```candid
-service : () -> {
-  // Core lending functions
-  supply : (text, nat) -> (Result);
-  borrow : (text, nat) -> (Result);
-  repay : (text, nat) -> (Result);
-  withdraw : (text, nat) -> (Result);
-
-  // Query functions
-  get_all_pools : () -> (vec Pool) query;
-  get_user_supplies : (principal) -> (vec record { principal; nat }) query;
-  get_user_borrows : (principal) -> (vec record { principal; nat }) query;
-
-  // Identity authentication functions
-  is_authenticated : () -> (bool) query;
-  get_user_info : () -> (Result_4) query;
-  register_user : (text) -> (Result_4);
-}
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make changes
-4. Add tests for new features
-5. Submit a pull request
-
-### Development Guidelines
-
-- Follow existing code style
-- Add comprehensive tests
-- Update documentation
-- Ensure type safety
-- Test on local and mainnet
-- Add multi-language support
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-For support and issues:
-
-- Create an issue in the repository
-- Check documentation
-- Review code examples
-- Test with provided setup
-
-## 🔄 Changelog
-
-### Latest Updates
-
-- ✅ Added multi-language support (Chinese and English)
-- ✅ Modern UI design with gradient backgrounds and card-based layouts
-- ✅ Complete Internet Identity integration
-- ✅ Principal ID and Account ID display and management
-- ✅ Token balance query functionality
-- ✅ Responsive design optimization
-- ✅ Interactive components (modals, copy functionality, etc.)
-- ✅ Error handling and user feedback improvements
-
-See [CHANGELOG.md](CHANGELOG.md) for detailed changes and update history.
-
----
-
-**Built for the Internet Computer ecosystem ❤️**

@@ -1,347 +1,508 @@
-// Internet Identity服务
-// 处理用户认证和与后端的交互
+// Internet Identity Service
+// Handles user authentication and backend interaction
 
-import { AuthClient } from "@dfinity/auth-client"; // 导入认证客户端
-import { Identity } from "@dfinity/agent"; // 导入身份接口
-import { Principal } from "@dfinity/principal"; // 导入主体类型
-import { Actor, HttpAgent } from "@dfinity/agent"; // 导入Actor和HTTP代理
-import { idlFactory } from "../../../declarations/backend"; // 导入后端接口定义
-import { TokenBalanceService, TOKEN_CANISTER_IDS } from "./TokenBalanceService"; // 导入余额查询服务
+import { AuthClient } from "@dfinity/auth-client";
+import {
+  Identity,
+  HttpAgent,
+  Actor,
+  ActorSubclass,
+  HttpAgentOptions,
+} from "@dfinity/agent";
+import { Principal } from "@dfinity/principal";
+import { IDL } from "@dfinity/candid";
+import {
+  TokenBalanceService,
+  TOKEN_CANISTER_IDS,
+  Account,
+} from "./TokenBalanceService";
 
-// Account接口定义
-export interface Account {
-  owner: Principal;
-  subaccount?: Uint8Array;
-}
-
-// 用户信息接口
+// User information interface
 export interface UserInfo {
-  principal: Principal; // 用户主体ID
-  username: string; // 用户名
-  ckbtc_balance: number; // ckBTC余额
-  total_earned: number; // 总收益
-  total_borrowed: number; // 总借贷
-  health_factor: number; // 健康因子
-  created_at: bigint; // 创建时间
+  principal: Principal;
+  username: string;
+  ckbtc_balance: number;
+  total_earned: number;
+  total_borrowed: number;
+  health_factor: number;
+  created_at: bigint;
   recent_activities?: Array<{
     description: string;
     timestamp: bigint;
-  }>; // 最近活动
+  }>;
 }
 
-// 借贷位置接口
+// Borrow position interface
 export interface BorrowPosition {
-  id: string; // 位置ID
-  asset: string; // 资产类型
-  amount: number; // 借贷金额
-  rate: number; // 利率
-  health_factor: number; // 健康因子
+  id: string;
+  asset: string;
+  amount: number;
+  rate: number;
+  health_factor: number;
 }
 
-// 收益位置接口
+// Earn position interface
 export interface EarnPosition {
-  id: string; // 位置ID
-  asset: string; // 资产类型
-  amount: number; // 存入金额
-  apy: number; // 年化收益率
-  earned: number; // 已赚取收益
+  id: string;
+  asset: string;
+  amount: number;
+  apy: number;
+  earned: number;
 }
 
-// 认证状态接口
+// Authentication state interface
 export interface AuthState {
-  isAuthenticated: boolean; // 是否已认证
-  principal: Principal | null; // 用户主体ID
-  userInfo: UserInfo | null; // 用户信息
+  isAuthenticated: boolean;
+  principal: Principal | null;
+  userInfo: UserInfo | null;
 }
 
-// Internet Identity服务类
+// Backend Actor interface
+interface BackendService {
+  is_authenticated: () => Promise<boolean>;
+  get_user_info: (
+    principal: Principal,
+  ) => Promise<{ Ok: UserInfo } | { Err: string }>;
+  register_user: (
+    principal: Principal,
+    username: string,
+  ) => Promise<{ Ok: UserInfo } | { Err: string }>;
+  update_ckbtc_balance: (
+    amount: number,
+  ) => Promise<{ Ok: number } | { Err: string }>;
+  get_borrow_positions: () => Promise<
+    { Ok: BorrowPosition[] } | { Err: string }
+  >;
+  get_earn_positions: () => Promise<{ Ok: EarnPosition[] } | { Err: string }>;
+  add_borrow_position: (
+    asset: string,
+    amount: number,
+    rate: number,
+  ) => Promise<{ Ok: BorrowPosition } | { Err: string }>;
+  add_earn_position: (
+    asset: string,
+    amount: number,
+    apy: number,
+  ) => Promise<{ Ok: EarnPosition } | { Err: string }>;
+}
+
+// ckBTC deposit state interface
+interface CkbtcDepositState {
+  status: string;
+  btcAddress: string;
+  received: number;
+  required: number;
+  confirmations: bigint;
+  requiredConfirmations: bigint;
+}
+
+// Backend IDL definition
+const idlFactory: IDL.InterfaceFactory = ({ IDL }) =>
+  IDL.Service({
+    is_authenticated: IDL.Func([], [IDL.Bool], ["query"]),
+    get_user_info: IDL.Func(
+      [IDL.Principal],
+      [
+        IDL.Variant({
+          Ok: IDL.Record({
+            principal: IDL.Principal,
+            username: IDL.Text,
+            ckbtc_balance: IDL.Float64,
+            total_earned: IDL.Float64,
+            total_borrowed: IDL.Float64,
+            health_factor: IDL.Float64,
+            created_at: IDL.Nat64,
+            recent_activities: IDL.Opt(
+              IDL.Vec(
+                IDL.Record({
+                  description: IDL.Text,
+                  timestamp: IDL.Nat64,
+                }),
+              ),
+            ),
+          }),
+          Err: IDL.Text,
+        }),
+      ],
+      ["query"],
+    ),
+    register_user: IDL.Func(
+      [IDL.Principal, IDL.Text],
+      [
+        IDL.Variant({
+          Ok: IDL.Record({
+            principal: IDL.Principal,
+            username: IDL.Text,
+            ckbtc_balance: IDL.Float64,
+            total_earned: IDL.Float64,
+            total_borrowed: IDL.Float64,
+            health_factor: IDL.Float64,
+            created_at: IDL.Nat64,
+            recent_activities: IDL.Opt(
+              IDL.Vec(
+                IDL.Record({
+                  description: IDL.Text,
+                  timestamp: IDL.Nat64,
+                }),
+              ),
+            ),
+          }),
+          Err: IDL.Text,
+        }),
+      ],
+      [],
+    ),
+    update_ckbtc_balance: IDL.Func(
+      [IDL.Float64],
+      [IDL.Variant({ Ok: IDL.Float64, Err: IDL.Text })],
+      [],
+    ),
+    get_borrow_positions: IDL.Func(
+      [],
+      [
+        IDL.Variant({
+          Ok: IDL.Vec(
+            IDL.Record({
+              id: IDL.Text,
+              asset: IDL.Text,
+              amount: IDL.Float64,
+              rate: IDL.Float64,
+              health_factor: IDL.Float64,
+            }),
+          ),
+          Err: IDL.Text,
+        }),
+      ],
+      ["query"],
+    ),
+    get_earn_positions: IDL.Func(
+      [],
+      [
+        IDL.Variant({
+          Ok: IDL.Vec(
+            IDL.Record({
+              id: IDL.Text,
+              asset: IDL.Text,
+              amount: IDL.Float64,
+              apy: IDL.Float64,
+              earned: IDL.Float64,
+            }),
+          ),
+          Err: IDL.Text,
+        }),
+      ],
+      ["query"],
+    ),
+    add_borrow_position: IDL.Func(
+      [IDL.Text, IDL.Float64, IDL.Float64],
+      [
+        IDL.Variant({
+          Ok: IDL.Record({
+            id: IDL.Text,
+            asset: IDL.Text,
+            amount: IDL.Float64,
+            rate: IDL.Float64,
+            health_factor: IDL.Float64,
+          }),
+          Err: IDL.Text,
+        }),
+      ],
+      [],
+    ),
+    add_earn_position: IDL.Func(
+      [IDL.Text, IDL.Float64, IDL.Float64],
+      [
+        IDL.Variant({
+          Ok: IDL.Record({
+            id: IDL.Text,
+            asset: IDL.Text,
+            amount: IDL.Float64,
+            apy: IDL.Float64,
+            earned: IDL.Float64,
+          }),
+          Err: IDL.Text,
+        }),
+      ],
+      [],
+    ),
+  });
+
 export class InternetIdentityService {
-  private authClient: AuthClient | null = null; // 认证客户端
-  private identity: Identity | null = null; // 用户身份
-  private agent: HttpAgent | null = null; // HTTP代理
-  private actor: any = null; // 后端Actor实例
-  private tokenBalanceService: TokenBalanceService | null = null; // 代币余额查询服务
+  private authClient: AuthClient | null = null;
+  private identity: Identity | null = null;
+  private agent: HttpAgent | null = null;
+  private actor: ActorSubclass<BackendService> | null = null;
+  private tokenBalanceService: TokenBalanceService | null = null;
   private authState: AuthState = {
     isAuthenticated: false,
     principal: null,
     userInfo: null,
-  }; // 认证状态
+  };
 
-  // 初始化认证客户端
+  // Get network configuration
+  public getNetworkConfig() {
+    console.log("=== 环境变量调试信息 ===");
+    console.log("import.meta.env.DFX_NETWORK:", import.meta.env.DFX_NETWORK);
+    console.log(
+      "import.meta.env.CANISTER_ID_INTERNET_IDENTITY:",
+      import.meta.env.CANISTER_ID_INTERNET_IDENTITY,
+    );
+    console.log(
+      "import.meta.env.CANISTER_ID_BACKEND:",
+      import.meta.env.CANISTER_ID_BACKEND,
+    );
+    console.log("所有import.meta.env:", import.meta.env);
+
+    const network = import.meta.env.DFX_NETWORK || "ic";
+    if (!["local", "ic"].includes(network)) {
+      throw new Error(
+        `Invalid DFX_NETWORK value: ${network}, must be "local" or "ic"`,
+      );
+    }
+    const isLocal = network === "local";
+    const host = isLocal ? "http://localhost:4943" : "https://icp-api.io";
+
+    // 使用新的推荐URL格式
+    const identityProvider = isLocal
+      ? `http://${import.meta.env.CANISTER_ID_INTERNET_IDENTITY}.localhost:4943/`
+      : "https://identity.icp0.io";
+
+    const config = { network, isLocal, host, identityProvider };
+    console.log("最终网络配置:", config);
+    return config;
+  }
+
+  // Initialize authentication client
   async initialize(): Promise<void> {
     try {
-      console.log("=== 初始化Internet Identity服务 ===");
-      console.log("环境变量检查:", {
+      console.log("=== 开始初始化 Internet Identity Service ===");
+
+      const { network, isLocal, host, identityProvider } =
+        this.getNetworkConfig();
+      console.log("网络配置:", { network, isLocal, host, identityProvider });
+      console.log("环境变量:", {
         DFX_NETWORK: import.meta.env.DFX_NETWORK,
         CANISTER_ID_INTERNET_IDENTITY: import.meta.env
           .CANISTER_ID_INTERNET_IDENTITY,
         CANISTER_ID_BACKEND: import.meta.env.CANISTER_ID_BACKEND,
       });
 
-      // 创建认证客户端
+      console.log("正在创建 AuthClient...");
       this.authClient = await AuthClient.create();
-      console.log("AuthClient创建成功");
+      console.log("AuthClient 创建成功");
 
-      // 检查是否已有身份
       const isAuthenticated = await this.authClient.isAuthenticated();
       console.log("当前认证状态:", isAuthenticated);
 
       if (isAuthenticated) {
-        console.log("用户已认证，开始初始化...");
-        // 如果已认证，获取身份并初始化
         this.identity = this.authClient.getIdentity();
         console.log("获取到身份:", this.identity.getPrincipal().toText());
-
         await this.initializeAgent();
         await this.checkAuthenticationStatus();
         console.log("已认证用户初始化完成");
       } else {
-        console.log("用户未认证，使用匿名身份初始化agent");
-        // 即使未认证，也要初始化agent以便调用查询方法
+        console.log("用户未认证，使用匿名身份初始化 agent");
         await this.initializeAgentWithAnonymousIdentity();
         console.log("匿名用户初始化完成");
       }
-    } catch (error) {
-      console.error("初始化Internet Identity失败:", error);
+    } catch (error: unknown) {
+      console.error(
+        "Internet Identity 初始化失败:",
+        error instanceof Error ? error.message : String(error),
+      );
       throw error;
     }
   }
 
-  // 初始化HTTP代理和Actor
+  // Initialize HTTP agent and Actor
   private async initializeAgent(): Promise<void> {
     if (!this.identity) {
-      throw new Error("身份未初始化");
+      throw new Error("Identity not initialized");
     }
 
-    // 创建HTTP代理 - 统一使用主网II登录，但连接到本地后端
-    const useLocalBackend = import.meta.env.DFX_NETWORK === "local";
+    const { network, isLocal, host } = this.getNetworkConfig();
+    console.log("=== Agent initialization info ===");
+    console.log("Using host:", host);
+    console.log("Network config:", network);
 
-    // 统一使用本地后端进行开发
-    const host = useLocalBackend ? "http://localhost:4943" : "https://ic0.app";
+    const options: HttpAgentOptions = { identity: this.identity, host };
+    this.agent = await HttpAgent.create(options);
 
-    console.log("=== Agent初始化信息 ===");
-    console.log("使用host:", host);
-    console.log("使用本地后端配置:", useLocalBackend);
-    console.log("网络配置:", import.meta.env.DFX_NETWORK);
-
-    this.agent = new HttpAgent({
-      identity: this.identity,
-      host: host,
-    });
-
-    // 如果是本地环境，需要获取root key
-    if (useLocalBackend) {
+    if (isLocal) {
       try {
-        console.log("获取本地环境的root key...");
-        await this.agent.fetchRootKey();
-        console.log("root key获取成功");
+        console.log("Fetching local environment Root Key...");
+        await this.retryFetchRootKey(this.agent, 3);
+        console.log("Root Key fetched successfully");
       } catch (error) {
-        console.error("获取root key失败:", error);
-        throw new Error("无法连接到本地环境，请确保dfx正在运行");
+        console.error("Failed to fetch Root Key:", error);
+        throw new Error(
+          "Cannot connect to local environment, ensure dfx is running",
+        );
       }
     }
 
-    // 获取后端canister ID
     const canisterId = import.meta.env.CANISTER_ID_BACKEND;
     if (!canisterId) {
-      throw new Error("后端canister ID未配置");
+      throw new Error("Backend canister ID not configured");
+    }
+    console.log("Using backend canister ID:", canisterId);
+
+    try {
+      this.actor = Actor.createActor<BackendService>(idlFactory, {
+        agent: this.agent,
+        canisterId,
+      });
+      console.log("Actor created successfully");
+    } catch (error: unknown) {
+      console.error(
+        "Failed to create Actor:",
+        error instanceof Error ? error.message : String(error),
+      );
+      throw new Error(
+        `Cannot create Actor for canister ${canisterId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
 
-    console.log("使用后端canister ID:", canisterId);
-
-    // 创建Actor实例
-    this.actor = Actor.createActor(idlFactory, {
-      agent: this.agent,
-      canisterId: canisterId,
-    });
-
-    // 初始化代币余额查询服务
     this.tokenBalanceService = new TokenBalanceService(this.agent);
   }
 
-  // 使用匿名身份初始化HTTP代理和Actor
-  private async initializeAgentWithAnonymousIdentity(): Promise<void> {
-    console.log("使用匿名身份初始化HTTP代理和Actor...");
-
-    // 创建匿名身份
-    const { AnonymousIdentity } = await import("@dfinity/agent");
-    this.identity = new AnonymousIdentity();
-
-    await this.initializeAgent();
-    console.log("匿名用户初始化完成");
+  // Retry fetching Root Key
+  private async retryFetchRootKey(
+    agent: HttpAgent,
+    retries: number,
+    delayMs: number = 1000,
+  ): Promise<void> {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        await agent.fetchRootKey();
+        return;
+      } catch (error) {
+        console.warn(
+          `Attempt ${attempt}/${retries} to fetch Root Key failed:`,
+          error,
+        );
+        if (attempt === retries) {
+          throw error;
+        }
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
   }
 
-  // 确保TokenBalanceService已初始化
-  private ensureTokenBalanceService(): TokenBalanceService {
+  // Initialize HTTP agent and Actor with anonymous identity
+  private async initializeAgentWithAnonymousIdentity(): Promise<void> {
+    console.log("Initializing HTTP agent and Actor with anonymous identity...");
+    const { AnonymousIdentity } = await import("@dfinity/agent");
+    this.identity = new AnonymousIdentity();
+    await this.initializeAgent();
+    console.log("Anonymous user initialization complete");
+  }
+
+  // Ensure TokenBalanceService is initialized
+  public ensureTokenBalanceService(): TokenBalanceService {
     if (!this.tokenBalanceService) {
-      if (!this.agent) {
-        // 如果agent未初始化，创建一个新的HttpAgent用于匿名查询
-        console.log("Agent未初始化，创建匿名Agent用于余额查询...");
-        const anonymousAgent = new HttpAgent({
-          host:
-            import.meta.env.DFX_NETWORK === "ic"
-              ? "https://ic0.app"
-              : "http://127.0.0.1:4943",
-        });
-
-        // 如果是本地环境，需要设置rootKey
-        if (import.meta.env.DFX_NETWORK !== "ic") {
-          anonymousAgent.fetchRootKey().catch(console.error);
-        }
-
-        this.tokenBalanceService = new TokenBalanceService(anonymousAgent);
-      } else {
-        console.log("使用已初始化的Agent创建TokenBalanceService...");
-        this.tokenBalanceService = new TokenBalanceService(this.agent);
+      const { network, isLocal, host } = this.getNetworkConfig();
+      console.log(
+        "Agent not initialized, creating anonymous Agent for balance queries...",
+      );
+      const options: HttpAgentOptions = { host };
+      const agent = HttpAgent.createSync(options);
+      this.tokenBalanceService = new TokenBalanceService(agent);
+      if (isLocal) {
+        agent
+          .fetchRootKey()
+          .catch((error: unknown) =>
+            console.error(
+              "Anonymous Agent Root Key fetch failed:",
+              error instanceof Error ? error.message : String(error),
+            ),
+          );
       }
     }
     return this.tokenBalanceService;
   }
 
-  // 登录方法 - 统一使用主网 Internet Identity
+  // Login method
   async login(): Promise<void> {
-    console.log("=== 开始登录流程 ===");
-    console.log("当前环境变量:", {
-      dfxNetwork: import.meta.env.DFX_NETWORK,
-      useLocalBackend: import.meta.env.VITE_USE_LOCAL_BACKEND,
-      isDev: import.meta.env.DEV,
-      canisterId: import.meta.env.VITE_CANISTER_ID_BACKEND,
+    console.log("=== Starting login process ===");
+    const { network, identityProvider } = this.getNetworkConfig();
+    console.log("Current environment variables:", {
+      dfxNetwork: network,
+      canisterId: import.meta.env.CANISTER_ID_BACKEND,
+      identityProvider,
     });
 
     if (!this.authClient) {
-      console.error("认证客户端未初始化");
-      throw new Error("认证客户端未初始化");
+      console.error("Authentication client not initialized");
+      throw new Error("Authentication client not initialized");
     }
 
-    // 检查是否已经认证
     const isAuthenticated = await this.authClient.isAuthenticated();
     if (isAuthenticated) {
-      console.log("用户已经认证，直接获取身份信息");
+      console.log("User already authenticated, retrieving identity info");
       this.identity = this.authClient.getIdentity();
       await this.initializeAgent();
       await this.checkAuthenticationStatus();
       return;
     }
 
-    // 统一使用主网 Internet Identity 登录
-    console.log("使用主网 Internet Identity 进行认证");
+    console.log("Authenticating with Internet Identity");
     await this.loginWithInternetIdentity();
   }
 
-  // 使用 dfx identity 登录（开发环境）
-  private async loginWithDfxIdentity(): Promise<void> {
-    try {
-      // 在开发环境中，直接使用 dfx identity
-      // 这里我们需要创建一个简单的身份验证流程
-      console.log("使用 dfx identity 登录...");
-
-      // 获取当前 dfx identity 的 principal
-      const principal = await this.getDfxIdentityPrincipal();
-
-      // 初始化 agent 和 actor
-      await this.initializeAgent();
-
-      // 检查认证状态
-      await this.checkAuthenticationStatus();
-
-      console.log("dfx identity 登录成功");
-    } catch (error) {
-      console.error("dfx identity 登录失败:", error);
-      throw error;
-    }
-  }
-
-  // 使用 Internet Identity 登录
+  // Login with Internet Identity
   private async loginWithInternetIdentity(): Promise<void> {
-    // 构建identityProvider URL
-    let identityProvider: string;
-
-    if (import.meta.env.DFX_NETWORK === "ic") {
-      identityProvider = "https://identity.ic0.app";
-    } else {
-      // 本地环境，使用推荐的URL格式
-      const iiCanisterId = import.meta.env.CANISTER_ID_INTERNET_IDENTITY;
-
-      // 使用推荐的格式：canisterId.localhost:4943 (使用dfx.json中配置的端口)
-      identityProvider = `http://${iiCanisterId}.localhost:4943/`;
-
-      console.log("使用本地II推荐URL格式");
+    const { identityProvider } = this.getNetworkConfig();
+    if (
+      !import.meta.env.CANISTER_ID_INTERNET_IDENTITY &&
+      identityProvider.includes("canisterId=")
+    ) {
+      console.warn(
+        "Warning: CANISTER_ID_INTERNET_IDENTITY not configured, local Internet Identity login may fail",
+      );
     }
 
-    console.log("使用Internet Identity URL:", identityProvider);
-    console.log("环境变量:", {
-      network: import.meta.env.DFX_NETWORK,
-      iiCanisterId: import.meta.env.CANISTER_ID_INTERNET_IDENTITY,
-      useLocalBackend: import.meta.env.VITE_USE_LOCAL_BACKEND,
-    });
+    console.log("Using Internet Identity URL:", identityProvider);
 
     return new Promise((resolve, reject) => {
-      // 开始登录流程
       this.authClient!.login({
         identityProvider,
         onSuccess: async () => {
-          console.log("Internet Identity登录成功");
+          console.log("Internet Identity login successful");
           try {
-            // 登录成功，获取身份并初始化
             this.identity = this.authClient!.getIdentity();
             console.log(
-              "获取到用户身份:",
+              "User identity retrieved:",
               this.identity.getPrincipal().toText(),
             );
-
-            // 初始化agent和actor
             await this.initializeAgent();
-            console.log("Agent和Actor初始化成功");
-
-            // 检查认证状态并获取用户信息
             await this.checkAuthenticationStatus();
-            console.log("认证状态检查完成");
-
-            // 派发登录成功事件，通知主窗口
             window.dispatchEvent(new Event("ii-login-success"));
             resolve();
           } catch (error) {
-            console.error("登录后初始化失败:", error);
+            console.error("Post-login initialization failed:", error);
             reject(error);
           }
         },
-        onError: (error: any) => {
-          console.error("Internet Identity登录失败:", error);
+        onError: (error) => {
+          console.error("Internet Identity login failed:", error);
           reject(error);
         },
-        // 添加窗口配置
         windowOpenerFeatures:
           "toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=500,height=600",
       });
     });
   }
 
-  // 获取 dfx identity 的 principal
-  private async getDfxIdentityPrincipal(): Promise<any> {
-    // 这里我们需要通过某种方式获取 dfx identity 的 principal
-    // 可以通过调用本地 dfx 命令或者使用其他方式
-    try {
-      // 临时方案：创建一个匿名身份
-      const { Ed25519KeyIdentity } = await import("@dfinity/identity");
-      const key = Ed25519KeyIdentity.generate();
-      this.identity = key;
-      return key.getPrincipal();
-    } catch (error) {
-      console.error("获取 dfx identity principal 失败:", error);
-      throw error;
-    }
-  }
-
-  // 登出方法
+  // Logout method
   async logout(): Promise<void> {
     if (this.authClient) {
       await this.authClient.logout();
     }
-
-    // 重置状态
     this.identity = null;
     this.agent = null;
     this.actor = null;
+    this.tokenBalanceService = null;
     this.authState = {
       isAuthenticated: false,
       principal: null,
@@ -349,448 +510,456 @@ export class InternetIdentityService {
     };
   }
 
-  // 检查认证状态并自动注册用户
+  // Check authentication status and auto-register user
   private async checkAuthenticationStatus(): Promise<void> {
     if (!this.actor || !this.identity) {
-      throw new Error("Actor或Identity未初始化");
+      throw new Error("Actor 或 Identity 未初始化");
     }
-
     try {
-      console.log("开始检查认证状态...");
-
-      // 获取前端用户主体ID
+      console.log("=== 开始检查认证状态 ===");
       const principal = this.identity.getPrincipal();
-      console.log("前端Principal:", principal.toText());
+      console.log("当前 Principal:", principal.toText());
+      console.log("Actor 是否可用:", !!this.actor);
 
-      // 首先测试基本连接
-      try {
-        console.log("测试与后端的连接...");
-        // 尝试调用一个简单的查询方法
-        const testResult = await this.actor.is_authenticated();
-        console.log("连接测试成功，认证状态:", testResult);
-      } catch (connectionError) {
-        console.error("连接测试失败:", connectionError);
-        throw new Error("无法连接到后端服务，请检查dfx是否正在运行");
-      }
-
-      // 检查是否已认证
+      console.log("正在调用后端 is_authenticated...");
       const isAuthenticated = await this.actor.is_authenticated();
       console.log("后端认证状态:", isAuthenticated);
 
       if (isAuthenticated) {
-        // 尝试获取用户信息
-        try {
-          const userInfoResult = await this.actor.get_user_info(principal);
-          console.log("用户信息结果:", userInfoResult);
-
-          if ("Ok" in userInfoResult) {
-            // 用户已注册，更新状态
-            this.authState = {
-              isAuthenticated: true,
-              principal,
-              userInfo: userInfoResult.Ok,
-            };
-            console.log("用户已注册，状态已更新");
-          } else {
-            // 用户不存在，进入自动注册流程
-            console.log("用户不存在，开始自动注册...");
-            await this.autoRegisterUser(principal);
-          }
-        } catch (error) {
-          console.error("获取用户信息失败:", error);
-          // 如果获取用户信息失败，尝试自动注册
-          console.log("获取用户信息失败，尝试自动注册...");
-          await this.autoRegisterUser(principal);
-        }
+        console.log("用户已认证，获取用户信息...");
+        const userInfoResult = await this.actor.get_user_info(principal);
+        this.authState = {
+          isAuthenticated: true,
+          principal,
+          userInfo: "Ok" in userInfoResult ? userInfoResult.Ok : null,
+        };
       } else {
-        // 用户未认证，自动注册
         console.log("用户未认证，开始自动注册...");
         await this.autoRegisterUser(principal);
       }
-
       console.log("最终认证状态:", this.authState);
     } catch (error) {
       console.error("检查认证状态失败:", error);
+      if (error instanceof Error) {
+        console.error("错误详情:", {
+          message: error.message,
+          stack: error.stack,
+        });
+        if (error.message.includes("400")) {
+          console.error(
+            "HTTP 400 Bad Request，可能的原因：无效的签名或 Canister ID 错误",
+          );
+          console.error("建议检查：");
+          console.error("1. 后端 canister 是否正在运行");
+          console.error("2. Canister ID 是否正确");
+          console.error("3. 本地 dfx 是否正常运行");
+        }
+      }
       this.authState = {
         isAuthenticated: false,
         principal: null,
         userInfo: null,
       };
+      throw error;
     }
   }
 
-  // 自动注册用户
+  // Auto-register user
   private async autoRegisterUser(principal: Principal): Promise<void> {
     if (!this.actor) {
-      throw new Error("Actor未初始化");
+      throw new Error("Actor not initialized");
     }
-
     try {
-      // 使用Principal ID的前8位作为用户名
-      const principalText = principal.toText();
-      const username = principalText.slice(0, 8) + "...";
-
-      // 自动注册用户
+      const username = principal.toText().slice(0, 8) + "...";
       const result = await this.actor.register_user(principal, username);
 
       if ("Ok" in result) {
-        // 注册成功，更新认证状态
         this.authState = {
           isAuthenticated: true,
           principal,
           userInfo: result.Ok,
         };
-        console.log("用户自动注册成功:", username);
+        console.log("User auto-registered successfully:", username);
+      } else if (result.Err.includes("User already exists")) {
+        console.log("User already exists, fetching user info...");
+        const userInfoResult = await this.actor.get_user_info(principal);
+        this.authState = {
+          isAuthenticated: true,
+          principal,
+          userInfo: "Ok" in userInfoResult ? userInfoResult.Ok : null,
+        };
       } else {
-        // 如果注册失败，可能是因为用户已存在，尝试获取用户信息
-        if (result.Err.includes("用户已存在")) {
-          console.log("用户已存在，尝试获取用户信息...");
-          try {
-            const userInfoResult = await this.actor.get_user_info(principal);
-            if ("Ok" in userInfoResult) {
-              this.authState = {
-                isAuthenticated: true,
-                principal,
-                userInfo: userInfoResult.Ok,
-              };
-              console.log("成功获取已存在用户的信息");
-            } else {
-              throw new Error(userInfoResult.Err);
-            }
-          } catch (error) {
-            console.error("获取已存在用户信息失败:", error);
-            // 即使获取失败，也保持认证状态
-            this.authState = {
-              isAuthenticated: true,
-              principal,
-              userInfo: null,
-            };
-          }
-        } else {
-          throw new Error(result.Err);
-        }
+        throw new Error(result.Err);
       }
     } catch (error) {
-      console.error("自动注册用户失败:", error);
-      // 即使注册失败，也保持认证状态
-      this.authState = {
-        isAuthenticated: true,
-        principal,
-        userInfo: null,
-      };
+      console.error("Failed to auto-register user:", error);
+      this.authState = { isAuthenticated: true, principal, userInfo: null };
+      throw error;
     }
   }
 
-  // 获取用户信息
+  // Get user information
   async getUserInfo(): Promise<UserInfo | null> {
     if (!this.actor) {
-      throw new Error("Actor未初始化");
+      throw new Error("Actor not initialized");
     }
-
     try {
-      const result = await this.actor.get_user_info();
-
+      const principal = this.getCurrentPrincipal();
+      if (!principal) {
+        throw new Error("User not logged in");
+      }
+      const result = await this.actor.get_user_info(principal);
       if ("Ok" in result) {
         this.authState.userInfo = result.Ok;
         return result.Ok;
-      } else {
-        return null;
       }
+      return null;
     } catch (error) {
-      console.error("获取用户信息失败:", error);
+      console.error("Failed to get user info:", error);
       return null;
     }
   }
 
-  // 更新ckBTC余额
+  // Update ckBTC balance
   async updateCkbtcBalance(amount: number): Promise<number> {
     if (!this.actor) {
-      throw new Error("Actor未初始化");
+      throw new Error("Actor not initialized");
     }
-
     try {
       const result = await this.actor.update_ckbtc_balance(amount);
-
       if ("Ok" in result) {
-        // 更新本地用户信息
         if (this.authState.userInfo) {
           this.authState.userInfo.ckbtc_balance = result.Ok;
         }
         return result.Ok;
-      } else {
-        throw new Error(result.Err);
       }
+      throw new Error(result.Err);
     } catch (error) {
-      console.error("更新ckBTC余额失败:", error);
+      console.error("Failed to update ckBTC balance:", error);
       throw error;
     }
   }
 
-  // 获取借贷位置
+  // Get borrow positions
   async getBorrowPositions(): Promise<BorrowPosition[]> {
     if (!this.actor) {
-      throw new Error("Actor未初始化");
+      throw new Error("Actor not initialized");
     }
-
     try {
       const result = await this.actor.get_borrow_positions();
-
       if ("Ok" in result) {
         return result.Ok;
-      } else {
-        throw new Error(result.Err);
       }
+      throw new Error(result.Err);
     } catch (error) {
-      console.error("获取借贷位置失败:", error);
+      console.error("Failed to get borrow positions:", error);
       throw error;
     }
   }
 
-  // 获取收益位置
+  // Get earn positions
   async getEarnPositions(): Promise<EarnPosition[]> {
     if (!this.actor) {
-      throw new Error("Actor未初始化");
+      throw new Error("Actor not initialized");
     }
-
     try {
       const result = await this.actor.get_earn_positions();
-
       if ("Ok" in result) {
         return result.Ok;
-      } else {
-        throw new Error(result.Err);
       }
+      throw new Error(result.Err);
     } catch (error) {
-      console.error("获取收益位置失败:", error);
+      console.error("Failed to get earn positions:", error);
       throw error;
     }
   }
 
-  // 添加借贷位置
+  // Add borrow position
   async addBorrowPosition(
     asset: string,
     amount: number,
     rate: number,
   ): Promise<BorrowPosition> {
     if (!this.actor) {
-      throw new Error("Actor未初始化");
+      throw new Error("Actor not initialized");
     }
-
     try {
       const result = await this.actor.add_borrow_position(asset, amount, rate);
-
       if ("Ok" in result) {
         return result.Ok;
-      } else {
-        throw new Error(result.Err);
       }
+      throw new Error(result.Err);
     } catch (error) {
-      console.error("添加借贷位置失败:", error);
+      console.error("Failed to add borrow position:", error);
       throw error;
     }
   }
 
-  // 添加收益位置
+  // Add earn position
   async addEarnPosition(
     asset: string,
     amount: number,
     apy: number,
   ): Promise<EarnPosition> {
     if (!this.actor) {
-      throw new Error("Actor未初始化");
+      throw new Error("Actor not initialized");
     }
-
     try {
       const result = await this.actor.add_earn_position(asset, amount, apy);
-
       if ("Ok" in result) {
         return result.Ok;
-      } else {
-        throw new Error(result.Err);
       }
+      throw new Error(result.Err);
     } catch (error) {
-      console.error("添加收益位置失败:", error);
+      console.error("Failed to add earn position:", error);
       throw error;
     }
   }
 
-  // 获取认证状态
+  // Get authentication state
   getAuthState(): AuthState {
     return this.authState;
   }
 
-  // 检查服务是否已初始化
+  // Check if service is initialized
   isInitialized(): boolean {
     return this.actor !== null;
   }
 
-  // 获取当前用户Principal
+  // Get current user Principal
   getCurrentPrincipal(): Principal | null {
     return this.identity ? this.identity.getPrincipal() : null;
   }
 
-  // 从Principal生成Account identifier
+  // Generate Account from Principal
   generateAccountFromPrincipal(
     principal: Principal,
     subaccount?: Uint8Array,
   ): Account {
     return {
       owner: principal,
-      subaccount: subaccount,
+      subaccount: subaccount ?? undefined,
     };
   }
 
-  // 生成默认Account（无subaccount）
+  // Generate default Account (no subaccount)
   generateDefaultAccount(principal: Principal): Account {
     return this.generateAccountFromPrincipal(principal);
   }
 
-  // 查询代币余额
+  // Query token balance
   async queryTokenBalance(
     tokenCanisterId: string,
     account: Account,
-  ): Promise<bigint> {
-    if (!this.agent) {
-      throw new Error("Agent未初始化");
-    }
-
-    try {
-      // 使用简单的HTTP请求查询余额
-      // 这里使用简化的方法，实际项目中可能需要更完整的IDL定义
-      console.log(`查询代币余额: ${tokenCanisterId}`);
-      console.log(`Account: ${account.owner.toText()}`);
-
-      // 返回模拟余额，实际实现需要完整的ledger IDL
-      return BigInt(0);
-    } catch (error) {
-      console.error("查询代币余额失败:", error);
-      throw error;
-    }
+  ): Promise<{ balance?: bigint; error?: string }> {
+    const tokenBalanceService = this.ensureTokenBalanceService();
+    const subaccount = account.subaccount ?? undefined; // Normalize null to undefined
+    return await tokenBalanceService.queryTokenBalance(
+      tokenCanisterId,
+      account.owner,
+      subaccount,
+    );
   }
 
-  // 查询用户当前代币余额
+  // Query current user token balance
   async queryCurrentUserBalance(tokenCanisterId: string): Promise<bigint> {
     const tokenBalanceService = this.ensureTokenBalanceService();
-
     const principal = this.getCurrentPrincipal();
     if (!principal) {
-      // 如果用户未登录，使用匿名principal进行查询
-      console.log("用户未登录，使用匿名principal查询余额...");
-      const anonymousPrincipal = Principal.anonymous();
-      return await tokenBalanceService.queryCurrentUserBalance(
-        tokenCanisterId,
-        anonymousPrincipal,
+      console.log(
+        "User not logged in, querying balance with anonymous Principal...",
       );
+      const result = await tokenBalanceService.queryTokenBalance(
+        tokenCanisterId,
+        Principal.anonymous(),
+      );
+      return result.balance || BigInt(0);
     }
-
-    return await tokenBalanceService.queryCurrentUserBalance(
+    const result = await tokenBalanceService.queryTokenBalance(
       tokenCanisterId,
       principal,
     );
+    return result.balance || BigInt(0);
   }
 
-  // 查询ICP余额
+  // Query ICP balance
   async queryICPBalance(): Promise<bigint> {
-    const tokenBalanceService = this.ensureTokenBalanceService();
-
-    const principal = this.getCurrentPrincipal();
-    if (!principal) {
-      // 如果用户未登录，使用匿名principal进行查询
-      console.log("用户未登录，使用匿名principal查询ICP余额...");
-      const anonymousPrincipal = Principal.anonymous();
-      return await tokenBalanceService.queryCurrentUserBalance(
-        TOKEN_CANISTER_IDS.ICP,
-        anonymousPrincipal,
+    const { isLocal } = this.getNetworkConfig();
+    const canisterId = isLocal
+      ? TOKEN_CANISTER_IDS.LOCAL_ICP
+      : TOKEN_CANISTER_IDS.ICP;
+    if (!canisterId) {
+      throw new Error(
+        `ICP canister ID not configured (${isLocal ? "LOCAL_ICP" : "ICP"})`,
       );
     }
-
-    return await tokenBalanceService.queryCurrentUserBalance(
-      TOKEN_CANISTER_IDS.ICP,
-      principal,
-    );
+    return await this.queryCurrentUserBalance(canisterId);
   }
 
-  // 查询ckBTC余额
+  // Query ckBTC balance
   async queryCkbtcBalance(): Promise<bigint> {
-    const tokenBalanceService = this.ensureTokenBalanceService();
-
-    const principal = this.getCurrentPrincipal();
-    if (!principal) {
-      // 如果用户未登录，使用匿名principal进行查询
-      console.log("用户未登录，使用匿名principal查询ckBTC余额...");
-      const anonymousPrincipal = Principal.anonymous();
-      return await tokenBalanceService.queryCurrentUserBalance(
-        TOKEN_CANISTER_IDS.CKBTC,
-        anonymousPrincipal,
+    const { isLocal } = this.getNetworkConfig();
+    const canisterId = isLocal
+      ? TOKEN_CANISTER_IDS.LOCAL_CKBTC
+      : TOKEN_CANISTER_IDS.CKBTC;
+    if (!canisterId) {
+      throw new Error(
+        `ckBTC canister ID not configured (${isLocal ? "LOCAL_CKBTC" : "CKBTC"})`,
       );
     }
-
-    return await tokenBalanceService.queryCurrentUserBalance(
-      TOKEN_CANISTER_IDS.CKBTC,
-      principal,
-    );
+    return await this.queryCurrentUserBalance(canisterId);
   }
 
-  // 获取代币信息
-  async getTokenInfo(tokenCanisterId: string) {
+  // Get token information
+  async getTokenInfo(tokenCanisterId: string): Promise<{
+    name: string;
+    symbol: string;
+    decimals: number;
+  }> {
     const tokenBalanceService = this.ensureTokenBalanceService();
-
     return await tokenBalanceService.getTokenInfo(tokenCanisterId);
   }
 
-  // 格式化余额显示
+  // Format balance display
   formatBalance(balance: bigint, decimals: number): string {
     const tokenBalanceService = this.ensureTokenBalanceService();
-
     return tokenBalanceService.formatBalance(balance, decimals);
   }
 
-  // 检查用户是否已认证
+  // Check if user is authenticated
   async isUserAuthenticated(): Promise<boolean> {
     if (!this.authClient) return false;
     return await this.authClient.isAuthenticated();
   }
 
-  // 刷新认证状态
+  // Refresh authentication state
   async refreshAuthState(): Promise<void> {
     await this.checkAuthenticationStatus();
   }
 }
 
-// ckBTC minter canister 配置
-const CKBTC_MINTER_CANISTER_ID = "qjdve-lqaaa-aaaaa-aaaeq-cai"; // 主网 minter canister
-const CKBTC_MINTER_IDL = (IDL: any) =>
+// ckBTC minter canister configuration
+const CKBTC_MINTER_CANISTER_ID = "qjdve-lqaaa-aaaaa-aaaeq-cai";
+
+// ckBTC minter Actor interface
+interface CkbtcMinterService {
+  get_btc_deposit_state: () => Promise<Array<CkbtcDepositState>>;
+}
+
+// ckBTC minter IDL
+const CKBTC_MINTER_IDL: IDL.InterfaceFactory = ({ IDL }) =>
   IDL.Service({
     get_btc_deposit_state: IDL.Func(
       [],
       [
-        IDL.Record({
-          status: IDL.Text,
-          btcAddress: IDL.Text,
-          received: IDL.Float64,
-          required: IDL.Float64,
-          confirmations: IDL.Nat,
-          requiredConfirmations: IDL.Nat,
-        }),
+        IDL.Vec(
+          IDL.Record({
+            status: IDL.Text,
+            btcAddress: IDL.Text,
+            received: IDL.Float64,
+            required: IDL.Float64,
+            confirmations: IDL.Nat,
+            requiredConfirmations: IDL.Nat,
+          }),
+        ),
       ],
       ["query"],
     ),
   });
 
-// 查询充值进度
-export async function getCkbtcDepositState(): Promise<any> {
-  const agent = new HttpAgent({ host: "https://ic0.app" });
-  const minter = Actor.createActor(CKBTC_MINTER_IDL, {
-    agent,
-    canisterId: CKBTC_MINTER_CANISTER_ID,
-  });
-  // 这里只是伪实现，实际参数和返回结构请根据 minter candid 调整
-  const result = await minter.get_btc_deposit_state();
-  if (Array.isArray(result) && result.length > 0) {
-    return result[0];
+// Query ckBTC deposit state
+export async function getCkbtcDepositState(): Promise<CkbtcDepositState | null> {
+  try {
+    const options: HttpAgentOptions = { host: "https://icp-api.io" };
+    const agent = await HttpAgent.create(options);
+    const minter = Actor.createActor<CkbtcMinterService>(CKBTC_MINTER_IDL, {
+      agent,
+      canisterId: CKBTC_MINTER_CANISTER_ID,
+    });
+    const result = await minter.get_btc_deposit_state();
+    const depositState = result[0];
+    if (!depositState) return null;
+    return {
+      status: depositState.status,
+      btcAddress: depositState.btcAddress,
+      received: Number(depositState.received),
+      required: Number(depositState.required),
+      confirmations: BigInt(depositState.confirmations),
+      requiredConfirmations: BigInt(depositState.requiredConfirmations),
+    };
+  } catch (error) {
+    console.error("Failed to query ckBTC deposit state:", error);
+    return null;
   }
-  return null;
 }
 
-// 创建全局实例
+// Create global instance
 export const internetIdentityService = new InternetIdentityService();
+
+// Verify Principal and Account ID dynamically
+export async function verifyIds(expectedAccountId?: string) {
+  await internetIdentityService.initialize();
+
+  try {
+    // Check if user is authenticated, trigger login if not
+    const isAuthenticated = await internetIdentityService.isUserAuthenticated();
+    if (!isAuthenticated) {
+      console.log("No authenticated user, triggering login...");
+      await internetIdentityService.login();
+    }
+
+    const principal = internetIdentityService.getCurrentPrincipal();
+    if (!principal) {
+      throw new Error(
+        "No Principal available, login failed or user not authenticated",
+      );
+    }
+    console.log("Current Principal ID:", principal.toText());
+
+    const tokenBalanceService =
+      internetIdentityService.ensureTokenBalanceService();
+    const generatedAccountId =
+      await tokenBalanceService.generateAccountId(principal);
+    console.log("Generated Account ID:", generatedAccountId);
+
+    // Optional: Compare with expected Account ID if provided
+    if (expectedAccountId) {
+      if (generatedAccountId === expectedAccountId) {
+        console.log("Account ID matches expected value");
+      } else {
+        console.error("Account ID does not match expected value", {
+          generated: generatedAccountId,
+          expected: expectedAccountId,
+        });
+      }
+    }
+
+    // Query balance to demonstrate functionality
+    const { isLocal } = internetIdentityService.getNetworkConfig();
+    const canisterId = isLocal
+      ? TOKEN_CANISTER_IDS.LOCAL_ICP
+      : TOKEN_CANISTER_IDS.ICP;
+    if (!canisterId) {
+      throw new Error("ICP canister ID not configured");
+    }
+    const result = await internetIdentityService.queryTokenBalance(canisterId, {
+      owner: principal,
+      subaccount: undefined,
+    });
+    const tokenInfo = await internetIdentityService.getTokenInfo(canisterId);
+    console.log(
+      `ICP Balance: ${internetIdentityService.formatBalance(
+        result.balance ?? BigInt(0),
+        tokenInfo.decimals,
+      )} ${tokenInfo.symbol}`,
+    );
+  } catch (error) {
+    console.error(
+      "Verification failed:",
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+}
+
+// Run verification
+verifyIds();
