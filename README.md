@@ -634,6 +634,7 @@ The application uses Internet Identity for secure authentication.
    - Backend: http://localhost:4943
 
 ## Backend Implemented Features
+
 https://dashboard.internetcomputer.org/canister/d72ol-biaaa-aaaai-q32jq-cai
 
 1. Pool Management
