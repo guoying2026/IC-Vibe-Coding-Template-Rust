@@ -634,6 +634,7 @@ The application uses Internet Identity for secure authentication.
    - Backend: http://localhost:4943
 
 ## Backend Implemented Features
+https://dashboard.internetcomputer.org/canister/d72ol-biaaa-aaaai-q32jq-cai
 
 1. Pool Management
    create_pool(pool_config: PoolConfig) - Create new lending pool
@@ -736,3 +737,6 @@ Complete Candid interface can be found in `src/backend/backend.did`:
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 **Built for the Internet Computer ecosystem ❤️**
+
+**Frontend URL**: https://dk57g-aaaaa-aaaai-q32ka-cai.icp0.io/
+**Backend**：https://dashboard.internetcomputer.org/canister/d72ol-biaaa-aaaai-q32jq-cai

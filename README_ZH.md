@@ -713,3 +713,6 @@ approve_token(from, to, amount) - 授权操作
 本项目采用MIT许可证 - 详情请参阅 [LICENSE](LICENSE) 文件。
 
 **为互联网计算机生态系统而构建 ❤️**
+
+**Frontend URL**: https://dk57g-aaaaa-aaaai-q32ka-cai.icp0.io/
+**Backend**：https://dashboard.internetcomputer.org/canister/d72ol-biaaa-aaaai-q32jq-cai
