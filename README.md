@@ -599,7 +599,9 @@ Supported language keys include:
 The application uses Internet Identity for secure authentication.
 
 ## 🚀 Quick Start
+
 ### Prerequisites
+
 - Node.js 23+
 - Rust 1.70+
 - dfx 0.28+
@@ -607,17 +609,20 @@ The application uses Internet Identity for secure authentication.
 ### Installation
 
 1. **Clone the repository**:
+
    ```bash
    git clone <repository-url>
    cd icp
    ```
 
 2. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 3. **Start local development**:
+
    ```bash
    dfx start --clean --background
    dfx deploy
@@ -631,28 +636,28 @@ The application uses Internet Identity for secure authentication.
 ## Backend Implemented Features
 
 1. Pool Management
-create_pool(pool_config: PoolConfig) - Create new lending pool
-update_pool_collateral(token_id, collateral_id) - Add pool collateral
-remove_pool_collateral(token_id, collateral_id) - Remove pool collateral
-increase_maximum_token(token_id, maximum_token) - Increase pool capacity
-decrease_maximum_token(token_id, maximum_token) - Decrease pool capacity
+   create_pool(pool_config: PoolConfig) - Create new lending pool
+   update_pool_collateral(token_id, collateral_id) - Add pool collateral
+   remove_pool_collateral(token_id, collateral_id) - Remove pool collateral
+   increase_maximum_token(token_id, maximum_token) - Increase pool capacity
+   decrease_maximum_token(token_id, maximum_token) - Decrease pool capacity
 
 2. Lending Operations
-supply(token_id, amount) - Deposit tokens to pool
-borrow(token_id, amount) - Borrow tokens from pool
-repay(token_id, amount) - Repay loan
-withdraw(token_id, amount) - Withdraw deposited tokens
-liquidate1(user, repay_token, target_collateral, repay_amount) - Liquidation
+   supply(token_id, amount) - Deposit tokens to pool
+   borrow(token_id, amount) - Borrow tokens from pool
+   repay(token_id, amount) - Repay loan
+   withdraw(token_id, amount) - Withdraw deposited tokens
+   liquidate1(user, repay_token, target_collateral, repay_amount) - Liquidation
 
 3. Asset Management
-update_contract_assets(config: AssetParameter) - Add new assets
-edit_contract_assets(token_id, name, collaterals_factor, interest_rate) - Modify asset parameters
-edit_contract_liquidation(liquidation) - Modify liquidation threshold
+   update_contract_assets(config: AssetParameter) - Add new assets
+   edit_contract_assets(token_id, name, collaterals_factor, interest_rate) - Modify asset parameters
+   edit_contract_liquidation(liquidation) - Modify liquidation threshold
 
 4. System Management
-update_interest_amount() - Settle interest (admin call)
-transfer_token(from, to, amount) - Transfer operation
-approve_token(from, to, amount) - Authorization operation
+   update_interest_amount() - Settle interest (admin call)
+   transfer_token(from, to, amount) - Transfer operation
+   approve_token(from, to, amount) - Authorization operation
 
 Query Functions (Query Methods)
 These functions only read data and don't require user signatures:
@@ -730,4 +735,4 @@ Complete Candid interface can be found in `src/backend/backend.did`:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-**Built for the Internet Computer ecosystem ❤️** 
+**Built for the Internet Computer ecosystem ❤️**
