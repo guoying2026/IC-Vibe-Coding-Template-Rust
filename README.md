@@ -596,4 +596,138 @@ Supported language keys include:
 
 ### Internet Identity Integration
 
-The application uses Internet Identity for secure authentication:
+The application uses Internet Identity for secure authentication.
+
+## 🚀 Quick Start
+### Prerequisites
+- Node.js 23+
+- Rust 1.70+
+- dfx 0.28+
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd icp
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Start local development**:
+   ```bash
+   dfx start --clean --background
+   dfx deploy
+   npm start
+   ```
+
+4. **Access the application**:
+   - Frontend: http://localhost:5173
+   - Backend: http://localhost:4943
+
+## Backend Implemented Features
+
+1. Pool Management
+create_pool(pool_config: PoolConfig) - Create new lending pool
+update_pool_collateral(token_id, collateral_id) - Add pool collateral
+remove_pool_collateral(token_id, collateral_id) - Remove pool collateral
+increase_maximum_token(token_id, maximum_token) - Increase pool capacity
+decrease_maximum_token(token_id, maximum_token) - Decrease pool capacity
+
+2. Lending Operations
+supply(token_id, amount) - Deposit tokens to pool
+borrow(token_id, amount) - Borrow tokens from pool
+repay(token_id, amount) - Repay loan
+withdraw(token_id, amount) - Withdraw deposited tokens
+liquidate1(user, repay_token, target_collateral, repay_amount) - Liquidation
+
+3. Asset Management
+update_contract_assets(config: AssetParameter) - Add new assets
+edit_contract_assets(token_id, name, collaterals_factor, interest_rate) - Modify asset parameters
+edit_contract_liquidation(liquidation) - Modify liquidation threshold
+
+4. System Management
+update_interest_amount() - Settle interest (admin call)
+transfer_token(from, to, amount) - Transfer operation
+approve_token(from, to, amount) - Authorization operation
+
+Query Functions (Query Methods)
+These functions only read data and don't require user signatures:
+
+- User Information
+  get_user_info(principal: Principal) - Get user information
+  register_user(principal, username) - Register user
+
+- Pool Information
+  get_pool_info(token: String) - Get pool details
+  get_real_pool_amount(token: String) - Get real pool deposits
+  get_pool_supply_apy(token: String) - Get deposit APY
+  get_pool_borrow_apy(token: String) - Get borrow APY
+
+- Calculation Functions
+  cal_collateral_value(user: Principal) - Calculate collateral value
+  cal_borrow_value(user: Principal) - Calculate borrow value
+  cal_health_factor(user: Principal) - Calculate health factor
+  max_borrow_amount(user: Principal) - Calculate maximum borrowable amount
+  cal_interest(token: Principal) - Calculate interest rate
+  cal_earning(token: Principal) - Calculate earnings
+
+- System Information
+  get_liquidation_threshold() - Get liquidation threshold
+  get_token_decimals(token: Principal) - Get token decimals
+  get_price(token: Principal) - Get token price (from Pyth oracle)
+
+### Type Safety
+
+## 🔧 Development
+
+## 🚀 Production Deployment
+
+### Mainnet Deployment Steps
+
+1. **Prepare Environment**:
+
+   ```bash
+   dfx config --network ic
+   ```
+
+2. **Deploy Canisters**:
+
+   ```bash
+   dfx deploy --network ic
+   ```
+
+3. **Update Environment Variables**:
+
+   - Set production canister IDs
+   - Configure Internet Identity
+   - Update price oracle endpoints
+
+4. **Verify Deployment**:
+   - Test all functionality
+   - Verify authentication
+   - Check data integration
+   - Test multi-language features
+
+### Security Considerations
+
+- **Access Control**: Admin-only functions for pool management
+- **Input Validation**: Comprehensive parameter validation
+- **Error Handling**: Graceful error handling throughout the system
+- **Rate Limiting**: Rate limiting for critical functions
+- **Authentication**: Secure Internet Identity integration
+
+## 📚 API Documentation
+
+### Candid Interface
+
+Complete Candid interface can be found in `src/backend/backend.did`:
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+**Built for the Internet Computer ecosystem ❤️** 
