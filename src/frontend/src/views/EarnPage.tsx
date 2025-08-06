@@ -54,37 +54,45 @@ export const EarnPage = ({
     const loadVaults = async () => {
       try {
         setVaultsLoading(true);
-        
+
         // 创建后端服务
         const agent = new HttpAgent({ host: "https://ic0.app" });
-        const backendService = createBackendService(agent, "d72ol-biaaa-aaaai-q32jq-cai");
-        
+        const backendService = createBackendService(
+          agent,
+          "d72ol-biaaa-aaaai-q32jq-cai",
+        );
+
         // 获取所有池子
         const pools = await backendService.getAllPools();
-        
+
         // 转换为Vault格式
         const vaultsData: Vault[] = await Promise.all(
           pools.map(async (pool, index) => {
             // 获取池子的详细信息
-            const poolInfo = await backendService.getPoolInfo(pool.token_id.toText());
-            
+            const poolInfo = await backendService.getPoolInfo(
+              pool.token_id.toText(),
+            );
+
             // 计算APY (这里使用池子的supply_apy)
             const apy = poolInfo.supply_apy;
-            
+
             // 计算存款金额 (转换为可读格式)
-            const deposits = Number(pool.amount) / Math.pow(10, pool.pool_account.decimals);
-            
+            const deposits =
+              Number(pool.amount) / Math.pow(10, pool.pool_account.decimals);
+
             // 计算流动性
-            const liquidity = Number(pool.amount) / Math.pow(10, pool.pool_account.decimals);
-            
+            const liquidity =
+              Number(pool.amount) / Math.pow(10, pool.pool_account.decimals);
+
             // 计算分配金额
             const allocation = Number(pool.amount);
-            
+
             // 计算供应份额 (基于使用率)
-            const supplyShare = pool.maximum_token > 0n 
-              ? (Number(pool.amount) / Number(pool.maximum_token)) * 100 
-              : 0;
-            
+            const supplyShare =
+              pool.maximum_token > 0n
+                ? (Number(pool.amount) / Number(pool.maximum_token)) * 100
+                : 0;
+
             return {
               id: index.toString(),
               name: pool.name || `${pool.pool_account.name} Pool`,
@@ -97,7 +105,7 @@ export const EarnPage = ({
               apy,
               liquidity,
               totalDeposits: allocation,
-              collateral: pool.collateral.map(c => c.name),
+              collateral: pool.collateral.map((c) => c.name),
               description: `${pool.name} lending pool with ${apy.toFixed(2)}% APY`,
               performanceData: {
                 nativeApy: apy,
@@ -107,14 +115,14 @@ export const EarnPage = ({
                 chartData: [],
               },
             };
-          })
+          }),
         );
-        
+
         setVaults(vaultsData);
       } catch (error) {
         console.error("Failed to load vaults:", error);
         onError("Failed to load vault data");
-        
+
         // 如果加载失败，使用模拟数据作为后备
         const fallbackVaults: Vault[] = [
           {

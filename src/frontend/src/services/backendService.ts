@@ -84,14 +84,18 @@ interface BackendActor {
   // 池子信息查询
   get_pool_info: (token: string) => Promise<PoolInfo>;
   get_all_pools: () => Promise<Pool[]>;
-  get_pool_info_detailed: (token: string) => Promise<{ Ok: Pool } | { Err: string }>;
+  get_pool_info_detailed: (
+    token: string,
+  ) => Promise<{ Ok: Pool } | { Err: string }>;
   get_real_pool_amount: (token: string) => Promise<number>;
   get_pool_supply_apy: (token: string) => Promise<number>;
   get_pool_borrow_apy: (token: string) => Promise<number>;
 
   // 资产信息查询
   get_all_assets: () => Promise<AssetConfig[]>;
-  get_asset_info: (token: string) => Promise<{ Ok: AssetConfig } | { Err: string }>;
+  get_asset_info: (
+    token: string,
+  ) => Promise<{ Ok: AssetConfig } | { Err: string }>;
 
   // 用户计算
   cal_collateral_value: (user: Principal) => Promise<number>;
@@ -100,8 +104,12 @@ interface BackendActor {
   max_borrow_amount: (user: Principal) => Promise<number>;
 
   // 用户信息查询
-  get_user_supplies: (user: Principal) => Promise<Array<{ principal: Principal; nat: bigint }>>;
-  get_user_borrows: (user: Principal) => Promise<Array<{ principal: Principal; nat: bigint }>>;
+  get_user_supplies: (
+    user: Principal,
+  ) => Promise<Array<{ principal: Principal; nat: bigint }>>;
+  get_user_borrows: (
+    user: Principal,
+  ) => Promise<Array<{ principal: Principal; nat: bigint }>>;
   get_user_total_supply_value: (user: Principal) => Promise<number>;
   get_user_total_borrow_value: (user: Principal) => Promise<number>;
   get_user_health_factor: (user: Principal) => Promise<number>;
@@ -371,8 +379,16 @@ const backendIdlFactory: IDL.InterfaceFactory = ({ IDL }) =>
       [IDL.Vec(IDL.Record({ principal: IDL.Principal, nat: IDL.Nat }))],
       ["query"],
     ),
-    get_user_total_supply_value: IDL.Func([IDL.Principal], [IDL.Float64], ["query"]),
-    get_user_total_borrow_value: IDL.Func([IDL.Principal], [IDL.Float64], ["query"]),
+    get_user_total_supply_value: IDL.Func(
+      [IDL.Principal],
+      [IDL.Float64],
+      ["query"],
+    ),
+    get_user_total_borrow_value: IDL.Func(
+      [IDL.Principal],
+      [IDL.Float64],
+      ["query"],
+    ),
     get_user_health_factor: IDL.Func([IDL.Principal], [IDL.Float64], ["query"]),
 
     // 系统信息
@@ -513,7 +529,9 @@ export class BackendService {
     }
   }
 
-  async getUserSupplies(user: Principal): Promise<Array<{ principal: Principal; nat: bigint }>> {
+  async getUserSupplies(
+    user: Principal,
+  ): Promise<Array<{ principal: Principal; nat: bigint }>> {
     if (!this.actor) throw new Error("Actor not initialized");
     try {
       return await this.actor.get_user_supplies(user);
@@ -523,7 +541,9 @@ export class BackendService {
     }
   }
 
-  async getUserBorrows(user: Principal): Promise<Array<{ principal: Principal; nat: bigint }>> {
+  async getUserBorrows(
+    user: Principal,
+  ): Promise<Array<{ principal: Principal; nat: bigint }>> {
     if (!this.actor) throw new Error("Actor not initialized");
     try {
       return await this.actor.get_user_borrows(user);
