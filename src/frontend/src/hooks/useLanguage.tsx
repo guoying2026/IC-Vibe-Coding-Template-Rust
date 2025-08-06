@@ -176,6 +176,7 @@ const translations: Translations = {
     en: "Try adjusting your filters.",
     zh: "请尝试调整筛选条件。",
   },
+  loading_vaults: { en: "Loading vaults...", zh: "加载金库中..." },
 
   // 页面标题
   page_earn_title: { en: "Earn Bitcoin Yield", zh: "赚取比特币收益" },

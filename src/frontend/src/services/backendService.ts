@@ -20,6 +20,32 @@ export interface UserInfo {
   }>;
 }
 
+// Asset configuration interface
+export interface AssetConfig {
+  name: string;
+  token_id: Principal;
+  account: {
+    owner: Principal;
+    subaccount?: Uint8Array | null;
+  };
+  price_id: string;
+  asset_type: string;
+  decimals: number;
+  collateral_factor: number;
+  interest_rate: number;
+}
+
+// Pool interface
+export interface Pool {
+  name: string;
+  token_id: Principal;
+  pool_account: AssetConfig;
+  collateral: AssetConfig[];
+  amount: bigint;
+  used_amount: bigint;
+  maximum_token: bigint;
+}
+
 // Pool info interface
 export interface PoolInfo {
   name: string;
@@ -57,15 +83,28 @@ interface BackendActor {
 
   // 池子信息查询
   get_pool_info: (token: string) => Promise<PoolInfo>;
+  get_all_pools: () => Promise<Pool[]>;
+  get_pool_info_detailed: (token: string) => Promise<{ Ok: Pool } | { Err: string }>;
   get_real_pool_amount: (token: string) => Promise<number>;
   get_pool_supply_apy: (token: string) => Promise<number>;
   get_pool_borrow_apy: (token: string) => Promise<number>;
+
+  // 资产信息查询
+  get_all_assets: () => Promise<AssetConfig[]>;
+  get_asset_info: (token: string) => Promise<{ Ok: AssetConfig } | { Err: string }>;
 
   // 用户计算
   cal_collateral_value: (user: Principal) => Promise<number>;
   cal_borrow_value: (user: Principal) => Promise<number>;
   cal_health_factor: (user: Principal) => Promise<number>;
   max_borrow_amount: (user: Principal) => Promise<number>;
+
+  // 用户信息查询
+  get_user_supplies: (user: Principal) => Promise<Array<{ principal: Principal; nat: bigint }>>;
+  get_user_borrows: (user: Principal) => Promise<Array<{ principal: Principal; nat: bigint }>>;
+  get_user_total_supply_value: (user: Principal) => Promise<number>;
+  get_user_total_borrow_value: (user: Principal) => Promise<number>;
+  get_user_health_factor: (user: Principal) => Promise<number>;
 
   // 系统信息
   get_liquidation_threshold: () => Promise<number>;
@@ -179,15 +218,162 @@ const backendIdlFactory: IDL.InterfaceFactory = ({ IDL }) =>
       ],
       ["query"],
     ),
+    get_all_pools: IDL.Func(
+      [],
+      [
+        IDL.Vec(
+          IDL.Record({
+            name: IDL.Text,
+            token_id: IDL.Principal,
+            pool_account: IDL.Record({
+              name: IDL.Text,
+              token_id: IDL.Principal,
+              account: IDL.Record({
+                owner: IDL.Principal,
+                subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
+              }),
+              price_id: IDL.Text,
+              asset_type: IDL.Text,
+              decimals: IDL.Nat8,
+              collateral_factor: IDL.Float64,
+              interest_rate: IDL.Float64,
+            }),
+            collateral: IDL.Vec(
+              IDL.Record({
+                name: IDL.Text,
+                token_id: IDL.Principal,
+                account: IDL.Record({
+                  owner: IDL.Principal,
+                  subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
+                }),
+                price_id: IDL.Text,
+                asset_type: IDL.Text,
+                decimals: IDL.Nat8,
+                collateral_factor: IDL.Float64,
+                interest_rate: IDL.Float64,
+              }),
+            ),
+            amount: IDL.Nat,
+            used_amount: IDL.Nat,
+            maximum_token: IDL.Nat,
+          }),
+        ),
+      ],
+      ["query"],
+    ),
+    get_pool_info_detailed: IDL.Func(
+      [IDL.Text],
+      [
+        IDL.Variant({
+          Ok: IDL.Record({
+            name: IDL.Text,
+            token_id: IDL.Principal,
+            pool_account: IDL.Record({
+              name: IDL.Text,
+              token_id: IDL.Principal,
+              account: IDL.Record({
+                owner: IDL.Principal,
+                subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
+              }),
+              price_id: IDL.Text,
+              asset_type: IDL.Text,
+              decimals: IDL.Nat8,
+              collateral_factor: IDL.Float64,
+              interest_rate: IDL.Float64,
+            }),
+            collateral: IDL.Vec(
+              IDL.Record({
+                name: IDL.Text,
+                token_id: IDL.Principal,
+                account: IDL.Record({
+                  owner: IDL.Principal,
+                  subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
+                }),
+                price_id: IDL.Text,
+                asset_type: IDL.Text,
+                decimals: IDL.Nat8,
+                collateral_factor: IDL.Float64,
+                interest_rate: IDL.Float64,
+              }),
+            ),
+            amount: IDL.Nat,
+            used_amount: IDL.Nat,
+            maximum_token: IDL.Nat,
+          }),
+          Err: IDL.Text,
+        }),
+      ],
+      ["query"],
+    ),
     get_real_pool_amount: IDL.Func([IDL.Text], [IDL.Float64], ["query"]),
     get_pool_supply_apy: IDL.Func([IDL.Text], [IDL.Float64], ["query"]),
     get_pool_borrow_apy: IDL.Func([IDL.Text], [IDL.Float64], ["query"]),
+
+    // 资产信息查询
+    get_all_assets: IDL.Func(
+      [],
+      [
+        IDL.Vec(
+          IDL.Record({
+            name: IDL.Text,
+            token_id: IDL.Principal,
+            account: IDL.Record({
+              owner: IDL.Principal,
+              subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
+            }),
+            price_id: IDL.Text,
+            asset_type: IDL.Text,
+            decimals: IDL.Nat8,
+            collateral_factor: IDL.Float64,
+            interest_rate: IDL.Float64,
+          }),
+        ),
+      ],
+      ["query"],
+    ),
+    get_asset_info: IDL.Func(
+      [IDL.Text],
+      [
+        IDL.Variant({
+          Ok: IDL.Record({
+            name: IDL.Text,
+            token_id: IDL.Principal,
+            account: IDL.Record({
+              owner: IDL.Principal,
+              subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
+            }),
+            price_id: IDL.Text,
+            asset_type: IDL.Text,
+            decimals: IDL.Nat8,
+            collateral_factor: IDL.Float64,
+            interest_rate: IDL.Float64,
+          }),
+          Err: IDL.Text,
+        }),
+      ],
+      ["query"],
+    ),
 
     // 用户计算
     cal_collateral_value: IDL.Func([IDL.Principal], [IDL.Float64], ["query"]),
     cal_borrow_value: IDL.Func([IDL.Principal], [IDL.Float64], ["query"]),
     cal_health_factor: IDL.Func([IDL.Principal], [IDL.Float64], ["query"]),
     max_borrow_amount: IDL.Func([IDL.Principal], [IDL.Float64], ["query"]),
+
+    // 用户信息查询
+    get_user_supplies: IDL.Func(
+      [IDL.Principal],
+      [IDL.Vec(IDL.Record({ principal: IDL.Principal, nat: IDL.Nat }))],
+      ["query"],
+    ),
+    get_user_borrows: IDL.Func(
+      [IDL.Principal],
+      [IDL.Vec(IDL.Record({ principal: IDL.Principal, nat: IDL.Nat }))],
+      ["query"],
+    ),
+    get_user_total_supply_value: IDL.Func([IDL.Principal], [IDL.Float64], ["query"]),
+    get_user_total_borrow_value: IDL.Func([IDL.Principal], [IDL.Float64], ["query"]),
+    get_user_health_factor: IDL.Func([IDL.Principal], [IDL.Float64], ["query"]),
 
     // 系统信息
     get_liquidation_threshold: IDL.Func([], [IDL.Float64], ["query"]),
@@ -275,6 +461,108 @@ export class BackendService {
     }
   }
 
+  async getAllPools(): Promise<Pool[]> {
+    if (!this.actor) throw new Error("Actor not initialized");
+    try {
+      return await this.actor.get_all_pools();
+    } catch (error) {
+      console.error("Failed to get all pools:", error);
+      throw error;
+    }
+  }
+
+  async getPoolInfoDetailed(tokenId: string): Promise<Pool | null> {
+    if (!this.actor) throw new Error("Actor not initialized");
+    try {
+      const result = await this.actor.get_pool_info_detailed(tokenId);
+      if ("Ok" in result) {
+        return result.Ok;
+      } else {
+        console.error("Failed to get pool info detailed:", result.Err);
+        return null;
+      }
+    } catch (error) {
+      console.error("Failed to get pool info detailed:", error);
+      throw error;
+    }
+  }
+
+  async getAllAssets(): Promise<AssetConfig[]> {
+    if (!this.actor) throw new Error("Actor not initialized");
+    try {
+      return await this.actor.get_all_assets();
+    } catch (error) {
+      console.error("Failed to get all assets:", error);
+      throw error;
+    }
+  }
+
+  async getAssetInfo(tokenId: string): Promise<AssetConfig | null> {
+    if (!this.actor) throw new Error("Actor not initialized");
+    try {
+      const result = await this.actor.get_asset_info(tokenId);
+      if ("Ok" in result) {
+        return result.Ok;
+      } else {
+        console.error("Failed to get asset info:", result.Err);
+        return null;
+      }
+    } catch (error) {
+      console.error("Failed to get asset info:", error);
+      throw error;
+    }
+  }
+
+  async getUserSupplies(user: Principal): Promise<Array<{ principal: Principal; nat: bigint }>> {
+    if (!this.actor) throw new Error("Actor not initialized");
+    try {
+      return await this.actor.get_user_supplies(user);
+    } catch (error) {
+      console.error("Failed to get user supplies:", error);
+      throw error;
+    }
+  }
+
+  async getUserBorrows(user: Principal): Promise<Array<{ principal: Principal; nat: bigint }>> {
+    if (!this.actor) throw new Error("Actor not initialized");
+    try {
+      return await this.actor.get_user_borrows(user);
+    } catch (error) {
+      console.error("Failed to get user borrows:", error);
+      throw error;
+    }
+  }
+
+  async getUserTotalSupplyValue(user: Principal): Promise<number> {
+    if (!this.actor) throw new Error("Actor not initialized");
+    try {
+      return await this.actor.get_user_total_supply_value(user);
+    } catch (error) {
+      console.error("Failed to get user total supply value:", error);
+      throw error;
+    }
+  }
+
+  async getUserTotalBorrowValue(user: Principal): Promise<number> {
+    if (!this.actor) throw new Error("Actor not initialized");
+    try {
+      return await this.actor.get_user_total_borrow_value(user);
+    } catch (error) {
+      console.error("Failed to get user total borrow value:", error);
+      throw error;
+    }
+  }
+
+  async getUserHealthFactor(user: Principal): Promise<number> {
+    if (!this.actor) throw new Error("Actor not initialized");
+    try {
+      return await this.actor.get_user_health_factor(user);
+    } catch (error) {
+      console.error("Failed to get user health factor:", error);
+      throw error;
+    }
+  }
+
   async getRealPoolAmount(tokenId: string): Promise<number> {
     if (!this.actor) throw new Error("Actor not initialized");
     try {
@@ -322,16 +610,6 @@ export class BackendService {
       return await this.actor.cal_borrow_value(principal);
     } catch (error) {
       console.error("Failed to get user borrow value:", error);
-      throw error;
-    }
-  }
-
-  async getUserHealthFactor(principal: Principal): Promise<number> {
-    if (!this.actor) throw new Error("Actor not initialized");
-    try {
-      return await this.actor.cal_health_factor(principal);
-    } catch (error) {
-      console.error("Failed to get user health factor:", error);
       throw error;
     }
   }

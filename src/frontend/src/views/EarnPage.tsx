@@ -7,6 +7,8 @@ import { useLanguage } from "../hooks/useLanguage";
 import { VaultListItem } from "../components/Earn/VaultListItem";
 import { UserInfoDisplay } from "../components/UserInfoDisplay";
 import { UserInfo } from "../services/InternetIdentityService";
+import { createBackendService } from "../services/backendService";
+import { HttpAgent } from "@dfinity/agent";
 
 // 组件属性接口
 interface EarnPageProps {
@@ -36,6 +38,7 @@ export const EarnPage = ({
 
   // 金库列表状态
   const [vaults, setVaults] = useState<Vault[]>([]);
+  const [loading, setVaultsLoading] = useState(true);
 
   // 筛选文本状态
   const [filter, setFilter] = useState("");
@@ -48,237 +51,103 @@ export const EarnPage = ({
 
   // 初始化金库数据
   useEffect(() => {
-    // 模拟金库数据，匹配图片中的内容
-    const mockVaults: Vault[] = [
-      {
-        id: "1",
-        name: "Spark USDC Vault",
-        curator: "SparkDAO",
-        curatorIcon: "⚡",
-        allocation: 490640000,
-        supplyShare: 81.76,
-        asset: "USDC",
-        deposits: 490.64,
-        apy: 4.54,
-        liquidity: 490590000,
-        totalDeposits: 490640000,
-        collateral: ["₿"],
-        description:
-          "SparkDAO managed USDC vault with optimized yield strategies",
-        performanceData: {
-          nativeApy: 4.54,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 4.54,
-          chartData: [],
-        },
-      },
-      {
-        id: "2",
-        name: "Moonwell Flagship USDC",
-        curator: "B.Protocol",
-        curatorIcon: "🌙",
-        allocation: 50460000,
-        supplyShare: 80.0,
-        asset: "USDC",
-        deposits: 50.46,
-        apy: 7.21,
-        liquidity: 50460000,
-        totalDeposits: 50460000,
-        collateral: ["₿", "🔵", "🟡", "🔶"],
-        description:
-          "Moonwell flagship USDC vault curated by B.Protocol and Block Analitica",
-        performanceData: {
-          nativeApy: 7.21,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 7.21,
-          chartData: [],
-        },
-      },
-      {
-        id: "3",
-        name: "Seamless USDC Vault",
-        curator: "Gauntlet",
-        curatorIcon: "🎯",
-        allocation: 42060000,
-        supplyShare: 80.0,
-        asset: "USDC",
-        deposits: 42.06,
-        apy: 7.25,
-        liquidity: 42050000,
-        totalDeposits: 42060000,
-        collateral: ["₿", "🔵", "🟡", "🔶", "⚡"],
-        description: "Seamless USDC vault with multiple collateral support",
-        performanceData: {
-          nativeApy: 7.25,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 7.25,
-          chartData: [],
-        },
-      },
-      {
-        id: "4",
-        name: "Moonwell Flagship ETH",
-        curator: "Block Analitica",
-        curatorIcon: "📊",
-        allocation: 10290000,
-        supplyShare: 80.0,
-        asset: "WETH",
-        deposits: 10.29,
-        apy: 3.76,
-        liquidity: 10290000,
-        totalDeposits: 10290000,
-        collateral: ["⚡", "🔵", "🟡", "🔶"],
-        description:
-          "Ethereum focused vault with diversified collateral options",
-        performanceData: {
-          nativeApy: 3.76,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 3.76,
-          chartData: [],
-        },
-      },
-      {
-        id: "5",
-        name: "Moonwell Frontier cbBTC",
-        curator: "B.Protocol",
-        curatorIcon: "🌙",
-        allocation: 203350000,
-        supplyShare: 80.0,
-        asset: "cbBTC",
-        deposits: 203.35,
-        apy: 0.72,
-        liquidity: 24000000,
-        totalDeposits: 203350000,
-        collateral: ["₿", "🔵", "🟡"],
-        description: "Coinbase wrapped Bitcoin vault with frontier strategies",
-        performanceData: {
-          nativeApy: 0.72,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 0.72,
-          chartData: [],
-        },
-      },
-      {
-        id: "6",
-        name: "Seamless WETH Vault",
-        curator: "Gauntlet",
-        curatorIcon: "🎯",
-        allocation: 7617270000,
-        supplyShare: 80.0,
-        asset: "WETH",
-        deposits: 7617.27,
-        apy: 4.11,
-        liquidity: 22760000,
-        totalDeposits: 7617270000,
-        collateral: ["⚡", "🔵", "🟡", "🔶"],
-        description:
-          "High-volume WETH vault with institutional-grade management",
-        performanceData: {
-          nativeApy: 4.11,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 4.11,
-          chartData: [],
-        },
-      },
-      {
-        id: "7",
-        name: "Extrafi XLend WETH",
-        curator: "Gauntlet",
-        curatorIcon: "🎯",
-        allocation: 3869410000,
-        supplyShare: 80.0,
-        asset: "WETH",
-        deposits: 3869.41,
-        apy: 4.08,
-        liquidity: 11560000,
-        totalDeposits: 3869410000,
-        collateral: ["⚡", "🔵", "🟡", "🔶"],
-        description: "Extrafi lending protocol WETH vault",
-        performanceData: {
-          nativeApy: 4.08,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 4.08,
-          chartData: [],
-        },
-      },
-      {
-        id: "8",
-        name: "Seamless cbBTC Vault",
-        curator: "Gauntlet",
-        curatorIcon: "🎯",
-        allocation: 82030000,
-        supplyShare: 80.0,
-        asset: "cbBTC",
-        deposits: 82.03,
-        apy: 1.14,
-        liquidity: 9860000,
-        totalDeposits: 82030000,
-        collateral: ["₿", "🔵", "🟡", "🔶"],
-        description: "Seamless cbBTC vault with balanced risk management",
-        performanceData: {
-          nativeApy: 1.14,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 1.14,
-          chartData: [],
-        },
-      },
-      {
-        id: "9",
-        name: "Steakhouse USDC",
-        curator: "Steakhouse Financial",
-        curatorIcon: "🥩",
-        allocation: 9460000,
-        supplyShare: 80.0,
-        asset: "USDC",
-        deposits: 9.46,
-        apy: 6.39,
-        liquidity: 9460000,
-        totalDeposits: 9460000,
-        collateral: ["₿", "🔵", "🟡"],
-        description: "Steakhouse Financial managed USDC vault",
-        performanceData: {
-          nativeApy: 6.39,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 6.39,
-          chartData: [],
-        },
-      },
-      {
-        id: "10",
-        name: "Re7 - eUSD",
-        curator: "RE7 Labs",
-        curatorIcon: "🔬",
-        allocation: 8870000,
-        supplyShare: 80.0,
-        asset: "eUSD",
-        deposits: 8.87,
-        apy: 8.93,
-        liquidity: 8870000,
-        totalDeposits: 8870000,
-        collateral: ["⚡", "🔵", "🟡", "🔶"],
-        description:
-          "RE7 Labs experimental eUSD vault with high yield potential",
-        performanceData: {
-          nativeApy: 8.93,
-          wellBonus: 0,
-          performanceFee: 0,
-          netApy: 8.93,
-          chartData: [],
-        },
-      },
-    ];
+    const loadVaults = async () => {
+      try {
+        setVaultsLoading(true);
+        
+        // 创建后端服务
+        const agent = new HttpAgent({ host: "https://ic0.app" });
+        const backendService = createBackendService(agent, "d72ol-biaaa-aaaai-q32jq-cai");
+        
+        // 获取所有池子
+        const pools = await backendService.getAllPools();
+        
+        // 转换为Vault格式
+        const vaultsData: Vault[] = await Promise.all(
+          pools.map(async (pool, index) => {
+            // 获取池子的详细信息
+            const poolInfo = await backendService.getPoolInfo(pool.token_id.toText());
+            
+            // 计算APY (这里使用池子的supply_apy)
+            const apy = poolInfo.supply_apy;
+            
+            // 计算存款金额 (转换为可读格式)
+            const deposits = Number(pool.amount) / Math.pow(10, pool.pool_account.decimals);
+            
+            // 计算流动性
+            const liquidity = Number(pool.amount) / Math.pow(10, pool.pool_account.decimals);
+            
+            // 计算分配金额
+            const allocation = Number(pool.amount);
+            
+            // 计算供应份额 (基于使用率)
+            const supplyShare = pool.maximum_token > 0n 
+              ? (Number(pool.amount) / Number(pool.maximum_token)) * 100 
+              : 0;
+            
+            return {
+              id: index.toString(),
+              name: pool.name || `${pool.pool_account.name} Pool`,
+              curator: pool.pool_account.name || "System",
+              curatorIcon: "🏦",
+              allocation,
+              supplyShare,
+              asset: pool.pool_account.name,
+              deposits,
+              apy,
+              liquidity,
+              totalDeposits: allocation,
+              collateral: pool.collateral.map(c => c.name),
+              description: `${pool.name} lending pool with ${apy.toFixed(2)}% APY`,
+              performanceData: {
+                nativeApy: apy,
+                wellBonus: 0,
+                performanceFee: 0,
+                netApy: apy,
+                chartData: [],
+              },
+            };
+          })
+        );
+        
+        setVaults(vaultsData);
+      } catch (error) {
+        console.error("Failed to load vaults:", error);
+        onError("Failed to load vault data");
+        
+        // 如果加载失败，使用模拟数据作为后备
+        const fallbackVaults: Vault[] = [
+          {
+            id: "1",
+            name: "ICP Lending Pool",
+            curator: "System",
+            curatorIcon: "🏦",
+            allocation: 1000000,
+            supplyShare: 75.0,
+            asset: "ICP",
+            deposits: 1000.0,
+            apy: 4.5,
+            liquidity: 1000000,
+            totalDeposits: 1000000,
+            collateral: ["₿"],
+            description: "ICP lending pool with 4.5% APY",
+            performanceData: {
+              nativeApy: 4.5,
+              wellBonus: 0,
+              performanceFee: 0,
+              netApy: 4.5,
+              chartData: [],
+            },
+          },
+        ];
+        setVaults(fallbackVaults);
+      } finally {
+        setVaultsLoading(false);
+      }
+    };
 
-    setVaults(mockVaults);
-  }, []);
+    loadVaults();
+  }, [onError]);
 
   // 根据筛选条件过滤金库
   const filteredVaults = vaults.filter((vault) => {
@@ -390,7 +259,11 @@ export const EarnPage = ({
 
           {/* 金库列表 */}
           <div className="mt-2 space-y-2">
-            {filteredVaults.length > 0 ? (
+            {loading ? (
+              <div className="py-12 text-center text-gray-500 dark:text-gray-400">
+                <p className="text-lg font-medium">{t("loading_vaults")}</p>
+              </div>
+            ) : filteredVaults.length > 0 ? (
               filteredVaults.map((vault) => (
                 <VaultListItem
                   key={vault.id}

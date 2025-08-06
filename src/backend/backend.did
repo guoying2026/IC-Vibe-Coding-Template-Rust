@@ -19,6 +19,15 @@ type AssetParameter = record {
   collaterals : opt float64;
 };
 type AssetTypes = variant { ICP; ICRC2 };
+type Pool = record {
+  used_amount : nat;
+  token_id : principal;
+  name : text;
+  collateral : vec AssetConfig;
+  maximum_token : nat;
+  amount : nat;
+  pool_account : AssetConfig;
+};
 type PoolConfig = record {
   token_id : text;
   name : text;
@@ -37,7 +46,9 @@ type PoolInfo = record {
 };
 type Result = variant { Ok : nat64; Err : text };
 type Result_1 = variant { Ok; Err : text };
-type Result_2 = variant { Ok : UserInfo; Err : text };
+type Result_2 = variant { Ok : AssetConfig; Err : text };
+type Result_3 = variant { Ok : Pool; Err : text };
+type Result_4 = variant { Ok : UserInfo; Err : text };
 type UserInfo = record {
   "principal" : principal;
   username : text;
@@ -66,14 +77,23 @@ service : () -> {
   edit_contract_liquidation : (float64) -> ();
   generate_random_subaccount : () -> (blob);
   get_admin : () -> (principal) query;
+  get_all_assets : () -> (vec AssetConfig) query;
+  get_all_pools : () -> (vec Pool) query;
+  get_asset_info : (text) -> (Result_2) query;
   get_liquidation_threshold : () -> (float64) query;
   get_pool_borrow_apy : (text) -> (float64) query;
   get_pool_info : (text) -> (PoolInfo) query;
+  get_pool_info_detailed : (text) -> (Result_3) query;
   get_pool_supply_apy : (text) -> (float64) query;
   get_price : (principal) -> (float64);
   get_real_pool_amount : (text) -> (float64) query;
   get_token_decimals : (principal) -> (nat32) query;
-  get_user_info : (principal) -> (Result_2) query;
+  get_user_borrows : (principal) -> (vec record { principal; nat }) query;
+  get_user_health_factor : (principal) -> (float64) query;
+  get_user_info : (principal) -> (Result_4) query;
+  get_user_supplies : (principal) -> (vec record { principal; nat }) query;
+  get_user_total_borrow_value : (principal) -> (float64) query;
+  get_user_total_supply_value : (principal) -> (float64) query;
   increase_maximum_token : (text, nat) -> ();
   is_authenticated : () -> (bool) query;
   liquidate1 : (principal, principal, principal, nat) -> (Result);
@@ -83,7 +103,7 @@ service : () -> {
   pool_state_repay : (principal, nat) -> ();
   pool_state_supply : (principal, nat) -> ();
   pool_state_withdraw : (principal, nat) -> ();
-  register_user : (principal, text) -> (Result_2);
+  register_user : (principal, text) -> (Result_4);
   remove_pool_collateral : (text, text) -> ();
   repay : (text, nat) -> (Result);
   set_admin : () -> (Result_1);

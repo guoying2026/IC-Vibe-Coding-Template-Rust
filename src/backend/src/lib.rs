@@ -1340,7 +1340,6 @@ fn register_user(principal: Principal, username: String) -> Result<UserInfo, Str
 }
 */
 /*-------------------------Query Functions for Frontend------------------------*/
-/*
 #[query] // 获取所有资产配置
 fn get_all_assets() -> Vec<AssetConfig> {
     STATE.with(|s| {
@@ -1390,7 +1389,7 @@ fn get_user_borrows(user: Principal) -> Vec<(Principal, NumTokens)> {
 }
 
 #[query] // 获取池子详情
-fn get_pool_info(token_id: String) -> Result<Pool, String> {
+fn get_pool_info_detailed(token_id: String) -> Result<Pool, String> {
     let token = Principal::from_text(token_id).map_err(|_| "Invalid token ID")?;
     STATE.with(|s| {
         let state = s.borrow();
@@ -1416,20 +1415,19 @@ fn get_asset_info(token_id: String) -> Result<AssetConfig, String> {
 }
 
 #[query] // 获取用户的总供应价值
-fn get_user_total_supply_value(user: Principal) -> f64 {
-    cal_collateral_value(user)
+async fn get_user_total_supply_value(user: Principal) -> f64 {
+    cal_collateral_value(user).await
 }
 
 #[query] // 获取用户的总借贷价值
-fn get_user_total_borrow_value(user: Principal) -> f64 {
-    cal_borrow_value(user)
+async fn get_user_total_borrow_value(user: Principal) -> f64 {
+    cal_borrow_value(user).await
 }
 
 #[query] // 获取用户的健康因子
-fn get_user_health_factor(user: Principal) -> f64 {
-    cal_health_factor(user)
+async fn get_user_health_factor(user: Principal) -> f64 {
+    cal_health_factor(user).await
 }
-*/
 
 #[query]
 pub fn get_admin() -> Principal {
