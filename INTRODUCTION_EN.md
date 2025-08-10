@@ -28,7 +28,6 @@ Try BLend now👇🏻.
 
 📚 [EN Detailed Docs xD](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/Docs_EN.md)
 
-<<<<<<< HEAD
 📖 [CN 详细文档](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/Docs_CN.md)
 
 📚 [EN Mechanism Docs ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/MECHANISM_EN.md)
@@ -38,6 +37,3 @@ Try BLend now👇🏻.
 📚 [EN User Guide ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/TUTORIAL_EN.md)
 
 📖 [CN 用户指南 ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/TUTORIAL_CN.md)
-=======
-📖 [CN 超级无敌仔细到很啰嗦的文档](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/Docs_CN.md)
->>>>>>> upstream/main

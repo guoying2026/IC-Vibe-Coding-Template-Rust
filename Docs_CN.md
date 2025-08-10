@@ -254,7 +254,6 @@ $$
   - 💰 你获得的利润即为 10% 的差价（0.1 BTC）。
 
 > 📌 每种资产的清算奖励不同。为保障 BTC 的流动性，**清算 BTC 的奖励为最高，为 10%。**
-<<<<<<< HEAD
 
 ## 代币经济 (Tokenomics)
 
@@ -324,5 +323,3 @@ $$
 > 若你是开发者、有创意的 DeFi 实验者或想合作的生态伙伴，欢迎前来互相交流与学习！ [Telegram](https://t.me/potato89757) / [X 账号](https://x.com/potato89757_3) / [GitHub](https://github.com/looikaizhi)
 
 
-=======
->>>>>>> upstream/main
