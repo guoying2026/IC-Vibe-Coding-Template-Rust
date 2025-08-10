@@ -176,6 +176,7 @@ const translations: Translations = {
     en: "Try adjusting your filters.",
     zh: "请尝试调整筛选条件。",
   },
+  loading_vaults: { en: "Loading vaults...", zh: "加载金库中..." },
 
   // 页面标题
   page_earn_title: { en: "Earn Bitcoin Yield", zh: "赚取比特币收益" },
@@ -485,6 +486,7 @@ const translations: Translations = {
   // 代币类型描述
   icp_description: { en: "Internet Computer Protocol", zh: "互联网计算机协议" },
   ckbtc_description: { en: "Chain-key Bitcoin", zh: "链密钥比特币" },
+  cketh_description: { en: "Chain-key Ethereum", zh: "链密钥以太坊" },
   sns1_description: { en: "SNS Governance Token", zh: "SNS治理代币" },
 
   // 自定义代币添加说明

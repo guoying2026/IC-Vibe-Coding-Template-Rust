@@ -100,7 +100,7 @@ export const TokenBalanceExample: React.FC = () => {
         <ul className="mt-1 space-y-1">
           <li>• ICP: {TOKEN_CANISTER_IDS.ICP}</li>
           <li>• ckBTC: {TOKEN_CANISTER_IDS.CKBTC}</li>
-          <li>• SNS-1: {TOKEN_CANISTER_IDS.SNS1}</li>
+          <li>• CKETH: {TOKEN_CANISTER_IDS.CKETH}</li>
           <li>• {t("custom_token_support")}</li>
         </ul>
       </div>

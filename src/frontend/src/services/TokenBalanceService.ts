@@ -1,54 +1,26 @@
-// Token Balance Query Service
-
-import { Actor, HttpAgent, ActorSubclass } from "@dfinity/agent";
+import { HttpAgent, Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { IDL } from "@dfinity/candid";
+import { createAgent } from "@dfinity/utils";
+import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
+import { sha224 } from "js-sha256";
 
 // Account interface
 export interface Account {
   owner: Principal;
-  subaccount?: Uint8Array | null;
+  subaccount: Uint8Array | null;
 }
-
-// ICRC Ledger interface
-export interface ICRCLedger {
-  icrc1_balance_of: (args: {
-    account: { owner: Principal; subaccount: Uint8Array[] | [] };
-  }) => Promise<bigint>;
-  icrc1_name: () => Promise<string>;
-  icrc1_symbol: () => Promise<string>;
-  icrc1_decimals: () => Promise<number>;
-}
-
-// ICRC Ledger IDL
-const icrc1Idl: IDL.InterfaceFactory = ({ IDL }) =>
-  IDL.Service({
-    icrc1_balance_of: IDL.Func(
-      [
-        IDL.Record({
-          account: IDL.Record({
-            owner: IDL.Principal,
-            subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
-          }),
-        }),
-      ],
-      [IDL.Nat],
-      ["query"],
-    ),
-    icrc1_name: IDL.Func([], [IDL.Text], ["query"]),
-    icrc1_symbol: IDL.Func([], [IDL.Text], ["query"]),
-    icrc1_decimals: IDL.Func([], [IDL.Nat8], ["query"]),
-  });
 
 export class TokenBalanceService {
   private agent: HttpAgent;
+  private identity: Identity;
   private tokenInfoCache: Map<
     string,
     { name: string; symbol: string; decimals: number }
   >;
 
-  constructor(agent: HttpAgent) {
+  constructor(agent: HttpAgent, identity: Identity) {
     this.agent = agent;
+    this.identity = identity;
     this.tokenInfoCache = new Map();
     const network = import.meta.env.DFX_NETWORK || "ic";
     if (network === "local") {
@@ -71,56 +43,96 @@ export class TokenBalanceService {
     return { network, isLocal, host };
   }
 
-  // Generate Account from Principal
-  generateAccountFromPrincipal(
+  // Query ICP balance using ICRC interface (since ledger-icp has Buffer issues in browser)
+  async queryICPBalance(
     principal: Principal,
-    subaccount?: Uint8Array,
-  ): Account {
-    return {
-      owner: principal,
-      subaccount: subaccount ?? undefined,
-    };
+  ): Promise<{ balance?: bigint; error?: string }> {
+    try {
+      console.log("Querying ICP balance for principal:", principal.toText());
+
+      const { host } = this.getNetworkConfig();
+
+      // Create agent using @dfinity/utils
+      const agent = await createAgent({
+        identity: this.identity,
+        host,
+      });
+
+      // Use ICRC interface for ICP ledger to avoid Buffer issues
+      const ledger = IcrcLedgerCanister.create({
+        agent,
+        canisterId: Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"), // ICP ledger canister ID
+      });
+
+      // Query balance using ICRC interface
+      const balance = await ledger.balance({
+        owner: principal,
+      });
+
+      console.log("ICP balance:", balance);
+      return { balance };
+    } catch (error) {
+      console.error("Failed to query ICP balance:", error);
+      return { error: error instanceof Error ? error.message : String(error) };
+    }
   }
 
-  // Generate default Account (no subaccount)
-  generateDefaultAccount(principal: Principal): Account {
-    return this.generateAccountFromPrincipal(principal);
-  }
-
-  // Query token balance
-  async queryTokenBalance(
+  // Query ICRC token balance using official ledger-icrc library
+  async queryICRCTokenBalance(
     tokenCanisterId: string,
     principal: Principal,
     subaccount?: Uint8Array,
   ): Promise<{ balance?: bigint; error?: string }> {
     try {
       console.log(
-        `Querying token balance: Canister=${tokenCanisterId}, Principal=${principal.toText()}, Subaccount=${
-          subaccount ? this.toHex(subaccount) : "none"
-        }`,
+        `Querying ICRC token balance for ${tokenCanisterId}, principal:`,
+        principal.toText(),
       );
 
-      const actor = Actor.createActor<ICRCLedger>(icrc1Idl, {
-        agent: this.agent,
-        canisterId: tokenCanisterId,
+      const { host } = this.getNetworkConfig();
+
+      // Create agent using @dfinity/utils
+      const agent = await createAgent({
+        identity: this.identity,
+        host,
       });
 
-      // 正确处理subaccount参数 - ICRC-1期望opt vec nat8
-      const account = {
-        owner: principal,
-        subaccount: subaccount ? [subaccount] : [], // 转换为opt vec nat8格式
-      };
+      // Create ICRC ledger canister
+      const ledger = IcrcLedgerCanister.create({
+        agent,
+        canisterId: Principal.fromText(tokenCanisterId),
+      });
 
-      const balance = await actor.icrc1_balance_of({ account });
-      console.log(`Balance retrieved: ${balance}`);
+      // Query balance
+      const balance = await ledger.balance({
+        owner: principal,
+        subaccount,
+      });
+
+      console.log(`${tokenCanisterId} balance:`, balance);
       return { balance };
     } catch (error) {
-      console.error("Failed to query token balance:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      return {
-        error: `Failed to query ${tokenCanisterId} balance: ${errorMessage}`,
-      };
+      console.error(`Failed to query ${tokenCanisterId} balance:`, error);
+      return { error: error instanceof Error ? error.message : String(error) };
+    }
+  }
+
+  // Query token balance - unified interface
+  async queryTokenBalance(
+    tokenCanisterId: string,
+    principal: Principal,
+    subaccount: Uint8Array | null,
+  ): Promise<{ balance?: bigint; error?: string }> {
+    // Check if it's ICP ledger
+    if (tokenCanisterId === "ryjl3-tyaaa-aaaaa-aaaba-cai") {
+      return await this.queryICPBalance(principal);
+    } else {
+      // For ICRC tokens (ckBTC, ckETH, etc.)
+      return await this.queryICRCTokenBalance(
+        tokenCanisterId,
+        principal,
+        subaccount || undefined,
+      );
     }
   }
 
@@ -130,32 +142,67 @@ export class TokenBalanceService {
     subaccount?: Uint8Array,
   ): Promise<string> {
     try {
+      console.log("TokenBalanceService: 开始生成Account ID");
+      console.log("Principal:", principal.toText());
+
+      // 按照 ICP 官方文档的公式：
+      // account_identifier(principal, subaccount) := CRC32(h) || h
+      // where h = SHA224("\x0Aaccount-id" || principal || subaccount)
+
+      // 1. 构建 padding: "\x0Aaccount-id" (11字节)
       const padding = new Uint8Array([
         0x0a,
         ...new TextEncoder().encode("account-id"),
       ]);
+      console.log("Padding length:", padding.length);
+
+      // 2. 获取 principal 的原始字节
       const principalBytes = principal.toUint8Array();
+      console.log("Principal bytes length:", principalBytes.length);
+
+      // 3. 处理 subaccount: 如果没有提供，使用32字节的0
       const sub = subaccount ?? new Uint8Array(32);
+      console.log("Subaccount length:", sub.length);
+
+      // 4. 拼接数据: padding || principal || subaccount
       const data = new Uint8Array(
         padding.length + principalBytes.length + sub.length,
       );
       data.set(padding, 0);
       data.set(principalBytes, padding.length);
       data.set(sub, padding.length + principalBytes.length);
+      console.log("Total data length:", data.length);
 
-      // SHA-224 hash
-      const hashBuffer = await crypto.subtle.digest("SHA-224", data);
-      const hash = new Uint8Array(hashBuffer);
+      // 5. 计算 SHA224 哈希
+      console.log("开始计算SHA224哈希...");
+      const hash224 = sha224.create();
+      hash224.update(data);
+      const hash = new Uint8Array(hash224.array());
+      console.log("SHA224哈希完成，长度:", hash.length);
 
-      // CRC32 checksum
+      // 6. 计算 CRC32 校验和
+      console.log("开始计算CRC32校验和...");
       const crc32 = this.calculateCRC32(hash);
+      console.log("CRC32校验和完成，长度:", crc32.length);
+
+      // 7. 拼接最终结果: CRC32(h) || h
       const result = new Uint8Array(4 + hash.length);
       result.set(crc32, 0);
       result.set(hash, 4);
+      console.log("最终结果长度:", result.length);
 
-      return this.toHex(result);
+      const hexResult = this.toHex(result);
+      console.log("Account ID生成成功:", hexResult);
+      return hexResult;
     } catch (error) {
-      console.error("Failed to generate Account ID:", error);
+      console.error(
+        "TokenBalanceService: Failed to generate Account ID:",
+        error,
+      );
+      console.error("错误详情:", {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -172,18 +219,50 @@ export class TokenBalanceService {
       }
 
       console.log(`Fetching token info for ${tokenCanisterId}`);
-      const actor = Actor.createActor<ICRCLedger>(icrc1Idl, {
-        agent: this.agent,
-        canisterId: tokenCanisterId,
+
+      const { host } = this.getNetworkConfig();
+      const agent = await createAgent({
+        identity: this.identity,
+        host,
       });
 
-      const [name, symbol, decimals] = await Promise.all([
-        actor.icrc1_name(),
-        actor.icrc1_symbol(),
-        actor.icrc1_decimals(),
-      ]);
+      let tokenInfo: { name: string; symbol: string; decimals: number };
 
-      const tokenInfo = { name, symbol, decimals: Number(decimals) };
+      if (tokenCanisterId === "ryjl3-tyaaa-aaaaa-aaaba-cai") {
+        // ICP token info
+        tokenInfo = {
+          name: "Internet Computer",
+          symbol: "ICP",
+          decimals: 8,
+        };
+      } else {
+        // ICRC token info
+        const ledger = IcrcLedgerCanister.create({
+          agent,
+          canisterId: Principal.fromText(tokenCanisterId),
+        });
+
+        const metadata = await ledger.metadata({});
+        const nameEntry = metadata.find(([key]) => key === "icrc1:name");
+        const symbolEntry = metadata.find(([key]) => key === "icrc1:symbol");
+        const decimalsEntry = metadata.find(
+          ([key]) => key === "icrc1:decimals",
+        );
+
+        const name =
+          nameEntry && "Text" in nameEntry[1]
+            ? nameEntry[1].Text
+            : "Unknown Token";
+        const symbol =
+          symbolEntry && "Text" in symbolEntry[1] ? symbolEntry[1].Text : "";
+        const decimals =
+          decimalsEntry && "Nat" in decimalsEntry[1]
+            ? Number(decimalsEntry[1].Nat)
+            : 8;
+
+        tokenInfo = { name, symbol, decimals };
+      }
+
       this.tokenInfoCache.set(tokenCanisterId, tokenInfo);
       return tokenInfo;
     } catch (error) {
@@ -221,7 +300,7 @@ export class TokenBalanceService {
         crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
       }
     }
-    crc = ~crc >>> 0;
+    crc = (~crc >>> 0) as number;
     const buffer = new Uint8Array(4);
     buffer[0] = (crc >> 24) & 0xff;
     buffer[1] = (crc >> 16) & 0xff;
@@ -242,14 +321,16 @@ export class TokenBalanceService {
 export const TOKEN_CANISTER_IDS = {
   ICP: "ryjl3-tyaaa-aaaaa-aaaba-cai",
   CKBTC: "mxzaz-hqaaa-aaaar-qaada-cai",
-  SNS1: "zfcdd-tqaaa-aaaaq-aaaga-cai",
+  CKETH: "ss2fx-dyaaa-aaaar-qacoq-cai",
   LOCAL_ICP: import.meta.env.LOCAL_ICP_CANISTER_ID || "",
   LOCAL_CKBTC: import.meta.env.LOCAL_CKBTC_CANISTER_ID || "",
+  LOCAL_CKETH: import.meta.env.LOCAL_CKETH_CANISTER_ID || "",
 };
 
 // Create global instance
 export function createTokenBalanceService(
   agent: HttpAgent,
+  identity: Identity,
 ): TokenBalanceService {
-  return new TokenBalanceService(agent);
+  return new TokenBalanceService(agent, identity);
 }

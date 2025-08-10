@@ -1,6 +1,3 @@
-// Internet Identity Service
-// Handles user authentication and backend interaction
-
 import { AuthClient } from "@dfinity/auth-client";
 import {
   Identity,
@@ -8,6 +5,7 @@ import {
   Actor,
   ActorSubclass,
   HttpAgentOptions,
+  AnonymousIdentity,
 } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { IDL } from "@dfinity/candid";
@@ -70,20 +68,6 @@ interface BackendService {
   update_ckbtc_balance: (
     amount: number,
   ) => Promise<{ Ok: number } | { Err: string }>;
-  get_borrow_positions: () => Promise<
-    { Ok: BorrowPosition[] } | { Err: string }
-  >;
-  get_earn_positions: () => Promise<{ Ok: EarnPosition[] } | { Err: string }>;
-  add_borrow_position: (
-    asset: string,
-    amount: number,
-    rate: number,
-  ) => Promise<{ Ok: BorrowPosition } | { Err: string }>;
-  add_earn_position: (
-    asset: string,
-    amount: number,
-    apy: number,
-  ) => Promise<{ Ok: EarnPosition } | { Err: string }>;
 }
 
 // ckBTC deposit state interface
@@ -193,38 +177,6 @@ const idlFactory: IDL.InterfaceFactory = ({ IDL }) =>
       ],
       ["query"],
     ),
-    add_borrow_position: IDL.Func(
-      [IDL.Text, IDL.Float64, IDL.Float64],
-      [
-        IDL.Variant({
-          Ok: IDL.Record({
-            id: IDL.Text,
-            asset: IDL.Text,
-            amount: IDL.Float64,
-            rate: IDL.Float64,
-            health_factor: IDL.Float64,
-          }),
-          Err: IDL.Text,
-        }),
-      ],
-      [],
-    ),
-    add_earn_position: IDL.Func(
-      [IDL.Text, IDL.Float64, IDL.Float64],
-      [
-        IDL.Variant({
-          Ok: IDL.Record({
-            id: IDL.Text,
-            asset: IDL.Text,
-            amount: IDL.Float64,
-            apy: IDL.Float64,
-            earned: IDL.Float64,
-          }),
-          Err: IDL.Text,
-        }),
-      ],
-      [],
-    ),
   });
 
 export class InternetIdentityService {
@@ -324,6 +276,15 @@ export class InternetIdentityService {
     console.log("=== Agent initialization info ===");
     console.log("Using host:", host);
     console.log("Network config:", network);
+    // 新增：打印当前身份principal
+    if (this.identity && typeof this.identity.getPrincipal === "function") {
+      console.log(
+        "[Agent Init] 当前身份 Principal:",
+        this.identity.getPrincipal().toText(),
+      );
+    } else {
+      console.log("[Agent Init] 当前为匿名身份");
+    }
 
     const options: HttpAgentOptions = { identity: this.identity, host };
     this.agent = await HttpAgent.create(options);
@@ -363,7 +324,12 @@ export class InternetIdentityService {
       );
     }
 
-    this.tokenBalanceService = new TokenBalanceService(this.agent);
+    // 重新创建 TokenBalanceService 以使用认证身份
+    this.tokenBalanceService = new TokenBalanceService(
+      this.agent,
+      this.identity,
+    );
+    console.log("TokenBalanceService created with authenticated identity");
   }
 
   // Retry fetching Root Key
@@ -402,21 +368,34 @@ export class InternetIdentityService {
   public ensureTokenBalanceService(): TokenBalanceService {
     if (!this.tokenBalanceService) {
       const { network, isLocal, host } = this.getNetworkConfig();
-      console.log(
-        "Agent not initialized, creating anonymous Agent for balance queries...",
-      );
-      const options: HttpAgentOptions = { host };
-      const agent = HttpAgent.createSync(options);
-      this.tokenBalanceService = new TokenBalanceService(agent);
-      if (isLocal) {
-        agent
-          .fetchRootKey()
-          .catch((error: unknown) =>
-            console.error(
-              "Anonymous Agent Root Key fetch failed:",
-              error instanceof Error ? error.message : String(error),
-            ),
-          );
+
+      // 检查是否有认证身份可用
+      if (this.identity && this.agent) {
+        console.log("使用认证身份创建 TokenBalanceService");
+        this.tokenBalanceService = new TokenBalanceService(
+          this.agent,
+          this.identity,
+        );
+      } else {
+        console.log(
+          "Agent not initialized, creating anonymous Agent for balance queries...",
+        );
+        const options: HttpAgentOptions = { host };
+        const agent = HttpAgent.createSync(options);
+        this.tokenBalanceService = new TokenBalanceService(
+          agent,
+          new AnonymousIdentity(),
+        );
+        if (isLocal) {
+          agent
+            .fetchRootKey()
+            .catch((error: unknown) =>
+              console.error(
+                "Anonymous Agent Root Key fetch failed:",
+                error instanceof Error ? error.message : String(error),
+              ),
+            );
+        }
       }
     }
     return this.tokenBalanceService;
@@ -580,7 +559,7 @@ export class InternetIdentityService {
           userInfo: result.Ok,
         };
         console.log("User auto-registered successfully:", username);
-      } else if (result.Err.includes("User already exists")) {
+      } else if (result.Err.includes("用户已存在")) {
         console.log("User already exists, fetching user info...");
         const userInfoResult = await this.actor.get_user_info(principal);
         this.authState = {
@@ -588,13 +567,33 @@ export class InternetIdentityService {
           principal,
           userInfo: "Ok" in userInfoResult ? userInfoResult.Ok : null,
         };
+        console.log("User info fetched successfully for existing user");
       } else {
         throw new Error(result.Err);
       }
     } catch (error) {
       console.error("Failed to auto-register user:", error);
+      // 如果是用户已存在的错误，不要抛出，而是尝试获取用户信息
+      if (error instanceof Error && error.message.includes("用户已存在")) {
+        console.log("User already exists, attempting to fetch user info...");
+        try {
+          const userInfoResult = await this.actor!.get_user_info(principal);
+          this.authState = {
+            isAuthenticated: true,
+            principal,
+            userInfo: "Ok" in userInfoResult ? userInfoResult.Ok : null,
+          };
+          console.log("User info fetched successfully for existing user");
+          return; // 成功获取用户信息，不抛出错误
+        } catch (fetchError) {
+          console.error(
+            "Failed to fetch user info for existing user:",
+            fetchError,
+          );
+        }
+      }
+      // 对于其他错误，设置基本状态但不抛出
       this.authState = { isAuthenticated: true, principal, userInfo: null };
-      throw error;
     }
   }
 
@@ -640,82 +639,6 @@ export class InternetIdentityService {
     }
   }
 
-  // Get borrow positions
-  async getBorrowPositions(): Promise<BorrowPosition[]> {
-    if (!this.actor) {
-      throw new Error("Actor not initialized");
-    }
-    try {
-      const result = await this.actor.get_borrow_positions();
-      if ("Ok" in result) {
-        return result.Ok;
-      }
-      throw new Error(result.Err);
-    } catch (error) {
-      console.error("Failed to get borrow positions:", error);
-      throw error;
-    }
-  }
-
-  // Get earn positions
-  async getEarnPositions(): Promise<EarnPosition[]> {
-    if (!this.actor) {
-      throw new Error("Actor not initialized");
-    }
-    try {
-      const result = await this.actor.get_earn_positions();
-      if ("Ok" in result) {
-        return result.Ok;
-      }
-      throw new Error(result.Err);
-    } catch (error) {
-      console.error("Failed to get earn positions:", error);
-      throw error;
-    }
-  }
-
-  // Add borrow position
-  async addBorrowPosition(
-    asset: string,
-    amount: number,
-    rate: number,
-  ): Promise<BorrowPosition> {
-    if (!this.actor) {
-      throw new Error("Actor not initialized");
-    }
-    try {
-      const result = await this.actor.add_borrow_position(asset, amount, rate);
-      if ("Ok" in result) {
-        return result.Ok;
-      }
-      throw new Error(result.Err);
-    } catch (error) {
-      console.error("Failed to add borrow position:", error);
-      throw error;
-    }
-  }
-
-  // Add earn position
-  async addEarnPosition(
-    asset: string,
-    amount: number,
-    apy: number,
-  ): Promise<EarnPosition> {
-    if (!this.actor) {
-      throw new Error("Actor not initialized");
-    }
-    try {
-      const result = await this.actor.add_earn_position(asset, amount, apy);
-      if ("Ok" in result) {
-        return result.Ok;
-      }
-      throw new Error(result.Err);
-    } catch (error) {
-      console.error("Failed to add earn position:", error);
-      throw error;
-    }
-  }
-
   // Get authentication state
   getAuthState(): AuthState {
     return this.authState;
@@ -738,7 +661,7 @@ export class InternetIdentityService {
   ): Account {
     return {
       owner: principal,
-      subaccount: subaccount ?? undefined,
+      subaccount: subaccount ?? null,
     };
   }
 
@@ -753,7 +676,7 @@ export class InternetIdentityService {
     account: Account,
   ): Promise<{ balance?: bigint; error?: string }> {
     const tokenBalanceService = this.ensureTokenBalanceService();
-    const subaccount = account.subaccount ?? undefined; // Normalize null to undefined
+    const subaccount = account.subaccount ?? null; // 使用 null 而不是 []
     return await tokenBalanceService.queryTokenBalance(
       tokenCanisterId,
       account.owner,
@@ -765,6 +688,11 @@ export class InternetIdentityService {
   async queryCurrentUserBalance(tokenCanisterId: string): Promise<bigint> {
     const tokenBalanceService = this.ensureTokenBalanceService();
     const principal = this.getCurrentPrincipal();
+    // 新增：打印当前principal
+    console.log(
+      "[Query Balance] 当前 principal:",
+      principal ? principal.toText() : "匿名",
+    );
     if (!principal) {
       console.log(
         "User not logged in, querying balance with anonymous Principal...",
@@ -772,12 +700,14 @@ export class InternetIdentityService {
       const result = await tokenBalanceService.queryTokenBalance(
         tokenCanisterId,
         Principal.anonymous(),
+        null, // 添加缺失的第三个参数
       );
       return result.balance || BigInt(0);
     }
     const result = await tokenBalanceService.queryTokenBalance(
       tokenCanisterId,
       principal,
+      null, // 添加缺失的第三个参数
     );
     return result.balance || BigInt(0);
   }
@@ -944,7 +874,7 @@ export async function verifyIds(expectedAccountId?: string) {
     }
     const result = await internetIdentityService.queryTokenBalance(canisterId, {
       owner: principal,
-      subaccount: undefined,
+      subaccount: null,
     });
     const tokenInfo = await internetIdentityService.getTokenInfo(canisterId);
     console.log(

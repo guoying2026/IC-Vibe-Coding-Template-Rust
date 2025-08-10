@@ -1,55 +1,19 @@
 // 用户信息显示组件
 // User information display component
 
-import { useState } from "react";
-import { UserInfo } from "../services/InternetIdentityService";
-import { CkbtcBalanceManager } from "./CkbtcBalanceManager";
-import { useLanguage } from "../hooks/useLanguage";
+import React, { useState } from "react";
 import { Principal } from "@dfinity/principal";
-import React from "react";
+import { useLanguage } from "../hooks/useLanguage";
+import { UserInfo } from "../services/InternetIdentityService";
+import { internetIdentityService } from "../services/InternetIdentityService";
 import bitcoinLogo from "../assets/btc1.png";
 
-// 使用Web Crypto API实现SHA-224
-async function sha224(data: Uint8Array): Promise<Uint8Array> {
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  return new Uint8Array(hashBuffer);
-}
-
-function toHex(buffer: Uint8Array): string {
-  return Array.prototype.map
-    .call(buffer, (x) => ("00" + x.toString(16)).slice(-2))
-    .join("");
-}
-
-async function accountIdentifierFromPrincipal(
-  principal: Principal,
-  subaccount?: Uint8Array,
-): Promise<string> {
-  try {
-    const padding = new Uint8Array([
-      10,
-      ...new TextEncoder().encode("account-id"),
-    ]);
-    const principalBytes = principal.toUint8Array();
-    const sub = subaccount ?? new Uint8Array(32);
-    const data = new Uint8Array(
-      padding.length + principalBytes.length + sub.length,
-    );
-    data.set(padding, 0);
-    data.set(principalBytes, padding.length);
-    data.set(sub, padding.length + principalBytes.length);
-    const hash = await sha224(data);
-    return toHex(hash);
-  } catch (error) {
-    console.error("生成Account ID失败:", error);
-    return "生成失败";
-  }
-}
+// 移除旧的 accountIdentifierFromPrincipal 函数
+// 移除 sha224 和 toHex 函数
 
 function mask(str: string) {
-  if (!str) return "-";
-  if (str.length <= 10) return str;
-  return str.slice(0, 6) + "****" + str.slice(-4);
+  if (str.length <= 8) return str;
+  return `${str.slice(0, 4)}...${str.slice(-4)}`;
 }
 
 interface UserInfoDisplayProps {
@@ -76,7 +40,7 @@ export const UserInfoDisplay = ({
   }>({ type: null, message: "" });
   const [showRechargeTip, setShowRechargeTip] = useState(false);
 
-  // 安全生成accountId
+  // 使用推荐的 TokenBalanceService.generateAccountId 方法
   React.useEffect(() => {
     const generateAccountId = async () => {
       try {
@@ -84,9 +48,11 @@ export const UserInfoDisplay = ({
           setAccountId("-");
           return;
         }
-        const id = await accountIdentifierFromPrincipal(
-          Principal.fromText(principal.toText()),
-        );
+
+        // 使用推荐的 TokenBalanceService 方法
+        const tokenBalanceService =
+          internetIdentityService.ensureTokenBalanceService();
+        const id = await tokenBalanceService.generateAccountId(principal);
         setAccountId(id);
       } catch (error) {
         console.error("生成Account ID失败:", error);

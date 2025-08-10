@@ -1,13 +1,13 @@
+pub mod auth;
 pub mod types;
 
-use std::collections::HashSet;
-use ic_cdk::{export_candid, init, query, update};
-use std::ops::{Sub, AddAssign, SubAssign, MulAssign};
+use crate::types::{AssetConfig, Pool, UserAccounts, STATE};
 use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_cdk::api::{canister_self, msg_caller, time};
 use ic_cdk::call::Call;
 use ic_cdk::management_canister::http_request;
 use ic_cdk::management_canister::{HttpHeader, HttpMethod, HttpRequestArgs};
+use ic_cdk::{export_candid, init, query, update};
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use icrc_ledger_types::icrc1::transfer::{NumTokens, TransferError};
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
@@ -15,21 +15,27 @@ use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use serde::Serialize;
 use serde_json::Value;
 use sha2::{Digest, Sha256};
-use crate::types::{AssetConfig, Pool, PoolDirection, TokenPair, ICPSWAP, STATE};
+use std::collections::HashSet;
+use std::ops::{AddAssign, MulAssign, Sub, SubAssign};
 
 /*---------------------Main Modules---------------------------*/
 
 #[init] // 初始化池子的admin，先确定唯一作者
 fn init() {
+    let caller = msg_caller();
+    assert!(
+        caller != Principal::anonymous(),
+        "Anonymous caller not allowed"
+    );
     STATE.with(|s| {
         let mut state = s.borrow_mut();
-        state.admin = msg_caller();
+        state.admin = caller;
     });
-    ic_cdk::println!("Lending Contract initialized by {:?}", msg_caller());
+    ic_cdk::println!("Lending Contract initialized by {:?}", caller);
 }
 
 #[derive(Clone, Debug, CandidType, Serialize, Deserialize)]
-struct PoolConfig{
+struct PoolConfig {
     name: String,
     token_id: String,
     collateral: Vec<String>,
@@ -51,7 +57,7 @@ fn create_pool(pool_config: PoolConfig) -> Result<(), String> {
         for c in &pool_config.collateral {
             let cc = Principal::from_text(c).unwrap();
             let collateral = state.assets.get(&cc);
-            if collateral.is_some(){
+            if collateral.is_some() {
                 collaterals.push(collateral.unwrap().clone());
             } else {
                 return Err("No information about this collaterals".to_string());
@@ -97,9 +103,11 @@ async fn supply(token_id: String, amount: NumTokens) -> Result<u64, String> {
 
     // 4. 存入池子的账号(用户授权 + 转入池子)
     approve_token(from, to.pool_account.account, amount.clone())
-        .await.expect("Approve Token failed.");
+        .await
+        .expect("Approve Token failed.");
     let block_index = transfer_token(from, to.pool_account.account, amount.clone())
-        .await.expect("Transfer Token failed.");
+        .await
+        .expect("Transfer Token failed.");
     ic_cdk::println!("block_index: {:?}", block_index);
 
     // 5. 记录用户的Supply数量和池子内代币的容量
@@ -129,11 +137,12 @@ async fn borrow(token_id: String, amount: NumTokens) -> Result<u64, String> {
     let max_borrow = max_borrow_amount(msg_caller()).await;
 
     // 5. 检查用户输入NumTokens <= 当前用户能够借到的最大值
-    let decimals = STATE.with(|s|
-        s.borrow().assets.get(&token).unwrap().clone()).decimals;
+    let decimals = STATE
+        .with(|s| s.borrow().assets.get(&token).unwrap().clone())
+        .decimals;
     let borrow_f64 = numtokens_to_f64(&amount, decimals);
     let total_borrow_value = borrow_f64 * get_price(token).await; // 还要除小数点
-    assert_eq!(total_borrow_value <= max_borrow, true, "Don't borrow too more");
+    assert!(total_borrow_value <= max_borrow, "Don't borrow too more");
 
     // 6. 从池子借出
     // 执行交易， pool转出至用户
@@ -223,18 +232,26 @@ async fn withdraw(token_id: String, amount: NumTokens) -> Result<u64, String> {
 
     // 假设所有的supply的抵押品都满足这个池子 ****************************************
     let mut total_collateral_value = 0.0;
-    for (borrow, amount) in user_account.borrows{
-        let collateral_factor = assets.get(&borrow).unwrap().collateral_factor.clone();
-        let decimals = STATE.with(|s|
-            s.borrow().assets.get(&borrow).unwrap().clone()).decimals;
+    for (borrow, amount) in user_account.borrows {
+        let collateral_factor = assets.get(&borrow).unwrap().collateral_factor;
+        let decimals = STATE
+            .with(|s| s.borrow().assets.get(&borrow).unwrap().clone())
+            .decimals;
         let balance_u64 = numtokens_to_f64(&amount, decimals);
         total_collateral_value += balance_u64 * get_price(borrow).await / collateral_factor;
     }
     // 最大能提取金额
-    let max_withdraw_value = numtokens_to_f64(supply_value.unwrap()) - total_collateral_value;
+    let max_withdraw_value = numtokens_to_f64(supply_value.unwrap(), 8) - total_collateral_value;
+    assert!(max_withdraw_value >= 0.0, "Insufficient collateral");
+
+    let total_withdraw_value = numtokens_to_f64(&amount, 8);
+    assert!(
+        total_withdraw_value <= max_withdraw_value,
+        "Exceeds maximum withdraw"
+    );
 
     // 4. 检查输入NumTokens <= 能提取的最大金额
-    let total_withdraw_value = numtokens_to_f64(&amount);
+    let total_withdraw_value = numtokens_to_f64(&amount, 8);
     assert!(
         total_withdraw_value <= max_withdraw_value,
         "Exceeded the maximum amount that can be withdrawn"
@@ -244,8 +261,8 @@ async fn withdraw(token_id: String, amount: NumTokens) -> Result<u64, String> {
     let (supply_percentage, unused_percentage, safety_vault_percentage) = STATE.with(|s| {
         let state = s.borrow();
         let pool = state.pool.get(&token).unwrap().clone();
-        let amount = numtokens_to_f64(&pool.used_amount.clone());
-        let used_amount = numtokens_to_f64(&pool.used_amount.clone());
+        let amount = numtokens_to_f64(&pool.used_amount.clone(), 8);
+        let used_amount = numtokens_to_f64(&pool.used_amount.clone(), 8);
         let supply_percentage = total_withdraw_value / amount;
         let unused_percentage = (amount - used_amount) / amount;
         let safety_vault_percentage = state.safety_vault_percentage;
@@ -256,9 +273,14 @@ async fn withdraw(token_id: String, amount: NumTokens) -> Result<u64, String> {
         )
     });
     // 不能提取金库（池子设置了保留10%作为预备金）
-    assert_eq!(unused_percentage > safety_vault_percentage, true, "Can't take for the safety vault");
-    assert_eq!(supply_percentage <= unused_percentage - safety_vault_percentage, true,
-               "Some was getting borrow");
+    assert!(
+        unused_percentage > safety_vault_percentage,
+        "Can't take for the safety vault"
+    );
+    assert!(
+        supply_percentage <= unused_percentage - safety_vault_percentage,
+        "Some was getting borrow"
+    );
 
     // 6. 取出
     // 执行交易， 从pool转至用户
@@ -279,7 +301,7 @@ async fn withdraw(token_id: String, amount: NumTokens) -> Result<u64, String> {
 }
 
 #[derive(Clone, Debug, CandidType, Serialize, Deserialize)]
-struct DepositAndSwapArgs{
+struct DepositAndSwapArgs {
     amount_in: String,
     zero_for_one: bool,
     amount_out_minimum: String,
@@ -288,45 +310,91 @@ struct DepositAndSwapArgs{
 }
 
 #[update]
-async fn liquidate1(user: Principal, repay_token: Principal,
-                    target_collateral: Principal, repay_amount: NumTokens)
-                    -> Result<u64, String>{
+async fn liquidate1(
+    user: Principal,
+    repay_token: Principal,
+    target_collateral: Principal,
+    repay_amount: NumTokens,
+) -> Result<u64, String> {
     // 1. 检查借款人存在
-    let user_account = STATE.with(|s|
-        s.borrow().users.get(&user).ok_or("User not found").unwrap().clone());
-    assert_eq!(user_account.borrows.contains_key(&repay_token), true, "Repay Token does not exist");
-    assert_eq!(user_account.borrows.get(&repay_token).unwrap().gt(&NumTokens::default()), true, "Borrow Token is empty");
-    assert_eq!(user_account.supplies.contains_key(&target_collateral), true, "Target collateral does not exist");
-    assert_eq!(user_account.supplies.get(&target_collateral).unwrap().gt(&NumTokens::default()), true, "Supply Token is empty");
+    let user_account = STATE.with(|s| {
+        s.borrow()
+            .users
+            .get(&user)
+            .ok_or("User not found")
+            .unwrap()
+            .clone()
+    });
+    assert!(
+        user_account.borrows.contains_key(&repay_token),
+        "Repay Token does not exist"
+    );
+    assert!(
+        user_account
+            .borrows
+            .get(&repay_token)
+            .unwrap()
+            .gt(&NumTokens::default()),
+        "Borrow Token is empty"
+    );
+    assert!(
+        user_account.supplies.contains_key(&target_collateral),
+        "Target collateral does not exist"
+    );
+    assert!(
+        user_account
+            .supplies
+            .get(&target_collateral)
+            .unwrap()
+            .gt(&NumTokens::default()),
+        "Supply Token is empty"
+    );
 
     // 2. 计算健康因子
     let health_factor = cal_health_factor(user).await;
-    assert_eq!(health_factor < 1.0, true, "Cannot Liquidate");
+    assert!(health_factor < 1.0, "Cannot Liquidate");
 
     // 3. 确保清算人支付 <= 被清算人的债务
     let user_borrow_token = user_account.borrows.get(&repay_token).unwrap().clone();
-    assert_eq!(user_borrow_token.ge(&repay_amount), true, "borrow value must >= repay amount");
+    assert!(
+        user_borrow_token.ge(&repay_amount),
+        "borrow value must >= repay amount"
+    );
 
     // 4. 计算清算人需支付多少金额才能获取全部指定的抵押品
-    let (repay_decimals, target_decimals) = STATE.with(|s|{
+    let (repay_decimals, target_decimals) = STATE.with(|s| {
         let state = s.borrow();
         let assets = state.assets.clone();
-        (assets.get(&repay_token).unwrap().clone().decimals, assets.get(&target_collateral).unwrap().clone().decimals)
+        (
+            assets.get(&repay_token).unwrap().clone().decimals,
+            assets.get(&target_collateral).unwrap().clone().decimals,
+        )
     });
-    let mut repay_amount = numtokens_to_f64(&repay_amount, repay_decimals) * get_price(repay_token).await; // 清算人支付金额
-    let target = user_account.supplies.get(&target_collateral).unwrap().clone(); // 获取清算人想要的抵押品
-    let target_collateral_value = numtokens_to_f64(&target, target_decimals) * get_price(target_collateral).await; // 计算其抵押品的当前价值
+    let mut repay_amount =
+        numtokens_to_f64(&repay_amount, repay_decimals) * get_price(repay_token).await; // 清算人支付金额
+    let target = user_account
+        .supplies
+        .get(&target_collateral)
+        .unwrap()
+        .clone(); // 获取清算人想要的抵押品
+    let target_collateral_value =
+        numtokens_to_f64(&target, target_decimals) * get_price(target_collateral).await; // 计算其抵押品的当前价值
     let user_collateral_value = cal_collateral_value(user).await; // 被清算人的总抵押品价值
-    let user_borrow_value = numtokens_to_f64(&user_borrow_token, repay_decimals) * get_price(repay_token).await; // 被清算人当前借贷价值
+    let user_borrow_value =
+        numtokens_to_f64(&user_borrow_token, repay_decimals) * get_price(repay_token).await; // 被清算人当前借贷价值
     let max_repay_amount = user_borrow_value * target_collateral_value / user_collateral_value; // 获得指定所有抵押品需支付的最大值
     if repay_amount > max_repay_amount {
         repay_amount = max_repay_amount
     }
 
     // 5. 计算清算人可以最多获得多少的被清算人抵押品
-    let get_reward = STATE.with(|s|{
+    let get_reward = STATE.with(|s| {
         let state = s.borrow();
-        let collateral_factor = state.assets.get(&target_collateral).unwrap().collateral_factor;
+        let collateral_factor = state
+            .assets
+            .get(&target_collateral)
+            .unwrap()
+            .collateral_factor;
         collateral_factor + state.liquidation_threshold + state.liquidate_earnings
     });
     let mut get_collateral_value = target_collateral_value * repay_amount / max_repay_amount; // 当前支付金额占多少比例的抵押品
@@ -335,18 +403,27 @@ async fn liquidate1(user: Principal, repay_token: Principal,
 
     // 6. 开启清算
     // 执行交易，用户转入至pool
-    let from = Account{owner: msg_caller(), subaccount:None};
+    let from = Account {
+        owner: msg_caller(),
+        subaccount: None,
+    };
     let to = STATE.with(|s| s.borrow().pool.get(&repay_token).unwrap().clone());
     let amount = f64_to_numtokens(&repay_amount, repay_decimals);
     let block_index = transfer_token(from, to.pool_account.account, amount.clone())
-        .await.expect("Transfer Token failed.");
+        .await
+        .expect("Transfer Token failed.");
     ic_cdk::println!("block_index: {}", block_index);
 
     // 7. 更新user的supply和borrow
-    pool_state_liquidate1(user, repay_token, amount, target_collateral, get_collateral_numtokens);
+    pool_state_liquidate1(
+        user,
+        repay_token,
+        amount,
+        target_collateral,
+        get_collateral_numtokens,
+    );
     ic_cdk::println!("Success creating a repay process");
     Ok(block_index)
-
 }
 
 /*
@@ -458,9 +535,9 @@ async fn swap_with_icpswap(user: Principal, collateral_token: Principal){ // 清
 */
 
 #[update] // 分配收益
-fn distribute_earnings(token: Principal, amount: NumTokens){
+fn distribute_earnings(token: Principal, amount: NumTokens) {
     let total_supply_user = cal_token_amount(token);
-    STATE.with(|s|{
+    STATE.with(|s| {
         let mut state = s.borrow_mut();
         let decimals = state.assets.get(&token).unwrap().decimals;
         let total_reward = numtokens_to_f64(&amount, decimals) * cal_earning(token);
@@ -468,13 +545,16 @@ fn distribute_earnings(token: Principal, amount: NumTokens){
             // 用户持有的存款
             let user_amount = user.supplies.get(&token).unwrap().clone();
             let user_amount_f64 = numtokens_to_f64(&user_amount, decimals);
-            if user_amount_f64 <= 0.0 { continue; }
+            if user_amount_f64 <= 0.0 {
+                continue;
+            }
 
             // 计算用户应得的份额
             let share_f64 = total_reward * user_amount_f64 / total_supply_user;
             let share = f64_to_numtokens(&share_f64, decimals);
-            user.supplies.entry(token).and_modify(|e|
-                *e = e.clone() + share.clone())
+            user.supplies
+                .entry(token)
+                .and_modify(|e| *e = e.clone() + share.clone())
                 .or_insert(share);
         }
     })
@@ -486,11 +566,11 @@ fn pool_state_supply(token: Principal, amount: NumTokens) {
         let mut state = s.borrow_mut();
         {
             let user_account = state.users.entry(msg_caller()).or_default();
-            let supply_amount = user_account.supplies.entry(token.clone()).or_default();
+            let supply_amount = user_account.supplies.entry(token).or_default();
             supply_amount.add_assign(amount.clone()); // user的supply增加
         }
         {
-            let pool_account = state.pool.entry(token.clone()).or_default();
+            let pool_account = state.pool.entry(token).or_default();
             pool_account.amount.add_assign(amount.clone()); // 提供给池子 加
         }
     });
@@ -502,11 +582,11 @@ fn pool_state_borrow(token: Principal, amount: NumTokens) {
         let mut state = s.borrow_mut();
         {
             let user_account = state.users.entry(msg_caller()).or_default();
-            let borrow_amount = user_account.borrows.entry(token.clone()).or_default();
+            let borrow_amount = user_account.borrows.entry(token).or_default();
             borrow_amount.add_assign(amount.clone()); // user的borrow增加
         }
         {
-            let pool_account = state.pool.entry(token.clone()).or_default();
+            let pool_account = state.pool.entry(token).or_default();
             pool_account.used_amount.add_assign(amount.clone()); // 池子token被使用了 加
         }
     });
@@ -518,22 +598,22 @@ fn pool_state_repay(token: Principal, amount: NumTokens) {
         let mut state = s.borrow_mut();
         {
             let user_account = state.users.entry(msg_caller()).or_default();
-            let borrow_amount = user_account.borrows.entry(token.clone()).or_default();
+            let borrow_amount = user_account.borrows.entry(token).or_default();
             borrow_amount.sub_assign(amount.clone()); // 用户的borrow减少
         }
         {
             let user_account = state.users.entry(msg_caller()).or_default();
-            let interest_amount = user_account.interest.entry(token.clone()).or_default();
-            if amount.ge(interest_amount){
-                distribute_earnings(token.clone(), interest_amount.clone()); // 分配利润
+            let interest_amount = user_account.interest.entry(token).or_default();
+            if amount.ge(interest_amount) {
+                distribute_earnings(token, interest_amount.clone()); // 分配利润
                 interest_amount.mul_assign(NumTokens::default());
-            }else{
-                distribute_earnings(token.clone(), amount.clone()); // 分配利润
+            } else {
+                distribute_earnings(token, amount.clone()); // 分配利润
                 interest_amount.sub_assign(amount.clone());
             }
         }
         {
-            let pool_account = state.pool.entry(token.clone()).or_default();
+            let pool_account = state.pool.entry(token).or_default();
             pool_account.used_amount.sub_assign(amount.clone()); // 池子token被归还了 减
         }
     });
@@ -545,54 +625,60 @@ fn pool_state_withdraw(token: Principal, amount: NumTokens) {
         let mut state = s.borrow_mut();
         {
             let user_account = state.users.entry(msg_caller()).or_default();
-            let supply_amount = user_account.supplies.entry(token.clone()).or_default();
+            let supply_amount = user_account.supplies.entry(token).or_default();
             supply_amount.sub_assign(amount.clone()); // user的supply减少
         }
         {
-            let pool_account = state.pool.entry(token.clone()).or_default();
+            let pool_account = state.pool.entry(token).or_default();
             pool_account.amount.sub_assign(amount.clone()); // 从池子提出 减
         }
     })
 }
 
 #[update] // 更新pool和user状态 liquidate1
-fn pool_state_liquidate1(user: Principal, repay_token: Principal, repay_amount: NumTokens,
-                         target_token: Principal, target_amount: NumTokens){
-    STATE.with(|s|{
+fn pool_state_liquidate1(
+    user: Principal,
+    repay_token: Principal,
+    repay_amount: NumTokens,
+    target_token: Principal,
+    target_amount: NumTokens,
+) {
+    STATE.with(|s| {
         let mut state = s.borrow_mut();
         // user 被清算人账户
         {
-            let user_account = state.users.entry(user.clone()).or_default();
-            let user_supply_amount = user_account.supplies.entry(target_token.clone()).or_default();
+            let user_account = state.users.entry(user).or_default();
+            let user_supply_amount = user_account.supplies.entry(target_token).or_default();
             user_supply_amount.sub_assign(target_amount.clone()); // 用户的supply减少
         }
         {
-            let user_account = state.users.entry(user.clone()).or_default();
-            let user_borrow_amount = user_account.borrows.entry(repay_token.clone()).or_default();
+            let user_account = state.users.entry(user).or_default();
+            let user_borrow_amount = user_account.borrows.entry(repay_token).or_default();
             user_borrow_amount.sub_assign(repay_amount.clone()); // 用户的borrow减少
         }
         {
-            let user_account = state.users.entry(user.clone()).or_default();
-            let user_interest_amount = user_account.interest.entry(repay_token.clone()).or_default();
+            let user_account = state.users.entry(user).or_default();
+            let user_interest_amount = user_account.interest.entry(repay_token).or_default();
             // 分配利息给repay池子提供流动性的用户
-            if repay_amount.ge(user_interest_amount){
-                distribute_earnings(repay_token.clone(), user_interest_amount.clone()); // 分配利润
+            if repay_amount.ge(user_interest_amount) {
+                distribute_earnings(repay_token, user_interest_amount.clone()); // 分配利润
                 user_interest_amount.mul_assign(NumTokens::default());
-            }else{
-                distribute_earnings(repay_token.clone(), repay_amount.clone()); // 分配利润
+            } else {
+                distribute_earnings(repay_token, repay_amount.clone()); // 分配利润
                 user_interest_amount.sub_assign(repay_amount.clone());
             }
         }
         {
             // 借款池子
-            let repay_pool = state.pool.entry(repay_token.clone()).or_default();
+            let repay_pool = state.pool.entry(repay_token).or_default();
             // 清算人的账户变化
             repay_pool.used_amount.sub_assign(repay_amount.clone()); // 池子token被归还了 减
         }
         {
             // liquidate 清算人账户
             let liquidate_account = state.users.entry(msg_caller()).or_default();
-            let liquidate_supply_amount = liquidate_account.supplies.entry(target_token.clone()).or_default();
+            let liquidate_supply_amount =
+                liquidate_account.supplies.entry(target_token).or_default();
             // 被清算人的账户变化
             liquidate_supply_amount.add_assign(target_amount.clone()); // 清算人的抵押品增加
         }
@@ -606,15 +692,20 @@ fn check_user_collateral(token: Principal) -> Vec<Principal> {
         // 获取用户所有的抵押品Principal
         let user_set = state.users.get(&msg_caller()).cloned().unwrap();
         // 排除掉小于0的抵押品
-        let user_collateral = user_set.supplies.iter()
-            .filter(|&(_,s)| s.gt(&NumTokens::default()))
-            .map(|(who,_)| who.clone())
+        let user_collateral = user_set
+            .supplies
+            .iter()
+            .filter(|&(_, s)| s.gt(&NumTokens::default()))
+            .map(|(who, _)| *who)
             .collect::<HashSet<Principal>>();
 
         // 找出和池子要求的抵押品，并且要与用户所拥有的抵押品相同
         let pool = state.pool.get(&token).expect("pool not exist").clone();
-        let collateral = pool.collateral.clone().iter()
-            .map(|s| s.token_id.clone())
+        let collateral = pool
+            .collateral
+            .clone()
+            .iter()
+            .map(|s| s.token_id)
             .filter(|a| user_collateral.contains(a))
             .collect::<Vec<Principal>>();
 
@@ -623,21 +714,22 @@ fn check_user_collateral(token: Principal) -> Vec<Principal> {
 }
 
 #[update] // 从Pyth预言机 获取指定代币的价格
-async fn get_price(token: Principal)->f64{
-    let price_id = STATE.with(|s|
-        s.borrow().assets.get(&token).ok_or("Not Support this token").unwrap().price_id.clone()
-    );
-    let url = format!(
-        "https://hermes.pyth.network/api/latest_price_feeds?ids[]={}",
-        price_id
-    );
-    let request_headers = vec![
-        HttpHeader {
-            name: "User-Agent".to_string(),
-            value: "pyth_canister".to_string(),
-        },
-    ];
-    let request = HttpRequestArgs{
+async fn get_price(token: Principal) -> f64 {
+    let price_id = STATE.with(|s| {
+        s.borrow()
+            .assets
+            .get(&token)
+            .ok_or("Not Support this token")
+            .unwrap()
+            .price_id
+            .clone()
+    });
+    let url = format!("https://hermes.pyth.network/api/latest_price_feeds?ids[]={price_id}");
+    let request_headers = vec![HttpHeader {
+        name: "User-Agent".to_string(),
+        value: "pyth_canister".to_string(),
+    }];
+    let request = HttpRequestArgs {
         url: url.clone(),
         method: HttpMethod::GET,
         body: None,
@@ -650,9 +742,16 @@ async fn get_price(token: Principal)->f64{
         .expect("HTTP request failed (Pyth Hermes)");
     let json: Value = serde_json::from_slice(&response.body).expect("JSON decode error");
     let feeds = json.as_array().expect("Expected JSON array");
+    ic_cdk::println!("feeds: {:?}", feeds[0]);
     let feed = &feeds[0];
-    let price_raw = feed["price"].as_f64().expect("Expected price");
-    let expo = feed["expo"].as_i64().expect("Expected expo");
+    let price_obj = &feed["price"];
+    ic_cdk::println!("feed: {:?}", price_obj);
+    let price_raw = price_obj["price"]
+        .as_str()
+        .unwrap()
+        .parse::<f64>()
+        .expect("Expected price");
+    let expo = price_obj["expo"].as_i64().expect("Expected expo");
 
     price_raw * 10f64.powi(expo as i32)
 }
@@ -666,8 +765,8 @@ fn generate_random_subaccount() -> Subaccount {
 
     let mut hash = Sha256::new();
     Digest::update(&mut hash, caller.as_bytes());
-    Digest::update(&mut hash, &now.to_be_bytes());
-    Digest::update(&mut hash, &rnd.to_be_bytes());
+    Digest::update(&mut hash, now.to_be_bytes());
+    Digest::update(&mut hash, rnd.to_be_bytes());
 
     let result = hash.finalize();
     let mut subaccount = Subaccount::default();
@@ -686,7 +785,7 @@ fn edit_contract_liquidation(liquidation: f64) {
 }
 
 #[derive(Clone, Debug, CandidType, Serialize, Deserialize)]
-struct AssetParameter{
+struct AssetParameter {
     name: String,
     token_id: String,
     price_id: String,
@@ -706,20 +805,20 @@ fn update_contract_assets(config: AssetParameter) {
             "Already exists this assets"
         );
 
-        let asset = AssetConfig {
-            name: config.name.clone(),
+        let asset_config = AssetConfig {
+            name: config.name,
             token_id: token,
             account: Account {
                 owner: canister_self(),
-                subaccount: Some(generate_random_subaccount()),
+                subaccount: None,
             },
-            price_id: config.price_id.clone(),
-            asset_type: config.asset_type,
+            price_id: config.price_id,
+            asset_type: crate::types::AssetTypes::ICP, // 默认使用 ICP 类型
             decimals: config.decimals,
-            collateral_factor: config.collaterals.unwrap_or(0.0), // 抵押系数
-            interest_rate: config.interest_rate.unwrap_or(0.0),   // 利息
+            collateral_factor: config.collaterals.unwrap_or(0.0),
+            interest_rate: config.interest_rate.unwrap_or(0.0),
         };
-        state.assets.insert(token, asset);
+        state.assets.insert(token, asset_config);
     })
 }
 
@@ -796,7 +895,7 @@ fn increase_maximum_token(token_id: String, maximum_token: NumTokens) {
         assert!(state.pool.contains_key(&token), "Not exists this pool");
         let pool = state.pool.entry(token).or_default();
         let result = pool.maximum_token.lt(&maximum_token);
-        assert_eq!( result , true, "Must be greater than the current maximum token");
+        assert!(result, "Must be greater than the current maximum token");
         pool.maximum_token = maximum_token;
     })
 }
@@ -810,27 +909,27 @@ fn decrease_maximum_token(token_id: String, maximum_token: NumTokens) {
         assert!(state.pool.contains_key(&token), "Not exists this pool");
         let pool = state.pool.entry(token).or_default();
         let result = pool.amount.lt(&maximum_token);
-        assert_eq!(result, true, "Must be less than the current token's amount");
+        assert!(result, "Must be less than the current token's amount");
         pool.maximum_token = maximum_token;
     })
 }
 
 #[update] // 结算利息（每天一次）
-fn update_interest_amount(){
-    STATE.with(|s|{
+fn update_interest_amount() {
+    STATE.with(|s| {
         let mut state = s.borrow_mut();
         assert_eq!(state.admin, msg_caller(), "Only admin can submit");
         let past_a_day = time().saturating_sub(state.last_time);
-        assert_eq!(past_a_day >= 86_400_000_000_000, true, "{:}", past_a_day);
+        assert!(past_a_day >= 86_400_000_000_000, "{past_a_day:}");
 
         let assets = state.assets.clone();
 
         // 检查所有用户，并对每个借款人进行结算
-        for user_account in state.users.values_mut(){
-            for (token_id, amount) in user_account.borrows.iter_mut(){
-                let decimals = assets.get(&token_id).unwrap().decimals;
+        for user_account in state.users.values_mut() {
+            for (token_id, amount) in user_account.borrows.iter_mut() {
+                let decimals = assets.get(token_id).unwrap().decimals;
                 let current_interest = cal_interest(*token_id); // 当前利率
-                let mut interest_amount = numtokens_to_f64(&amount, decimals);
+                let mut interest_amount = numtokens_to_f64(amount, decimals);
                 interest_amount *= current_interest / 365.0; // 一天结算
                 amount.add_assign(f64_to_numtokens(&interest_amount, decimals));
             }
@@ -842,27 +941,58 @@ fn update_interest_amount(){
 /*-------------------------Calculate Function------------------------*/
 #[query] // 计算利率（先固定利率）
 fn cal_interest(token: Principal) -> f64 {
+    let slope1 = 0.02;
+    let slope2 = 0.4;
+    let utilisation_optimal_rate = 0.7;
     STATE.with(|s| {
         let state = s.borrow();
-        let collateral_factor = state
+        let pool = state.pool.get(&token).ok_or("Error token").unwrap().clone();
+        let base_rate = state.assets.get(&token).unwrap().interest_rate; // 固定利率
+        let decimals = state.assets.get(&token).unwrap().decimals;
+        let used_amount = numtokens_to_f64(&pool.amount, decimals);
+        let amount = numtokens_to_f64(&pool.used_amount, decimals);
+        let u = safe_div(used_amount, amount); // 利用率利率
+        if u <= 0.7 {
+            base_rate + (u / utilisation_optimal_rate) * slope1
+        } else {
+            base_rate
+                + slope1
+                + ((u / utilisation_optimal_rate) / (1.0 - utilisation_optimal_rate)) * slope2
+        }
+    })
+}
+
+fn safe_div(a: f64, b: f64) -> f64 {
+    if b == 0.0 {
+        0.0
+    } else {
+        a / b
+    }
+}
+
+#[query] // 计算收益率
+fn cal_earning(token: Principal) -> f64 {
+    STATE.with(|s| {
+        let state = s.borrow();
+        let interest_rate = state
             .assets
             .get(&token)
             .ok_or("Error token")
             .unwrap()
-            .collateral_factor;
-        collateral_factor
+            .interest_rate;
+        interest_rate
     })
 }
 
 #[query] // 计算抵押资产金额（供应金额）
-async fn cal_collateral_value(user: Principal) -> f64{
+async fn cal_collateral_value(user: Principal) -> f64 {
     let state = STATE.with(|s| s.borrow().clone());
-    let user_account = state.users.get(&user)
-        .ok_or("Error user account").unwrap();
+    let user_account = state.users.get(&user).ok_or("Error user account").unwrap();
     let mut collateral_value = 0.0;
     for (_token_id, _amount) in user_account.supplies.iter() {
-        let decimals = STATE.with(|s|
-            s.borrow().assets.get(&_token_id).unwrap().clone()).decimals;
+        let decimals = STATE
+            .with(|s| s.borrow().assets.get(_token_id).unwrap().clone())
+            .decimals;
         let amount = numtokens_to_f64(_amount, decimals);
         collateral_value += amount * get_price(*_token_id).await;
     }
@@ -870,14 +1000,14 @@ async fn cal_collateral_value(user: Principal) -> f64{
 }
 
 #[query] // 计算借款资产金额
-async fn cal_borrow_value(user: Principal) -> f64{
+async fn cal_borrow_value(user: Principal) -> f64 {
     let state = STATE.with(|s| s.borrow().clone());
-    let user_account = state.users.get(&user)
-        .ok_or("Error user account").unwrap();
+    let user_account = state.users.get(&user).ok_or("Error user account").unwrap();
     let mut borrow_value = 0.0;
     for (_token_id, _amount) in user_account.borrows.iter() {
-        let decimals = STATE.with(|s|
-            s.borrow().assets.get(&_token_id).unwrap().clone()).decimals;
+        let decimals = STATE
+            .with(|s| s.borrow().assets.get(_token_id).unwrap().clone())
+            .decimals;
         let amount = numtokens_to_f64(_amount, decimals);
         borrow_value += amount * get_price(*_token_id).await;
     }
@@ -885,24 +1015,24 @@ async fn cal_borrow_value(user: Principal) -> f64{
 }
 
 #[query] // 计算每个抵押资产 * 抵押系数
-async fn cal_collateral_with_factor(user: Principal) -> f64{
+async fn cal_collateral_with_factor(user: Principal) -> f64 {
     let state = STATE.with(|s| s.borrow().clone());
     let liquidation_threshold = state.liquidation_threshold;
     let assets = state.assets.clone();
-    let user_account = state.users.get(&user)
-        .ok_or("Error user account").unwrap();
+    let user_account = state.users.get(&user).ok_or("Error user account").unwrap();
     let mut collateral_value = 0.0;
     for (_token_id, _amount) in user_account.supplies.iter() {
-        let collateral_factor = assets.get(&_token_id).unwrap().collateral_factor;
-        let decimals = assets.get(&_token_id).unwrap().clone().decimals;
+        let collateral_factor = assets.get(_token_id).unwrap().collateral_factor;
+        let decimals = assets.get(_token_id).unwrap().clone().decimals;
         let amount = numtokens_to_f64(_amount, decimals);
-        collateral_value += amount * get_price(*_token_id).await * (collateral_factor + liquidation_threshold);
+        collateral_value +=
+            amount * get_price(*_token_id).await * (collateral_factor + liquidation_threshold);
     }
     collateral_value
 }
 
 #[query] // 计算健康因子=(c * l)/b
-async fn cal_health_factor(user: Principal) -> f64{
+async fn cal_health_factor(user: Principal) -> f64 {
     let liquidation_factor = get_liquidation_threshold();
     let collateral_value = cal_collateral_with_factor(user).await;
     let borrow_value = cal_borrow_value(user).await;
@@ -910,12 +1040,11 @@ async fn cal_health_factor(user: Principal) -> f64{
 }
 
 #[query] // 计算可借的最大金额
-async fn max_borrow_amount(user: Principal) -> f64{
+async fn max_borrow_amount(user: Principal) -> f64 {
     let liquidation_factor = get_liquidation_threshold();
     let collateral_value = cal_collateral_value(user).await;
     let borrow_value = cal_borrow_value(user).await;
     ((collateral_value * liquidation_factor) - borrow_value) * 0.98 // 不让用户一购买就触发清算
-
 }
 
 #[query] // 计算指定token所有用户存入的代币
@@ -923,59 +1052,70 @@ fn cal_token_amount(token: Principal) -> f64 {
     STATE.with(|s| {
         let state = s.borrow();
         let decimals = state.assets.get(&token).unwrap().decimals;
-        let total_supplies = state.users.values().map(|x| {
-            let amount = x.supplies.get(&token).cloned().unwrap_or_default();
-            numtokens_to_f64(&amount, decimals)
-        }).sum::<f64>();
+        let total_supplies = state
+            .users
+            .values()
+            .map(|x| {
+                let amount = x.supplies.get(&token).cloned().unwrap_or_default();
+                numtokens_to_f64(&amount, decimals)
+            })
+            .sum::<f64>();
         total_supplies
     })
 }
 
-
 /*-----------------------Query Function---------------------------*/
 #[query] // 查询清算最大区间
-fn get_liquidation_threshold() -> f64{
+fn get_liquidation_threshold() -> f64 {
     STATE.with(|s| s.borrow().liquidation_threshold)
 }
 
+#[query] // 获取代币小数位数
+fn get_token_decimals(token: Principal) -> u32 {
+    STATE.with(|s| {
+        let state = s.borrow();
+        state.assets.get(&token).unwrap().decimals
+    })
+}
+
 #[query] // 池子的真实deposit值
-fn get_real_pool_amount(token: String) -> f64{
+fn get_real_pool_amount(token: String) -> f64 {
     let token_id = Principal::from_text(token).unwrap();
     cal_token_amount(token_id)
 }
 
 #[query] // 池子存款的APY
-fn get_pool_supply_apy(token: String) -> f64{
+fn get_pool_supply_apy(token: String) -> f64 {
     let token_id = Principal::from_text(token).unwrap();
-    let apy = cal_earning(token_id);
-    apy * 100.0  // 转换成 %
+    let apy = cal_interest(token_id);
+    apy * 100.0 // 转换成 %
 }
 
 #[query] // 池子借款的APY
-fn get_pool_borrow_apy(token: String) -> f64{
+fn get_pool_borrow_apy(token: String) -> f64 {
     let token_id = Principal::from_text(token).unwrap();
     let apy = cal_interest(token_id);
-    apy * 100.0  // 转换成 %
+    apy * 100.0 // 转换成 %
 }
 
 #[derive(Clone, Debug, CandidType, Serialize, Deserialize)]
-struct PoolInfo{
-    name: String, // 池子名
-    collateral_factor: f64,  // 抵押系数
+struct PoolInfo {
+    name: String,                 // 池子名
+    collateral_factor: f64,       // 抵押系数
     collateral: Vec<AssetConfig>, // 池子接受的抵押品
-    amount: f64,  // 当前池子的代币
-    used_amount: f64, // 当前池子被借出的代币
-    maximum_amount: f64, // 池子的最大容量
-    supply_apy : f64,  // 当前池子的supply apy
-    borrow_apy : f64,  // 当前池子的borrow apy
+    amount: f64,                  // 当前池子的代币
+    used_amount: f64,             // 当前池子被借出的代币
+    maximum_amount: f64,          // 池子的最大容量
+    supply_apy: f64,              // 当前池子的supply apy
+    borrow_apy: f64,              // 当前池子的borrow apy
 }
 #[query] // 查询池子情况
-fn get_pool_info(token: String) -> PoolInfo{
+fn get_pool_info(token: String) -> PoolInfo {
     let token_id = Principal::from_text(token.clone()).unwrap();
     let pool = STATE.with(|s| s.borrow().pool.get(&token_id).unwrap().clone());
     let asset = STATE.with(|s| s.borrow().assets.get(&token_id).unwrap().clone());
     let decimals = get_token_decimals(token_id);
-    PoolInfo{
+    PoolInfo {
         name: pool.name,
         collateral_factor: asset.collateral_factor,
         collateral: pool.collateral,
@@ -987,67 +1127,116 @@ fn get_pool_info(token: String) -> PoolInfo{
     }
 }
 
-#[query] // 查询指定用户的supply token
-fn get_user_supply_token(user: String, token: String) -> f64{
-    let user_id = Principal::from_text(user).unwrap();
-    let token_id = Principal::from_text(token).unwrap();
-    let supply_token = STATE.with(|s|
-        s.borrow().users.get(&user_id).cloned().unwrap_or_default()
-            .supplies.get(&token_id).cloned().unwrap_or_default());
-    numtokens_to_f64(&supply_token, get_token_decimals(token_id))
+#[derive(CandidType, Deserialize, Serialize)]
+struct UserInfo {
+    principal: Principal,
+    username: String,
+    ckbtc_balance: f64,
+    total_earned: f64,
+    total_borrowed: f64,
+    health_factor: f64,
+    created_at: u64,
+    recent_activities: Vec<Activity>,
 }
 
-#[query] // 查询指定用户的borrow token
-fn get_user_borrow_token(user: String, token: String) -> f64{
-    let user_id = Principal::from_text(user).unwrap();
-    let token_id = Principal::from_text(token).unwrap();
-    let supply_token = STATE.with(|s|
-        s.borrow().users.get(&user_id).cloned().unwrap_or_default()
-            .borrows.get(&token_id).cloned().unwrap_or_default());
-    numtokens_to_f64(&supply_token, get_token_decimals(token_id))
+#[derive(CandidType, Deserialize, Serialize)]
+struct Activity {
+    description: String,
+    timestamp: u64,
 }
 
-#[query] // 查询指定用户的interest token
-fn get_user_interest_token(user: String, token: String) -> f64{
-    let user_id = Principal::from_text(user).unwrap();
-    let token_id = Principal::from_text(token).unwrap();
-    let supply_token = STATE.with(|s|
-        s.borrow().users.get(&user_id).cloned().unwrap_or_default()
-            .interest.get(&token_id).cloned().unwrap_or_default());
-    numtokens_to_f64(&supply_token, get_token_decimals(token_id))
+#[query] // 获取用户信息
+async fn get_user_info(principal: Principal) -> Result<UserInfo, String> {
+    // 检查用户是否存在
+    let user_exists = STATE.with(|s| {
+        let state = s.borrow();
+        state.users.contains_key(&principal)
+    });
+
+    if !user_exists {
+        return Err("用户不存在".to_string());
+    }
+
+    // 计算用户数据 - 需要 await
+    let collateral_value = cal_collateral_value(principal).await;
+    let borrow_value = cal_borrow_value(principal).await;
+    let health_factor = cal_health_factor(principal).await;
+
+    // 创建用户信息
+    let user_info = UserInfo {
+        principal,
+        username: format!("User_{}", &principal.to_text()[0..8]),
+        ckbtc_balance: collateral_value,
+        total_earned: collateral_value,
+        total_borrowed: borrow_value,
+        health_factor,
+        created_at: time(),
+        recent_activities: vec![
+            Activity {
+                description: "登录成功".to_string(),
+                timestamp: time(),
+            },
+            Activity {
+                description: "查看借贷池".to_string(),
+                timestamp: time() - 60000_000_000,
+            },
+        ],
+    };
+
+    Ok(user_info)
 }
 
-#[derive(Clone, Debug, CandidType, Serialize, Deserialize)]
-struct UserInfo{
-    supply: f64,
-    borrow: f64,
-    interest: f64,
-}
-#[query] // 查询指定用户的代币数量
-fn get_user_info(user: String, token: String) -> UserInfo{
-    let supply = get_user_supply_token(user.clone(), token.clone());
-    let borrow = get_user_borrow_token(user.clone(), token.clone());
-    let interest = get_user_interest_token(user.clone(), token.clone());
-    UserInfo{supply, borrow, interest }
+#[update] // 注册用户
+fn register_user(principal: Principal, username: String) -> Result<UserInfo, String> {
+    STATE.with(|s| {
+        let mut state = s.borrow_mut();
+
+        // 检查用户是否已存在
+        if state.users.contains_key(&principal) {
+            return Err("用户已存在".to_string());
+        }
+
+        // 创建新用户账户
+        let user_account = UserAccounts::default();
+        state.users.insert(principal, user_account);
+
+        // 创建用户信息
+        let user_info = UserInfo {
+            principal,
+            username,
+            ckbtc_balance: 0.0,
+            total_earned: 0.0,
+            total_borrowed: 0.0,
+            health_factor: 0.0,
+            created_at: time(),
+            recent_activities: vec![Activity {
+                description: "用户注册成功".to_string(),
+                timestamp: time(),
+            }],
+        };
+
+        Ok(user_info)
+    })
 }
 
 /*-------------------Unit Conversion Function--------------------*/
-fn numtokens_to_f64(a: &NumTokens, decimals: u32) -> f64{
+pub fn numtokens_to_f64(a: &NumTokens, decimals: u32) -> f64 {
     let value = a.0.to_string().parse::<f64>().unwrap_or_default();
     value / (10f64.powi(decimals as i32))
 }
 
-fn f64_to_numtokens(a: &f64, decimals: u32) -> NumTokens{
+fn f64_to_numtokens(a: &f64, decimals: u32) -> NumTokens {
     let scale = 1u128.checked_pow(decimals).expect("decimals overflow");
     let scaled = a * (scale as f64);
     let rounded = scaled.round().max(0.0);
-    let int_units = if rounded.is_finite() && rounded >= 0.0{
+    let int_units = if rounded.is_finite() && rounded >= 0.0 {
         rounded as u64
-    }else{ 0u64 };
+    } else {
+        0u64
+    };
 
     NumTokens::from(int_units)
 }
-
 
 /*-------------------------Authentication Functions------------------------*/
 /*
@@ -1151,7 +1340,6 @@ fn register_user(principal: Principal, username: String) -> Result<UserInfo, Str
 }
 */
 /*-------------------------Query Functions for Frontend------------------------*/
-/*
 #[query] // 获取所有资产配置
 fn get_all_assets() -> Vec<AssetConfig> {
     STATE.with(|s| {
@@ -1201,7 +1389,7 @@ fn get_user_borrows(user: Principal) -> Vec<(Principal, NumTokens)> {
 }
 
 #[query] // 获取池子详情
-fn get_pool_info(token_id: String) -> Result<Pool, String> {
+fn get_pool_info_detailed(token_id: String) -> Result<Pool, String> {
     let token = Principal::from_text(token_id).map_err(|_| "Invalid token ID")?;
     STATE.with(|s| {
         let state = s.borrow();
@@ -1227,19 +1415,38 @@ fn get_asset_info(token_id: String) -> Result<AssetConfig, String> {
 }
 
 #[query] // 获取用户的总供应价值
-fn get_user_total_supply_value(user: Principal) -> f64 {
-    cal_collateral_value(user)
+async fn get_user_total_supply_value(user: Principal) -> f64 {
+    cal_collateral_value(user).await
 }
 
 #[query] // 获取用户的总借贷价值
-fn get_user_total_borrow_value(user: Principal) -> f64 {
-    cal_borrow_value(user)
+async fn get_user_total_borrow_value(user: Principal) -> f64 {
+    cal_borrow_value(user).await
 }
 
 #[query] // 获取用户的健康因子
-fn get_user_health_factor(user: Principal) -> f64 {
-    cal_health_factor(user)
+async fn get_user_health_factor(user: Principal) -> f64 {
+    cal_health_factor(user).await
 }
-*/
+
+#[query]
+pub fn get_admin() -> Principal {
+    STATE.with(|s| s.borrow().admin)
+}
+
+#[update]
+pub fn set_admin() -> Result<(), String> {
+    STATE.with(|s| {
+        let mut state = s.borrow_mut();
+        // 直接设置为固定的 admin
+        state.admin =
+            Principal::from_text("utczu-b7es3-fs23u-etjih-qong5-q6zq3-xgbl3-ubhwu-z5lpc-llyko-uae")
+                .unwrap();
+        ic_cdk::println!(
+            "Admin set to: utczu-b7es3-fs23u-etjih-qong5-q6zq3-xgbl3-ubhwu-z5lpc-llyko-uae"
+        );
+        Ok(())
+    })
+}
 
 export_candid!();

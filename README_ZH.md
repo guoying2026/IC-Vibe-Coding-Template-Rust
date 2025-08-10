@@ -427,7 +427,7 @@ $$
 
 ## 📋 前置要求
 
-- Node.js (v18 或更高版本)
+- Node.js (v20 或更高版本)
 - DFX (v0.28.0 或更高版本)
 - Rust (最新稳定版)
 - 用于罐子部署的互联网连接
@@ -629,7 +629,56 @@ const { t, language, toggleLanguage } = useLanguage();
 - **安全显示**: 默认隐藏部分内容，支持显示/隐藏切换
 - **复制功能**: 一键复制到剪贴板
 
-## 📈 数据集成
+## 后端已实现功能
+
+1、池子管理
+create_pool(pool_config: PoolConfig) - 创建新的借贷池
+update_pool_collateral(token_id, collateral_id) - 添加池子抵押品
+remove_pool_collateral(token_id, collateral_id) - 删除池子抵押品
+increase_maximum_token(token_id, maximum_token) - 增加池子容量
+decrease_maximum_token(token_id, maximum_token) - 减少池子容量
+
+2、借贷操作
+supply(token_id, amount) - 存入代币到池子
+borrow(token_id, amount) - 从池子借出代币
+repay(token_id, amount) - 还款
+withdraw(token_id, amount) - 提取存入的代币
+liquidate1(user, repay_token, target_collateral, repay_amount) - 清算
+
+3、资产管理
+update_contract_assets(config: AssetParameter) - 添加新资产
+edit_contract_assets(token_id, name, collaterals_factor, interest_rate) - 修改资产参数
+edit_contract_liquidation(liquidation) - 修改清算阈值
+
+4、系统管理
+update_interest_amount() - 结算利息（管理员调用）
+transfer_token(from, to, amount) - 转账操作
+approve_token(from, to, amount) - 授权操作
+
+查询函数 (Query Methods)
+这些函数只读取数据，不需要用户签名：
+
+- 用户信息
+  get_user_info(principal: Principal) - 获取用户信息
+  register_user(principal, username) - 注册用户
+
+- 池子信息
+  get_pool_info(token: String) - 获取池子详情
+  get_real_pool_amount(token: String) - 获取池子真实存款
+  get_pool_supply_apy(token: String) - 获取存款APY
+  get_pool_borrow_apy(token: String) - 获取借款APY
+
+- 计算函数
+  cal_collateral_value(user: Principal) - 计算抵押品价值
+  cal_borrow_value(user: Principal) - 计算借款价值
+  cal_health_factor(user: Principal) - 计算健康因子
+  max_borrow_amount(user: Principal) - 计算最大可借金额
+  cal_interest(token: Principal) - 计算利率
+  cal_earning(token: Principal) - 计算收益率
+- 系统信息
+  get_liquidation_threshold() - 获取清算阈值
+  get_token_decimals(token: Principal) - 获取代币小数位
+  get_price(token: Principal) - 获取代币价格（从Pyth预言机）
 
 ### 代币余额查询
 
@@ -638,28 +687,6 @@ const { t, language, toggleLanguage } = useLanguage();
 未来要支持更多
 
 ### 类型安全
-
-## 🎨 UI/UX特性
-
-### 现代化设计
-
-- **渐变背景**: 使用蓝色到紫色的渐变背景
-- **卡片式布局**: 信息以卡片形式组织，层次清晰
-- **阴影效果**: 适当的阴影增强视觉层次
-- **圆角设计**: 现代化的圆角元素
-
-### 交互体验
-
-- **点击外部关闭**: 所有模态框支持点击外部区域关闭
-- **复制反馈**: 复制操作提供即时视觉反馈
-- **加载状态**: 异步操作显示加载动画
-- **错误处理**: 友好的错误提示和恢复建议
-
-### 响应式设计
-
-- **移动端适配**: 完整的移动端界面优化
-- **断点设计**: 使用Tailwind CSS的响应式断点
-- **触摸友好**: 按钮和交互元素适合触摸操作
 
 ## 🔧 开发
 
@@ -710,3 +737,6 @@ const { t, language, toggleLanguage } = useLanguage();
 本项目采用MIT许可证 - 详情请参阅 [LICENSE](LICENSE) 文件。
 
 **为互联网计算机生态系统而构建 ❤️**
+
+**Frontend URL**: https://dk57g-aaaaa-aaaai-q32ka-cai.icp0.io/
+**Backend**：https://dashboard.internetcomputer.org/canister/d72ol-biaaa-aaaai-q32jq-cai

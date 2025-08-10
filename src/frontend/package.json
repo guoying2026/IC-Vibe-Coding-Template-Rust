@@ -6,7 +6,7 @@
   "description": "Frontend for IC Vibe application",
   "scripts": {
     "start": "vite",
-    "build": "dfx generate && tsc && vite build",
+    "build": "tsc && vite build",
     "test": "vitest run"
   },
   "dependencies": {
@@ -14,8 +14,13 @@
     "@dfinity/auth-client": "^2.4.1",
     "@dfinity/candid": "^2.4.1",
     "@dfinity/identity": "^2.4.1",
+    "@dfinity/ledger-icp": "^4.0.0",
+    "@dfinity/ledger-icrc": "^2.9.1",
     "@dfinity/principal": "^2.4.1",
+    "@dfinity/utils": "^2.13.2",
+    "buffer": "^6.0.3",
     "cbor": "^10.0.9",
+    "js-sha256": "^0.11.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
