@@ -12,6 +12,11 @@
       },
       "frontend": {}
     },
+    "faucet_backend": {
+      "candid": "src/faucet_backend/faucet_backend.did",
+      "package": "faucet_backend",
+      "type": "rust"
+    },
     "backend": {
       "candid": "src/backend/backend.did",
       "package": "backend",
