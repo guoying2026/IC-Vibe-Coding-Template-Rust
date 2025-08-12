@@ -1,16 +1,40 @@
-# 🟧 BLend: BTC 借贷协议 on ICP
+# ⚡️BLend — 让你的比特币真正“动”起来
 
-## I. 概述 (Overview)
+> 别再让你的 BTC 安静躺着吃灰了。
 
-### 📌 协议介绍 (Introduction)
+**BLend** 是个部署在 Internet Computer（ICP）上的真正去中心化比特币借贷协议。
 
-在当前比特币原生 DeFi 不断发展的背景下，越来越多优秀项目正在探索如何激活 BTC 的链上流动性。然而，我们注意到：
+不包裹资产、不跨链桥接、不妥协安全。
 
-> 尽管赛道正在快速推进，在 **ICP 生态** 中，仍缺乏一个**成熟、原生、且高度优化的 BTC 借贷协议**。
+- 🚀 用 BTC、ETH 或稳定币赚利息  
+- 🔐 以 BTC 抵押借出资金，风险可控  
+- 💥 清算不良债务，获取协议奖励  
+- 🧠 一键登录（支持 Internet Identity），再也不用记助记词
 
-**BLend** 的出现，正是为了填补这一空白，打造一个真正服务于 BTC 用户的原生去中心化金融基础设施。
+### 为什么选择 BLend？
 
----
+因为你的比特币值得更高效的利用。  
+BLend 让它全天候、安全、原生地为你“打工”。
+
+> **ETH 可以质押，Meme 可以耕种，是时候让 BTC 也开始挣钱了。**
+
+
+
+## 项目目录
+
+📚 [EN Detailed Docs xD](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/Docs_EN.md)
+
+📖 [CN 详细文档](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/Docs_CN.md)
+
+📚 [EN Mechanism Docs ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/MECHANISM_EN.md)
+
+📖 [CN 技术文档 ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/MECHANISM_CN.md)
+
+📚 [EN User Guide ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/TUTORIAL_EN.md)
+
+📖 [CN 用户指南 ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/TUTORIAL_CN.md)
+
+以及以下这里就是超技术的Readme文档
 
 ### 💡 协议命名释义（What does “BLend” mean?）
 

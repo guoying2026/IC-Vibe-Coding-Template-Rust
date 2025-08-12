@@ -1,16 +1,43 @@
-# 🟧 BLend: BTC Lending Protocol on ICP
+# ⚡️BLend — Unlock Real Yield from Your Bitcoin
 
-## I. Overview
+> Your BTC deserves better than collecting digital dust.
 
-### 📌 Protocol Introduction
+**BLend** is the first truly decentralized Bitcoin lending protocol on Internet Computer (ICP).  
 
-In the current context of rapidly developing Bitcoin-native DeFi, more and more excellent projects are exploring how to activate on-chain liquidity for BTC. However, we have noticed:
+No wrapped assets. No bridges. No compromises.
 
-> Despite the rapid advancement of the track, in the **ICP ecosystem**, there is still a lack of a **mature, native, and highly optimized BTC lending protocol**.
+- 🚀 Earn interest on BTC, ETH, or stablecoins  
+- 🔐 Borrow against your BTC with clear risk controls  
+- 💥 Liquidate toxic debt, earn protocol rewards  
+- 🧠 Simple login via Internet Identity — no seed phrases
 
-The emergence of **BLend** is precisely to fill this gap and build a truly native decentralized financial infrastructure that serves BTC users.
+### Why BLend?
+
+Because Bitcoin shouldn’t sleep.  
+It should work for you — securely, natively, and 24/7.
+
+> **Stake ETH. Farm memes. But finally... Lend your BTC.**
 
 ---
+
+## The Whole Project Thing
+
+📚 [EN Detailed Docs xD](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/Docs_EN.md)
+
+📖 [CN 详细文档](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/Docs_CN.md)
+
+📚 [EN Mechanism Docs ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/MECHANISM_EN.md)
+
+📖 [CN 技术文档 ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/MECHANISM_CN.md)
+
+📚 [EN User Guide ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/TUTORIAL_EN.md)
+
+📖 [CN 用户指南 ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/TUTORIAL_CN.md)
+
+The very technical proposal is below: 
+
+
+
 
 ### 💡 Protocol Naming Explanation (What does "BLend" mean?)
 
