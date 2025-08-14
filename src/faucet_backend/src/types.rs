@@ -37,10 +37,7 @@ pub struct Configuration {
 // Here, we use Candid en/de-coding. It is not too space efficient, but it is simple to do.
 impl Storable for Configuration {
     fn to_bytes(&self) -> Cow<'_, [u8]> {
-        Cow::Owned(
-            Encode!(&self)
-                .expect("failed to serialize Configuration"),
-        )
+        Cow::Owned(Encode!(&self).expect("failed to serialize Configuration"))
     }
     fn from_bytes(bytes: Cow<'_, [u8]>) -> Self {
         Decode!(&bytes, Configuration).expect("failed to deserialize Configuration")
@@ -55,10 +52,7 @@ pub type TransactionLog = StableVec<StorableTransaction, VMem>;
 pub struct StorableTransaction(pub Transaction);
 impl Storable for StorableTransaction {
     fn to_bytes(&self) -> Cow<'_, [u8]> {
-        Cow::Owned(
-            Encode!(&self.0)
-                .expect("failed to serialize Transaction"),
-        )
+        Cow::Owned(Encode!(&self.0).expect("failed to serialize Transaction"))
     }
     fn from_bytes(bytes: Cow<'_, [u8]>) -> Self {
         Self(Decode!(&bytes, Transaction).expect("failed to deserialize Transaction"))

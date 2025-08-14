@@ -285,9 +285,7 @@ fn classify_tx(tx: TxInfo, now: u64) -> Result<StorableTransaction, TransferErro
             }),
             timestamp: now,
         }));
-    } else if let Some(minter) =
-        read_state(|state| state.configuration.get().minting_account)
-    {
+    } else if let Some(minter) = read_state(|state| state.configuration.get().minting_account) {
         if Some(tx.from) == Some(minter) {
             return Ok(StorableTransaction(Transaction {
                 kind: "mint".to_string(),
@@ -580,15 +578,7 @@ fn delete_token() -> Result<String, String> {
         return Err("Token not created".to_string());
     };
 
-    if msg_caller()
-        != read_state(|state| {
-            state
-                .configuration
-                .get()
-                .minting_account
-                .unwrap()
-                .owner
-        })
+    if msg_caller() != read_state(|state| state.configuration.get().minting_account.unwrap().owner)
     {
         return Err("Caller is not the token creator".to_string());
     };
