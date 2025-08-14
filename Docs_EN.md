@@ -32,7 +32,6 @@ By deeply blending **“B” (Bitcoin)** and **“Lend” (Lending)**, **BLend**
 
 A truly native **decentralized financial infrastructure** — serving BTC users and developers, and driving the growth of Bitcoin DeFi on ICP.
 
-
 ## 🏦 Borrowing: When You Need Extra Firepower
 
 At **BLend**, the interest you pay when borrowing is determined by a **Dynamic Interest Rate Model based on Utilization Rate** — fancy words for a system that adapts as more people borrow.
@@ -92,7 +91,6 @@ This system ensures fair pricing:
 - **Low usage = low rates = good time to borrow**
 - **High usage = higher rates = maybe wait or pay up**
 
-
 ## 💰 Supply Rate
 
 When a user supplies assets into BLend, **10% of the deposited amount** is automatically allocated to the **Reserve Pool** — a buffer designed to absorb risk for the protocol.
@@ -101,7 +99,6 @@ But don’t worry — **that portion still belongs to you**, and you’ll get it
 
 Meanwhile, your **supply rate (interest earnings)** comes from the interest paid by borrowers.  
 After the protocol takes a small fee, the **remaining interest is proportionally distributed** to all liquidity providers based on their share in the pool.
-
 
 ### 💸 Deposit Allocation Logic
 
@@ -139,7 +136,6 @@ $$
 Withdraw_{user} = ReserveShare_{user} + ActiveLiquidity_{user} + AccruedInterest_{user}
 $$
 
-
 ### 📈 Annualized Yield per User
 
 Each user _i_ earns annually:
@@ -152,15 +148,11 @@ $$
 
 That’s it — your deposit works while you chill 😎
 
-
-
 ## 🔁 Repay (Paying Back Your Loan)
 
 "Repay" means returning the BTC (or any other borrowed asset) back to the lending pool — settling both the **principal + interest**, unlocking your collateral, and restoring your borrowing capacity.
 
 At **BLend**, we believe **debt should be transparent**, not buried in confusing APR/APY jargon.
-
-
 
 ### 👤 User Perspective
 
@@ -169,7 +161,6 @@ At **BLend**, we believe **debt should be transparent**, not buried in confusing
 3. Remaining amount goes toward **paying off the principal** (`Borrowed Principal`).
 4. Your **borrow balance and Health Factor** are updated.
 5. If fully repaid, your **collateral is unlocked and withdrawable**.
-
 
 ### 🛠 Under the Hood (Tech Flow)
 
@@ -187,7 +178,6 @@ At **BLend**, we believe **debt should be transparent**, not buried in confusing
 
 "Withdraw" means taking out your supplied BTC (or other assets), along with the **interest you've earned** — either partially or in full.
 
-
 ### 👤 User Flow
 
 1. User initiates a `Withdraw` action — partial or full.
@@ -197,7 +187,6 @@ At **BLend**, we believe **debt should be transparent**, not buried in confusing
 3. If pool has enough liquidity → **instant payout** 🟢
 4. If your request exceeds available funds → system enables **Slow Withdraw Mode™** 🐢 (more on that later)
 5. Once processed, your **supply status is updated** accordingly.
-
 
 > ⛽️ TL;DR: Repay clears your debt, Withdraw reclaims your assets. BLend ensures both are smooth, transparent, and user-first.
 
@@ -214,17 +203,15 @@ This process is called **Liquidation**.
 
 > 💡 Liquidation is a **core risk management mechanism** in any DeFi lending protocol.
 
-
 <div align="center">
 
-| Parameter                  | Description                                           | ICP   | BTC/ETH | USDC  |
-|---------------------------|-------------------------------------------------------|-------|---------|--------|
-| **Collateral Factor**     | Portion of collateral value allowed to be borrowed    | 0.75  | 0.70    | 0.80   |
-| **Liquidation Threshold** | Max borrowing ratio before triggering liquidation     | 0.80  | 0.75    | 0.85   |
-| **Liquidation Bonus**     | Discount (bonus) granted to the liquidator            | 0.05  | 0.05    | 0.05   |
+| Parameter                 | Description                                        | ICP  | BTC/ETH | USDC |
+| ------------------------- | -------------------------------------------------- | ---- | ------- | ---- |
+| **Collateral Factor**     | Portion of collateral value allowed to be borrowed | 0.75 | 0.70    | 0.80 |
+| **Liquidation Threshold** | Max borrowing ratio before triggering liquidation  | 0.80 | 0.75    | 0.85 |
+| **Liquidation Bonus**     | Discount (bonus) granted to the liquidator         | 0.05 | 0.05    | 0.05 |
 
 </div>
-
 
 The **Health Factor (HF)** is like your wallet’s cholesterol level —  
 a quick check to see if your position is healthy or on the verge of collapse 🫣.
@@ -237,7 +224,6 @@ $$
 
 - If **HF ≥ 1**: You're good! Your account is healthy and safe 🟢
 - If **HF < 1**: Danger zone! You’re undercollateralized and eligible for liquidation 🔥
-
 
 #### 📊 Health Factor with Multiple Collateral Assets
 
@@ -261,7 +247,6 @@ In plain English:
 
 > The higher your HF, the safer your position. Think of it as your DeFi "credit score" — and yes, we’re watching it in real time 👀.
 
-
 ### 🔥 Liquidation Flow (Simplified Version)
 
 1. Anyone spots an account with a **Health Factor (HF) < 1** — Uh-oh!
@@ -282,8 +267,6 @@ In plain English:
 - You lose part of your collateral and pay the price — literally — via liquidation penalties.
 - ✅ Pro tip: Top up or repay when HF gets close to 1 to avoid the axe.
 
-
-
 ### 🦾 Liquidator's POV: “How do I make money here?”
 
 - Liquidators repay a portion (or all) of someone else's bad debt.
@@ -296,70 +279,69 @@ In plain English:
 > 📌 Different assets have different liquidation bonuses.  
 > For maximum incentive, **BTC gives the highest reward: 10%** — because it’s king 👑.
 
-
 ## 🧪 Tokenomics
 
 **Token Name**: BLEND 👩🏻‍🔬  
-Other details: *Coming soon. Sit tight!*
-
+Other details: _Coming soon. Sit tight!_
 
 ## 📍 BLend Protocol Roadmap
 
 ### ✅ Mid-July 2025｜**The Birth of BLend**
-- Officially launched on the ICP ecosystem, specializing in BTC lending  
-- Integrated wallet extensions & identity authorization (e.g., Internet Identity)  
-- Pyth Network oracle connected for real-time pricing accuracy  
-- Supported deposits & loans for core assets (BTC, ETH, ICP, USDC)  
-- Introduced Health Factor mechanism and one-click liquidation logic  
-- Initial release of the withdrawal throttling system and dynamic interest rate model  
+
+- Officially launched on the ICP ecosystem, specializing in BTC lending
+- Integrated wallet extensions & identity authorization (e.g., Internet Identity)
+- Pyth Network oracle connected for real-time pricing accuracy
+- Supported deposits & loans for core assets (BTC, ETH, ICP, USDC)
+- Introduced Health Factor mechanism and one-click liquidation logic
+- Initial release of the withdrawal throttling system and dynamic interest rate model
 
 ---
 
 ### 🔜 Q3 2025｜**Mainnet Optimization Phase**
-- Enhanced user interface & interest rate curve display  
-- Live TVL tracking and liquidation leaderboard  
-- Partial liquidation support goes live  
-- Documentation portal & developer API endpoints released  
+
+- Enhanced user interface & interest rate curve display
+- Live TVL tracking and liquidation leaderboard
+- Partial liquidation support goes live
+- Documentation portal & developer API endpoints released
 
 ---
 
 ### 🚧 Q4 2025｜**Feature Expansion & More Assets**
-- Onboard more blue-chip assets (e.g., SOL, SUI)  
-- Launch of dual-mode vaults: “Stable Yield” & “Flexible Yield”  
-- Allow users to customize collateral factor combinations  
+
+- Onboard more blue-chip assets (e.g., SOL, SUI)
+- Launch of dual-mode vaults: “Stable Yield” & “Flexible Yield”
+- Allow users to customize collateral factor combinations
 - Start building real-time analytics: APR curves, Health Factor trends, etc.
 
 ---
 
 ### 🌉 Q1 2026｜**Cross-chain Expansion & Multi-pool Support**
-- Begin cross-chain rollout: Arbitrum, Sui, and more  
-- Introduce Multi-pool Routing engine  
-- Cross-chain collateral & lending: BTC on ICP ↔ ETH on Arbitrum  
-- Integrate with LSD and RWA sector products for wider utility  
+
+- Begin cross-chain rollout: Arbitrum, Sui, and more
+- Introduce Multi-pool Routing engine
+- Cross-chain collateral & lending: BTC on ICP ↔ ETH on Arbitrum
+- Integrate with LSD and RWA sector products for wider utility
 
 ---
 
 ### 🪙 Q2 2026｜**BLend Master Plan**
-- Launch risk-isolated vaults & institutional-grade pools  
-- Release “1-click Refinance” tool  
-- Develop on-chain credit scoring system  
-- Kick off Beta for undercollateralized loans  
-- Pilot flash loan modules—yes, even on ICP  
+
+- Launch risk-isolated vaults & institutional-grade pools
+- Release “1-click Refinance” tool
+- Develop on-chain credit scoring system
+- Kick off Beta for undercollateralized loans
+- Pilot flash loan modules—yes, even on ICP
 
 ---
 
 ### 🌌 H2 2026｜**Tokenomics Launch (Preview)**
 
-- Launch governance token: **$BLEND**  
-- Introduce incentive system: deposit mining, liquidation rewards, active user bonuses  
-- Roll out BLEND DAO governance module  
-- Release tokenomics whitepaper & DAO community forum  
+- Launch governance token: **$BLEND**
+- Introduce incentive system: deposit mining, liquidation rewards, active user bonuses
+- Roll out BLEND DAO governance module
+- Release tokenomics whitepaper & DAO community forum
 
-
-
-> 🛠️ This roadmap outlines our vision—actual delivery timelines may vary.  
-> 
+> 🛠️ This roadmap outlines our vision—actual delivery timelines may vary.
+>
 > Are you a builder, DeFi dreamer, or just a curious degenerate? Come build with us!  
 > [Telegram](https://t.me/potato89757) / [X](https://x.com/potato89757_3) / [GitHub](https://github.com/looikaizhi)
-
-

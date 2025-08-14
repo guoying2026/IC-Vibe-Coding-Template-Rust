@@ -22,8 +22,6 @@ When a user deposits assets into the protocol, the system processes the transact
 5. **Record User Deposit Info**  
    Update the user’s supply record and the total pool balance for that token.
 
-
-
 ## 🛠 Borrow Logic
 
 When a user attempts to borrow assets, the system follows these steps to ensure safety and compliance:
@@ -48,8 +46,6 @@ When a user attempts to borrow assets, the system follows these steps to ensure 
 
 7. **Update Borrow Status**  
    Increase the user's `BorrowedAmount` and record the interest accrual timestamp.
-
-
 
 ## 🔁 Repay Logic
 
@@ -79,8 +75,6 @@ When a user initiates a repayment, the protocol performs the following operation
 8. **Update Borrow Records & Health Factor**  
    Refresh the user’s loan data and recalculate their account health factor.
 
-
-
 ## 🧾 Withdraw Logic
 
 Withdrawals aren’t as simple as hitting “withdraw.” The protocol ensures it’s safe to release your funds:
@@ -109,8 +103,6 @@ Withdrawals aren’t as simple as hitting “withdraw.” The protocol ensures i
 8. **Update Pool & User States**  
    Reflect updated `Supply` and pool liquidity states in the system.
 
-
-
 ## 💥 Liquidate Logic
 
 When a borrower's health factor drops below the liquidation threshold, third-party liquidators can step in. Here's how it works:
@@ -133,8 +125,6 @@ When a borrower's health factor drops below the liquidation threshold, third-par
 6. **Update Borrower & Pool Status**  
    Refresh the borrower’s `Borrow` and `Supply` records, and update the pool’s available liquidity.
 
-
-
 ## 🧠 Why We Use Pyth Network
 
 We chose **Pyth Network** as our oracle provider for a few practical reasons — one of them being our backend engineer is thrifty (in a good way). Pyth is **open-source and free**, and he was already familiar with it.
@@ -143,16 +133,12 @@ While **ICP offers its own native oracle**, it’s more expensive in terms of ga
 
 Security and reliability were also critical — Pyth is a leading oracle with a strong track record and robust infrastructure.
 
-
-
 ## 📈 Price Update Frequency & Mechanics
 
-- **Frontend**: Updates every second to display real-time prices.  
+- **Frontend**: Updates every second to display real-time prices.
 - **Backend**: Only updates prices when sensitive functions (e.g., borrow, repay) are triggered.
 
 This hybrid model ensures **user responsiveness while minimizing gas usage**.
-
-
 
 ## 🚨 Oracle Failure Handling
 

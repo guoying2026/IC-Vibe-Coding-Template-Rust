@@ -2,13 +2,13 @@
 
 > Your BTC deserves better than collecting digital dust.
 
-**BLend** is the first truly decentralized Bitcoin lending protocol on Internet Computer (ICP).  
+**BLend** is the first truly decentralized Bitcoin lending protocol on Internet Computer (ICP).
 
 No wrapped assets. No bridges. No compromises.
 
-- 🚀 Earn interest on BTC, ETH, or stablecoins  
-- 🔐 Borrow against your BTC with clear risk controls  
-- 💥 Liquidate toxic debt, earn protocol rewards  
+- 🚀 Earn interest on BTC, ETH, or stablecoins
+- 🔐 Borrow against your BTC with clear risk controls
+- 💥 Liquidate toxic debt, earn protocol rewards
 - 🧠 Simple login via Internet Identity — no seed phrases
 
 ### Why BLend?
@@ -34,10 +34,7 @@ It should work for you — securely, natively, and 24/7.
 
 📖 [CN 用户指南 ](https://github.com/guoying2026/IC-Vibe-Coding-Template-Rust/blob/main/TUTORIAL_CN.md)
 
-The very technical proposal is below: 
-
-
-
+The very technical proposal is below:
 
 ### 💡 Protocol Naming Explanation (What does "BLend" mean?)
 

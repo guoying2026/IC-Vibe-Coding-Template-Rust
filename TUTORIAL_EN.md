@@ -27,6 +27,7 @@ Once that’s done, you’re ready to dive in and start exploring!
 - Go to the **“Borrow”** page, choose the collateral you want to lock up (ICP, BTC, ETH, or USDC), enter the amount, and hit **“Submit”**.
 - Based on your collateral, the system will show you the **maximum borrowable amount**. Choose how much you want to borrow and click **“Confirm Borrow”**.
 - On the **Personal Center** page, you can keep track of all the important stuff:
+
   - Total debt (including interest)
   - Your **Health Factor** (aka how close you are to getting liquidated 😬)
   - Accrued interest (updated daily — yay, compound interest!)
@@ -57,12 +58,11 @@ When a user supplies assets to the protocol, the following steps are executed un
 5. **Record user deposit**  
    Update the user's supply record and the pool’s token capacity accordingly.
 
-
 ### 🛠 Borrow Logic
 
 When a user tries to borrow some tokens, we don’t just throw the money at them — here’s what actually happens:
 
-1. **Check if the user wants *more than zero***  
+1. **Check if the user wants _more than zero_**  
    Because borrowing 0 tokens is just... philosophical. We need `NumTokens > 0`.
 
 2. **Validate the token pool exists**  
@@ -72,7 +72,7 @@ When a user tries to borrow some tokens, we don’t just throw the money at them
    User must have deposited accepted assets (like ICP, BTC, ETH, USDC). No imaginary coins allowed.
 
 4. **Calculate max borrowable amount**  
-   Based on deposited collateral, price feeds, liquidation thresholds, and protocol parameters, we compute how much the user *can* borrow — safely.
+   Based on deposited collateral, price feeds, liquidation thresholds, and protocol parameters, we compute how much the user _can_ borrow — safely.
 
 5. **Ensure the user isn’t trying to YOLO too much**  
    The requested `NumTokens` must be ≤ `MaxBorrowableAmount`. Over-borrowing gets rejected.
@@ -83,9 +83,7 @@ When a user tries to borrow some tokens, we don’t just throw the money at them
 7. **Update the borrow record**  
    We update the user's borrow balance, interest tracking, and health factor. Basically: “Congrats, you're now officially in debt.”
 
-
-
-### 🔁 Repay Logic 
+### 🔁 Repay Logic
 
 When a user wants to repay their loan — great! But we still need to verify they’re not just clicking buttons for fun.
 
@@ -115,7 +113,6 @@ Here’s what happens under the hood:
 8. **Update the user’s borrow record**  
    New debt balance, reduced interest accumulation, and a better health factor. You're less likely to be liquidated — yay!
 
-
 ### 🏧 Withdraw
 
 1. **Check the amount**: Make sure `Numtokens > 0`. No ghost withdrawals allowed.
@@ -127,7 +124,6 @@ Here’s what happens under the hood:
 7. **Transfer funds**: Send the appropriate amount from the pool back to the user.
 8. **Update records**: Adjust the user's supply balance and pool's total state.
 
-
 ### 💥 Liquidate (Liquidation Mechanism)
 
 When a borrower's health factor falls below the protocol-defined threshold, third-party liquidators are allowed to repay the borrower's debt and acquire a portion of their collateral. The following outlines the standardized liquidation flow:
@@ -137,7 +133,7 @@ When a borrower's health factor falls below the protocol-defined threshold, thir
 
 2. **Calculate Health Factor**  
    Evaluate the borrower's account by computing the Health Factor using the formula:  
-   *(Collateral Value × Liquidation Threshold) / (Borrowed Amount + Accrued Interest)*.  
+   _(Collateral Value × Liquidation Threshold) / (Borrowed Amount + Accrued Interest)_.  
    If **Health Factor < 1**, liquidation is permitted.
 
 3. **Determine Liquidation Payment Amount**  

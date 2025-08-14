@@ -39,8 +39,7 @@ impl Storable for Configuration {
     fn to_bytes(&self) -> Cow<'_, [u8]> {
         Cow::Owned(
             Encode!(&self)
-                .expect("failed to serialize Configuration")
-                .into(),
+                .expect("failed to serialize Configuration"),
         )
     }
     fn from_bytes(bytes: Cow<'_, [u8]>) -> Self {
@@ -58,8 +57,7 @@ impl Storable for StorableTransaction {
     fn to_bytes(&self) -> Cow<'_, [u8]> {
         Cow::Owned(
             Encode!(&self.0)
-                .expect("failed to serialize Transaction")
-                .into(),
+                .expect("failed to serialize Transaction"),
         )
     }
     fn from_bytes(bytes: Cow<'_, [u8]>) -> Self {

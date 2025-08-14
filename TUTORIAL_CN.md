@@ -2,7 +2,6 @@
 
 ## 如何开始 (Getting Started)
 
-
 ![Internet Identity 登录界面](picture/ICP_login.png)
 
 <p align="center"> Internet Identity 登录界面

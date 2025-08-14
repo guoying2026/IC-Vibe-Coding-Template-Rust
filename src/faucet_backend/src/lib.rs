@@ -1,5 +1,5 @@
-use ic_cdk::{query, update};
 use ic_cdk::api::msg_caller;
+use ic_cdk::{query, update};
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use ic_stable_structures::DefaultMemoryImpl;
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
@@ -286,7 +286,7 @@ fn classify_tx(tx: TxInfo, now: u64) -> Result<StorableTransaction, TransferErro
             timestamp: now,
         }));
     } else if let Some(minter) =
-        read_state(|state| state.configuration.get().minting_account.clone())
+        read_state(|state| state.configuration.get().minting_account)
     {
         if Some(tx.from) == Some(minter) {
             return Ok(StorableTransaction(Transaction {
@@ -397,7 +397,7 @@ fn icrc1_total_supply() -> Tokens {
 
 #[query]
 fn icrc1_minting_account() -> Option<Account> {
-    read_state(|state| state.configuration.get().minting_account.clone())
+    read_state(|state| state.configuration.get().minting_account)
 }
 
 #[query]
@@ -496,7 +496,7 @@ fn icrc2_transfer_from(arg: TransferFromArgs) -> Result<BlockIndex, TransferFrom
             memo: arg.memo,
             created_at_time: arg.created_at_time,
         })
-            .map_err(to_transfer_from_error);
+        .map_err(to_transfer_from_error);
     }
     validate_memo(arg.memo.as_ref()).map_err(to_transfer_from_error)?;
     let spender = Account {
@@ -582,14 +582,13 @@ fn delete_token() -> Result<String, String> {
 
     if msg_caller()
         != read_state(|state| {
-        state
-            .configuration
-            .get()
-            .minting_account
-            .clone()
-            .unwrap()
-            .owner
-    })
+            state
+                .configuration
+                .get()
+                .minting_account
+                .unwrap()
+                .owner
+        })
     {
         return Err("Caller is not the token creator".to_string());
     };
